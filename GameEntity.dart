@@ -1,4 +1,4 @@
-abstract class GameEntity {
+class GameEntity {
   Game game;
   num x;
   num y;
@@ -6,7 +6,7 @@ abstract class GameEntity {
   var sprite = null;
   num radius;
   
-  GameEntity(Game this.game, num this.x, num this.y, this.radius);
+  GameEntity(Game this.game);
   
   abstract void update();
   
@@ -26,7 +26,7 @@ abstract class GameEntity {
     ctx.drawImage(sprite, x, y);
   }
   
-  void outsideScreen() {
+  bool outsideScreen() {
     return (x > game.halfSurfaceWidth || x < -(game.halfSurfaceWidth) ||
         y > game.halfSurfaceHeight || y < -(game.halfSurfaceHeight));
   }

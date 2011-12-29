@@ -11,6 +11,10 @@ class Game {
   num halfSurfaceWidth = null;
   num halfSurfaceHeight = null;
   Point clientBoundingRect = null;
+
+  bool showOutlines = false;
+  
+  num lives = 10;
   
   Game() {
     timer = new Timer();
