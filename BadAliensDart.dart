@@ -3,6 +3,8 @@
 #source('Animation.dart');
 #source('Timer.dart');
 #source('GameEntity.dart');
+#source('Game.dart');
+#source('Point.dart');
 
 class BadAliensDart {
 

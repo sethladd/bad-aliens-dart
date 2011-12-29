@@ -47074,6 +47074,20 @@ isolate$inits.push(function(){
 }
 );
 isolate$inits.push(function(){
+  this.entities$field = static$uninitialized;
+  this.ctx$field = static$uninitialized;
+  this.click$field = static$uninitialized;
+  this.mouse$field = static$uninitialized;
+  this.timer$field = static$uninitialized;
+  this.clockTick$field = static$uninitialized;
+  this.surfaceWidth$field = static$uninitialized;
+  this.surfaceHeight$field = static$uninitialized;
+  this.halfSurfaceWidth$field = static$uninitialized;
+  this.halfSurfaceHeight$field = static$uninitialized;
+  this.clientBoundingRect$field = static$uninitialized;
+}
+);
+isolate$inits.push(function(){
   this.removeFromWorld$field = false;
   this.sprite$field = static$uninitialized;
 }
