@@ -14,7 +14,7 @@ class AssetManager {
     }
     
     for (final path in downloadQueue) {
-      ImageElement img = new Element.tag("img");
+      ImageElement img = new html.Element.tag("img");
       img.on.load.add((event) {
         print(img.src + ' is loaded');
         successCount += 1;
