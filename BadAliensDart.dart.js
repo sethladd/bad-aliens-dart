@@ -6312,6 +6312,7 @@ Sentry.prototype.update$0 = Sentry.prototype.update;
 $inherits(Bullet, GameEntity);
 function Bullet(game, x, y, angle, explodesAt) {
   this.radialDistance = 95
+  this.angle = angle;
   this.explodesAt = explodesAt;
   // Initializers done
   GameEntity.withPosition$ctor.call(this, game, x, y);

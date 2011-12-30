@@ -61862,6 +61862,7 @@ unnamed48ba40$Bullet$Dart.$Constructor = function(game, x, y, angle, explodesAt)
 unnamed48ba40$Bullet$Dart.$Initializer = function(game, x, y, angle, explodesAt){
   unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, x, y);
   this.radialDistance$field = 95;
+  this.angle$field = angle;
   this.explodesAt$field = explodesAt;
 }
 ;
