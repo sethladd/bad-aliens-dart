@@ -1,8 +1,13 @@
 class AssetManager {
   var successCount = 0;
   var errorCount = 0;
-  var cache = const {};
-  var downloadQueue = const [];
+  Map cache;
+  List downloadQueue;
+  
+  AssetManager() {
+    downloadQueue = [];
+    cache = {};
+  }
     
   void queueDownload(String path) {
     downloadQueue.add(path);

@@ -1,6 +1,6 @@
 class Game {
   
-  List entities = const [];
+  List entities;
   html.CanvasRenderingContext2D ctx;
   Point click;
   Point mouse;
@@ -17,6 +17,7 @@ class Game {
   
   Game(AssetManager this.assetManager) {
     timer = new Timer();
+    entities = [];
   }
 
   void init(html.CanvasRenderingContext2D ctx) {
@@ -41,7 +42,7 @@ class Game {
     html.window.webkitRequestAnimationFrame(loop, ctx.canvas);
   }
   
-  void loop() {
+  void loop(int time) {
     clockTick = this.timer.tick();
     update();
     draw();

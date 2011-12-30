@@ -6738,13 +6738,6 @@ function native__IDBObjectStoreWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
-function native__IDBObjectStoreWrappingImplementation__index(_this, name) {
-  try {
-    return __dom_wrap(_this.$dom.index(__dom_unwrap(name)));
-  } catch (e) {
-    throw __dom_wrap_exception(e);
-  }
-}
 function native__IDBRequestWrappingImplementation__addEventListener(_this, type, listener) {
   try {
     return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
@@ -25848,22 +25841,6 @@ _IDBObjectStoreWrappingImplementation$Dart._clear$$member_ = function(receiver){
   return native__IDBObjectStoreWrappingImplementation__clear(receiver);
 }
 ;
-_IDBObjectStoreWrappingImplementation$Dart._index$$member_ = function(receiver, name_0){
-  return native__IDBObjectStoreWrappingImplementation__index(receiver, name_0);
-}
-;
-_IDBObjectStoreWrappingImplementation$Dart._index$$named_ = function($n, $o, receiver, name_0){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _IDBObjectStoreWrappingImplementation$Dart._index$$member_(receiver, name_0);
-}
-;
-_IDBObjectStoreWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _IDBObjectStoreWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _IDBObjectStoreWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _IDBObjectStoreWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBObjectStore';
 }
@@ -26319,18 +26296,6 @@ _Int16ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int16ArrayWrappingImplementation__index(_this, index);
 }
 ;
-_Int16ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Int16ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Int16ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Int16ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Int16ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _Int16ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Int16ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -26479,18 +26444,6 @@ _Int32ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int32ArrayWrappingImplementation__index(_this, index);
 }
 ;
-_Int32ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Int32ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Int32ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Int32ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Int32ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _Int32ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Int32ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -26637,18 +26590,6 @@ _Int8ArrayWrappingImplementation$Dart.prototype.INDEX$operator = function(index)
 ;
 _Int8ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int8ArrayWrappingImplementation__index(_this, index);
-}
-;
-_Int8ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Int8ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Int8ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Int8ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Int8ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
 }
 ;
 _Int8ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
@@ -27081,18 +27022,6 @@ _MediaListWrappingImplementation$Dart.prototype.INDEX$operator = function(index)
 ;
 _MediaListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__MediaListWrappingImplementation__index(_this, index);
-}
-;
-_MediaListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _MediaListWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_MediaListWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _MediaListWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _MediaListWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
 }
 ;
 _MediaListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
@@ -27774,18 +27703,6 @@ _NamedNodeMapWrappingImplementation$Dart._index$$member_ = function(_this, index
   return native__NamedNodeMapWrappingImplementation__index(_this, index);
 }
 ;
-_NamedNodeMapWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _NamedNodeMapWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_NamedNodeMapWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _NamedNodeMapWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _NamedNodeMapWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _NamedNodeMapWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -28153,18 +28070,6 @@ _NodeListWrappingImplementation$Dart.prototype.INDEX$operator = function(index){
 ;
 _NodeListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__NodeListWrappingImplementation__index(_this, index);
-}
-;
-_NodeListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _NodeListWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_NodeListWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _NodeListWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _NodeListWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
 }
 ;
 _NodeListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
@@ -43892,18 +43797,6 @@ _StyleSheetListWrappingImplementation$Dart._index$$member_ = function(_this, ind
   return native__StyleSheetListWrappingImplementation__index(_this, index);
 }
 ;
-_StyleSheetListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _StyleSheetListWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_StyleSheetListWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _StyleSheetListWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _StyleSheetListWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _StyleSheetListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -44497,18 +44390,6 @@ _TouchListWrappingImplementation$Dart.prototype.INDEX$operator = function(index)
 ;
 _TouchListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__TouchListWrappingImplementation__index(_this, index);
-}
-;
-_TouchListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _TouchListWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_TouchListWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _TouchListWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _TouchListWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
 }
 ;
 _TouchListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
@@ -45130,18 +45011,6 @@ _Uint16ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index)
   return native__Uint16ArrayWrappingImplementation__index(_this, index);
 }
 ;
-_Uint16ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Uint16ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Uint16ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Uint16ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Uint16ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _Uint16ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Uint16ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -45290,18 +45159,6 @@ _Uint32ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index)
   return native__Uint32ArrayWrappingImplementation__index(_this, index);
 }
 ;
-_Uint32ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Uint32ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Uint32ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Uint32ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Uint32ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
-}
-;
 _Uint32ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Uint32ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -45448,18 +45305,6 @@ _Uint8ArrayWrappingImplementation$Dart.prototype.INDEX$operator = function(index
 ;
 _Uint8ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Uint8ArrayWrappingImplementation__index(_this, index);
-}
-;
-_Uint8ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
-  if ($o.count || $n != 2)
-    $nsme();
-  return _Uint8ArrayWrappingImplementation$Dart._index$$member_(_this, index);
-}
-;
-_Uint8ArrayWrappingImplementation$Dart._index$$getter_ = function(){
-  var ret = _Uint8ArrayWrappingImplementation$Dart._index$$named_;
-  ret.$lookupRTT = _Uint8ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
-  return ret;
 }
 ;
 _Uint8ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
@@ -61069,11 +60914,29 @@ unnamed48ba40$Animation$Dart.prototype.currentFrame$named = function($n, $o){
   return unnamed48ba40$Animation$Dart.prototype.currentFrame$member.call(this);
 }
 ;
-var tmp$4cf8142$0;
 function unnamed48ba40$AssetManager$Dart(){
 }
 unnamed48ba40$AssetManager$Dart.$lookupRTT = function(){
   return RTT.create($cls('unnamed48ba40$AssetManager$Dart'));
+}
+;
+unnamed48ba40$AssetManager$Dart.$Constructor = function(){
+  var tmp$1, tmp$2, tmp$0;
+  this.downloadQueue$setter(tmp$0 = RTT.setTypeInfo([], Array.$lookupRTT())) , tmp$0;
+  this.cache$setter(tmp$2 = (tmp$1 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT()) , tmp$1)) , tmp$2;
+}
+;
+unnamed48ba40$AssetManager$Dart.$Initializer = function(){
+  this.successCount$field = 0;
+  this.errorCount$field = 0;
+}
+;
+unnamed48ba40$AssetManager$Dart.AssetManager$$Factory = function(){
+  var tmp$0 = new unnamed48ba40$AssetManager$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$AssetManager$Dart.$lookupRTT();
+  unnamed48ba40$AssetManager$Dart.$Initializer.call(tmp$0);
+  unnamed48ba40$AssetManager$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
 }
 ;
 unnamed48ba40$AssetManager$Dart.prototype.successCount$getter = function(){
@@ -61093,29 +60956,19 @@ unnamed48ba40$AssetManager$Dart.prototype.errorCount$setter = function(tmp$0){
 }
 ;
 unnamed48ba40$AssetManager$Dart.prototype.cache$getter = function(){
-  var tmp$0 = this.cache$field;
-  var tmp$1 = static$initializing;
-  if (tmp$0 === tmp$1)
-    throw 'circular initialization';
-  if (tmp$0 !== static$uninitialized)
-    return tmp$0;
-  this.cache$field = tmp$1;
-  var tmp$2 = $intern((tmp$4cf8142$0 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT()) , tmp$4cf8142$0), ['', '']);
-  this.cache$field = tmp$2;
-  return tmp$2;
+  return this.cache$field;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.cache$setter = function(tmp$0){
+  this.cache$field = tmp$0;
 }
 ;
 unnamed48ba40$AssetManager$Dart.prototype.downloadQueue$getter = function(){
-  var tmp$0 = this.downloadQueue$field;
-  var tmp$1 = static$initializing;
-  if (tmp$0 === tmp$1)
-    throw 'circular initialization';
-  if (tmp$0 !== static$uninitialized)
-    return tmp$0;
-  this.downloadQueue$field = tmp$1;
-  var tmp$2 = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
-  this.downloadQueue$field = tmp$2;
-  return tmp$2;
+  return this.downloadQueue$field;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.downloadQueue$setter = function(tmp$0){
+  this.downloadQueue$field = tmp$0;
 }
 ;
 unnamed48ba40$AssetManager$Dart.prototype.queueDownload$member = function(path){
@@ -61208,27 +61061,8 @@ unnamed48ba40$AssetManager$Dart.prototype.isDone$named = function($n, $o){
   return unnamed48ba40$AssetManager$Dart.prototype.isDone$member.call(this);
 }
 ;
-unnamed48ba40$AssetManager$Dart.$Constructor = function(){
-}
-;
-unnamed48ba40$AssetManager$Dart.$Initializer = function(){
-  var tmp$0;
-  this.successCount$field = 0;
-  this.errorCount$field = 0;
-  this.cache$field = $intern((tmp$0 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT()) , tmp$0), ['', '']);
-  this.downloadQueue$field = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
-}
-;
-unnamed48ba40$AssetManager$Dart.AssetManager$$Factory = function(){
-  var tmp$0 = new unnamed48ba40$AssetManager$Dart;
-  tmp$0.$typeInfo = unnamed48ba40$AssetManager$Dart.$lookupRTT();
-  unnamed48ba40$AssetManager$Dart.$Initializer.call(tmp$0);
-  unnamed48ba40$AssetManager$Dart.$Constructor.call(tmp$0);
-  return tmp$0;
-}
-;
 function unnamed48ba40$$main$c0$14_14$Hoisted(dartc_scp$1){
-  dartc_scp$1.game.init$named(0, $noargs);
+  dartc_scp$1.game.init$named(1, $noargs, dartc_scp$1.ctx);
   dartc_scp$1.game.start$named(0, $noargs);
 }
 function unnamed48ba40$$main$c0$14_14$Hoisted$named($s0, $n, $o){
@@ -61243,7 +61077,7 @@ function unnamed48ba40$main$member(){
   var dartc_scp$1;
   dartc_scp$1 = {};
   var canvas = htmld071c1$document$getter().query$named(1, $noargs, '#surface');
-  var ctx = canvas.getContext$named(1, $noargs, '2d');
+  dartc_scp$1.ctx = canvas.getContext$named(1, $noargs, '2d');
   var assetManager = unnamed48ba40$AssetManager$Dart.AssetManager$$Factory();
   assetManager.queueDownload$named(1, $noargs, 'img/alien-explosion.png');
   assetManager.queueDownload$named(1, $noargs, 'img/alien.png');
@@ -61267,27 +61101,22 @@ unnamed48ba40$Game$Dart.$addTo = function(target){
 }
 ;
 unnamed48ba40$Game$Dart.$Constructor = function(assetManager){
-  var tmp$0;
+  var tmp$1, tmp$0;
   this.timer$setter(tmp$0 = unnamed48ba40$Timer$Dart.Timer$$Factory()) , tmp$0;
+  this.entities$setter(tmp$1 = RTT.setTypeInfo([], Array.$lookupRTT())) , tmp$1;
 }
 ;
 unnamed48ba40$Game$Dart.$Initializer = function(assetManager){
-  this.entities$field = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
   this.showOutlines$field = false;
   this.assetManager$field = assetManager;
 }
 ;
 unnamed48ba40$Game$Dart.prototype.entities$getter = function(){
-  var tmp$0 = this.entities$field;
-  var tmp$1 = static$initializing;
-  if (tmp$0 === tmp$1)
-    throw 'circular initialization';
-  if (tmp$0 !== static$uninitialized)
-    return tmp$0;
-  this.entities$field = tmp$1;
-  var tmp$2 = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
-  this.entities$field = tmp$2;
-  return tmp$2;
+  return this.entities$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.entities$setter = function(tmp$0){
+  this.entities$field = tmp$0;
 }
 ;
 unnamed48ba40$Game$Dart.prototype.ctx$getter = function(){
@@ -61432,7 +61261,7 @@ unnamed48ba40$Game$Dart.prototype.start$getter = function(){
   return $bind(unnamed48ba40$Game$Dart.prototype.start$named, unnamed48ba40$Game$Dart.prototype.start$named_$lookupRTT, this);
 }
 ;
-unnamed48ba40$Game$Dart.prototype.loop$member = function(){
+unnamed48ba40$Game$Dart.prototype.loop$member = function(time){
   var tmp$1, tmp$0;
   this.clockTick$setter(tmp$0 = this.timer$getter().tick$named(0, $noargs)) , tmp$0;
   this.update$member();
@@ -61441,14 +61270,14 @@ unnamed48ba40$Game$Dart.prototype.loop$member = function(){
   htmld071c1$window$getter().webkitRequestAnimationFrame$named(2, $noargs, $bind(unnamed48ba40$Game$Dart.prototype.loop$named, unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT, this), this.ctx$getter().canvas$getter());
 }
 ;
-unnamed48ba40$Game$Dart.prototype.loop$named = function($n, $o){
-  if ($o.count || $n != 0)
+unnamed48ba40$Game$Dart.prototype.loop$named = function($n, $o, time){
+  if ($o.count || $n != 1)
     $nsme();
-  return unnamed48ba40$Game$Dart.prototype.loop$member.call(this);
+  return unnamed48ba40$Game$Dart.prototype.loop$member.call(this, time);
 }
 ;
 unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT = function(){
-  return RTT.createFunction(null, null);
+  return RTT.createFunction([int$Dart.$lookupRTT()], null);
 }
 ;
 unnamed48ba40$Game$Dart.prototype.loop$getter = function(){
@@ -62519,8 +62348,6 @@ isolate$inits.push(function(){
 isolate$inits.push(function(){
   this.successCount$field = 0;
   this.errorCount$field = 0;
-  this.cache$field = static$uninitialized;
-  this.downloadQueue$field = static$uninitialized;
 }
 );
 isolate$inits.push(function(){
@@ -62537,7 +62364,6 @@ isolate$inits.push(function(){
 }
 );
 isolate$inits.push(function(){
-  this.entities$field = static$uninitialized;
   this.showOutlines$field = false;
 }
 );

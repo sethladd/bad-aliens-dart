@@ -29,7 +29,7 @@ void main() {
   var game = new EvilAliens(assetManager);
   
   assetManager.downloadAll(() {
-    game.init();
+    game.init(ctx);
     game.start();
   });
 }

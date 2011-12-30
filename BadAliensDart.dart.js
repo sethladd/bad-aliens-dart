@@ -171,14 +171,11 @@ Object.prototype.getContext$0 = function() {
 Object.prototype.getContext$1 = function($0) {
   return this.noSuchMethod("getContext", [$0]);
 };
-Object.prototype.hasNext$0 = function() {
-  return this.noSuchMethod("hasNext", []);
-};
 Object.prototype.hashCode$0 = function() {
   return this.noSuchMethod("hashCode", []);
 };
-Object.prototype.init$0 = function() {
-  return this.noSuchMethod("init", []);
+Object.prototype.init$1 = function($0) {
+  return this.noSuchMethod("init", [$0]);
 };
 Object.prototype.is$CanvasElement = function() {
   return false;
@@ -186,11 +183,14 @@ Object.prototype.is$CanvasElement = function() {
 Object.prototype.is$ImageElement = function() {
   return false;
 };
-Object.prototype.iterator$0 = function() {
-  return this.noSuchMethod("iterator", []);
+Object.prototype.postMessage$1 = function($0) {
+  return this.noSuchMethod("postMessage", [$0]);
 };
-Object.prototype.next$0 = function() {
-  return this.noSuchMethod("next", []);
+Object.prototype.postMessage$2 = function($0, $1) {
+  return this.noSuchMethod("postMessage", [$0, $1]);
+};
+Object.prototype.postMessage$3 = function($0, $1, $2) {
+  return this.noSuchMethod("postMessage", [$0, $1, $2]);
 };
 Object.prototype.querySelector$1 = function($0) {
   return this.noSuchMethod("querySelector", [$0]);
@@ -222,14 +222,6 @@ Object.prototype.update$0 = function() {
 Object.prototype.webkitRequestAnimationFrame$2 = function($0, $1) {
   return this.noSuchMethod("webkitRequestAnimationFrame", [$0, $1]);
 };
-// ********** Code for IllegalAccessException **************
-function IllegalAccessException() {
-  // Initializers done
-}
-IllegalAccessException.prototype.toString = function() {
-  return "Attempt to modify an immutable object";
-}
-IllegalAccessException.prototype.toString$0 = IllegalAccessException.prototype.toString;
 // ********** Code for NoSuchMethodException **************
 function NoSuchMethodException(_receiver, _functionName, _arguments) {
   this._receiver = _receiver;
@@ -250,28 +242,45 @@ NoSuchMethodException.prototype.toString = function() {
   return ("NoSuchMethodException - receiver: '" + this._receiver + "' ") + ("function name: '" + this._functionName + "' arguments: [" + sb + "]");
 }
 NoSuchMethodException.prototype.toString$0 = NoSuchMethodException.prototype.toString;
+// ********** Code for ObjectNotClosureException **************
+function ObjectNotClosureException() {
+  // Initializers done
+}
+ObjectNotClosureException.prototype.toString = function() {
+  return "Object is not closure";
+}
+ObjectNotClosureException.prototype.toString$0 = ObjectNotClosureException.prototype.toString;
+// ********** Code for IllegalArgumentException **************
+function IllegalArgumentException(args) {
+  this._args = args;
+  // Initializers done
+}
+IllegalArgumentException.prototype.toString = function() {
+  return ("Illegal argument(s): " + this._args);
+}
+IllegalArgumentException.prototype.toString$0 = IllegalArgumentException.prototype.toString;
+// ********** Code for StackOverflowException **************
+function StackOverflowException() {
+  // Initializers done
+}
+StackOverflowException.prototype.toString = function() {
+  return "Stack Overflow";
+}
+StackOverflowException.prototype.toString$0 = StackOverflowException.prototype.toString;
 // ********** Code for BadNumberFormatException **************
 function BadNumberFormatException() {}
 BadNumberFormatException.prototype.toString = function() {
   return ("BadNumberFormatException: '" + this._s + "'");
 }
 BadNumberFormatException.prototype.toString$0 = BadNumberFormatException.prototype.toString;
-// ********** Code for NoMoreElementsException **************
-function NoMoreElementsException() {
+// ********** Code for NullPointerException **************
+function NullPointerException() {
   // Initializers done
 }
-NoMoreElementsException.prototype.toString = function() {
-  return "NoMoreElementsException";
+NullPointerException.prototype.toString = function() {
+  return "NullPointerException";
 }
-NoMoreElementsException.prototype.toString$0 = NoMoreElementsException.prototype.toString;
-// ********** Code for EmptyQueueException **************
-function EmptyQueueException() {
-  // Initializers done
-}
-EmptyQueueException.prototype.toString = function() {
-  return "EmptyQueueException";
-}
-EmptyQueueException.prototype.toString$0 = EmptyQueueException.prototype.toString;
+NullPointerException.prototype.toString$0 = NullPointerException.prototype.toString;
 // ********** Code for UnsupportedOperationException **************
 function UnsupportedOperationException(_message) {
   this._message = _message;
@@ -326,28 +335,61 @@ function _print(obj) {
     write('\n');
   }
 }
-function _map(itemsAndKeys) {
-  var ret = new LinkedHashMapImplementation();
-  for (var i = 0;
-   i < itemsAndKeys.get$length(); ) {
-    ret.$setindex(itemsAndKeys.$index(i++), itemsAndKeys.$index(i++));
+function _toDartException(e) {
+  function attachStack(dartEx) {
+    // TODO(jmesserly): setting the stack property is not a long term solution.
+    var stack = e.stack;
+    // The stack contains the error message, and the stack is all that is
+    // printed (the exception's toString() is never called).  Make the Dart
+    // exception's toString() be the dominant message.
+    if (typeof stack == 'string') {
+      var message = dartEx.toString();
+      if (/^(Type|Range)Error:/.test(stack)) {
+        // Indent JS message (it can be helpful) so new message stands out.
+        stack = '    (' + stack.substring(0, stack.indexOf('\n')) + ')\n' +
+                stack.substring(stack.indexOf('\n') + 1);
+      }
+      stack = message + '\n' + stack;
+    }
+    dartEx.stack = stack;
+    return dartEx;
   }
-  return ret;
-}
-function _constMap(itemsAndKeys) {
-  return new ImmutableMap(itemsAndKeys);
+
+  if (e instanceof TypeError) {
+    switch(e.type) {
+      case 'property_not_function':
+      case 'called_non_callable':
+        if (e.arguments[0] == null) {
+          return attachStack(new NullPointerException());
+        } else {
+          return attachStack(new ObjectNotClosureException());
+        }
+        break;
+      case 'non_object_property_call':
+      case 'non_object_property_load':
+        return attachStack(new NullPointerException());
+        break;
+      case 'undefined_method':
+        var mname = e.arguments[0];
+        if (typeof(mname) == 'string' && (mname.indexOf('call$') == 0
+            || mname == 'call' || mname == 'apply')) {
+          return attachStack(new ObjectNotClosureException());
+        } else {
+          // TODO(jmesserly): fix noSuchMethod on operators so we don't hit this
+          return attachStack(new NoSuchMethodException('', e.arguments[0], []));
+        }
+        break;
+    }
+  } else if (e instanceof RangeError) {
+    if (e.message.indexOf('call stack') >= 0) {
+      return attachStack(new StackOverflowException());
+    }
+  }
+  return e;
 }
 //  ********** Library dart:coreimpl **************
 // ********** Code for ListFactory **************
 ListFactory = Array;
-ListFactory.ListFactory$from$factory = function(other) {
-  var list = [];
-  for (var $$i = other.iterator(); $$i.hasNext$0(); ) {
-    var e = $$i.next$0();
-    list.add(e);
-  }
-  return list;
-}
 ListFactory.prototype.get$length = function() { return this.length; };
 ListFactory.prototype.set$length = function(value) { return this.length = value; };
 ListFactory.prototype.add = function(value) {
@@ -359,105 +401,11 @@ ListFactory.prototype.clear = function() {
 ListFactory.prototype.removeRange = function(start, length) {
   this.splice(start, length);
 }
-ListFactory.prototype.iterator = function() {
-  return new ListIterator(this);
-}
 ListFactory.prototype.add$1 = ListFactory.prototype.add;
-ListFactory.prototype.iterator$0 = ListFactory.prototype.iterator;
 ListFactory_E = ListFactory;
 ListFactory_String = ListFactory;
 ListFactory_V = ListFactory;
 ListFactory__EventListenerWrapper = ListFactory;
-// ********** Code for ListIterator **************
-function ListIterator(array) {
-  this._array = array;
-  this._pos = 0;
-  // Initializers done
-}
-ListIterator.prototype.hasNext = function() {
-  return this._array.get$length() > this._pos;
-}
-ListIterator.prototype.next = function() {
-  if (!this.hasNext()) {
-    $throw(const$6/*const NoMoreElementsException()*/);
-  }
-  return this._array.$index(this._pos++);
-}
-ListIterator.prototype.hasNext$0 = ListIterator.prototype.hasNext;
-ListIterator.prototype.next$0 = ListIterator.prototype.next;
-// ********** Code for ImmutableList **************
-/** Implements extends for Dart classes on JavaScript prototypes. */
-function $inherits(child, parent) {
-  if (child.prototype.__proto__) {
-    child.prototype.__proto__ = parent.prototype;
-  } else {
-    function tmp() {};
-    tmp.prototype = parent.prototype;
-    child.prototype = new tmp();
-    child.prototype.constructor = child;
-  }
-}
-$inherits(ImmutableList, ListFactory_E);
-function ImmutableList(length) {
-  this._length = length;
-  // Initializers done
-  ListFactory_E.call(this, length);
-}
-ImmutableList.ImmutableList$from$factory = function(other) {
-  var list = new ImmutableList(other.get$length());
-  for (var i = 0;
-   i < other.get$length(); i++) {
-    list._setindex(i, other.$index(i));
-  }
-  return list;
-}
-ImmutableList.prototype.get$length = function() {
-  return this._length;
-}
-ImmutableList.prototype.set$length = function(length) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-Object.defineProperty(ImmutableList.prototype, "length", {
-  get: ImmutableList.prototype.get$length,
-  set: ImmutableList.prototype.set$length
-});
-ImmutableList.prototype._setindex = function(index, value) {
-  return this[index] = value;
-}
-ImmutableList.prototype.$setindex = function(index, value) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-ImmutableList.prototype.removeRange = function(start, length) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-ImmutableList.prototype.add = function(element) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-ImmutableList.prototype.clear = function() {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-ImmutableList.prototype.toString = function() {
-  return ListFactory.ListFactory$from$factory(this).toString();
-}
-ImmutableList.prototype.add$1 = ImmutableList.prototype.add;
-ImmutableList.prototype.toString$0 = ImmutableList.prototype.toString;
-// ********** Code for ImmutableMap **************
-function ImmutableMap(keyValuePairs) {
-  this._internal = _map(keyValuePairs);
-  // Initializers done
-}
-ImmutableMap.prototype.$index = function(key) {
-  return this._internal.$index(key);
-}
-ImmutableMap.prototype.get$length = function() {
-  return this._internal.get$length();
-}
-ImmutableMap.prototype.$setindex = function(key, value) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
-ImmutableMap.prototype.putIfAbsent = function(key, ifAbsent) {
-  $throw(const$5/*const IllegalAccessException()*/);
-}
 // ********** Code for NumImplementation **************
 NumImplementation = Number;
 NumImplementation.prototype.abs = function() {
@@ -470,6 +418,158 @@ NumImplementation.prototype.hashCode = function() {
   return this & 0xFFFFFFF;
 }
 NumImplementation.prototype.hashCode$0 = NumImplementation.prototype.hashCode;
+// ********** Code for FutureNotCompleteException **************
+function FutureNotCompleteException() {
+  // Initializers done
+}
+// ********** Code for FutureAlreadyCompleteException **************
+function FutureAlreadyCompleteException() {
+  // Initializers done
+}
+// ********** Code for FutureImpl **************
+function FutureImpl() {
+  this._listeners = new Array();
+  this._exceptionHandlers = new Array();
+  // Initializers done
+  this._isComplete = false;
+  this._exceptionHandled = false;
+}
+FutureImpl.prototype.get$value = function() {
+  if (!this.get$isComplete()) {
+    $throw(new FutureNotCompleteException());
+  }
+  if (this._exception != null) {
+    $throw(this._exception);
+  }
+  return this._value;
+}
+FutureImpl.prototype.get$isComplete = function() {
+  return this._isComplete;
+}
+FutureImpl.prototype.get$hasValue = function() {
+  return this.get$isComplete() && this._exception == null;
+}
+FutureImpl.prototype.then = function(onComplete) {
+  if (this.get$hasValue()) {
+    onComplete(this.get$value());
+  }
+  else {
+    this._listeners.add(onComplete);
+  }
+}
+FutureImpl.prototype._complete = function() {
+  this._isComplete = true;
+  if (this._exception != null) {
+    var $$list = this._exceptionHandlers;
+    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+      var handler = $$list.$index($$i);
+      if (handler.call$1(this._exception)) {
+        this._exceptionHandled = true;
+      }
+    }
+  }
+  if (this.get$hasValue()) {
+    var $$list = this._listeners;
+    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+      var listener = $$list.$index($$i);
+      listener.call$1(this.get$value());
+    }
+  }
+  else {
+    if (!this._exceptionHandled && this._listeners.get$length() > 0) {
+      $throw(this._exception);
+    }
+  }
+}
+FutureImpl.prototype._setValue = function(value) {
+  if (this._isComplete) {
+    $throw(new FutureAlreadyCompleteException());
+  }
+  this._value = value;
+  this._complete();
+}
+FutureImpl.prototype._setException = function(exception) {
+  if (exception == null) {
+    $throw(new IllegalArgumentException(null));
+  }
+  if (this._isComplete) {
+    $throw(new FutureAlreadyCompleteException());
+  }
+  this._exception = exception;
+  this._complete();
+}
+// ********** Code for FutureImpl_T **************
+/** Implements extends for Dart classes on JavaScript prototypes. */
+function $inherits(child, parent) {
+  if (child.prototype.__proto__) {
+    child.prototype.__proto__ = parent.prototype;
+  } else {
+    function tmp() {};
+    tmp.prototype = parent.prototype;
+    child.prototype = new tmp();
+    child.prototype.constructor = child;
+  }
+}
+$inherits(FutureImpl_T, FutureImpl);
+function FutureImpl_T() {}
+FutureImpl_T.prototype._complete = function() {
+  this._isComplete = true;
+  if (this._exception != null) {
+    var $$list = this._exceptionHandlers;
+    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+      var handler = $$list.$index($$i);
+      if (handler.call$1(this._exception)) {
+        this._exceptionHandled = true;
+      }
+    }
+  }
+  if (this.get$hasValue()) {
+    var $$list = this._listeners;
+    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+      var listener = $$list.$index($$i);
+      listener.call$1(this.get$value());
+    }
+  }
+  else {
+    if (!this._exceptionHandled && this._listeners.get$length() > 0) {
+      $throw(this._exception);
+    }
+  }
+}
+FutureImpl_T.prototype._setValue = function(value) {
+  if (this._isComplete) {
+    $throw(new FutureAlreadyCompleteException());
+  }
+  this._value = value;
+  this._complete();
+}
+FutureImpl_T.prototype._setException = function(exception) {
+  if (exception == null) {
+    $throw(new IllegalArgumentException(null));
+  }
+  if (this._isComplete) {
+    $throw(new FutureAlreadyCompleteException());
+  }
+  this._exception = exception;
+  this._complete();
+}
+// ********** Code for CompleterImpl **************
+function CompleterImpl() {
+  this._futureImpl = new FutureImpl();
+  // Initializers done
+}
+CompleterImpl.prototype.get$future = function() {
+  return this._futureImpl;
+}
+CompleterImpl.prototype.complete = function(value) {
+  this._futureImpl._setValue(value);
+}
+CompleterImpl.prototype.completeException = function(exception) {
+  this._futureImpl._setException(exception);
+}
+// ********** Code for CompleterImpl_ElementRect **************
+$inherits(CompleterImpl_ElementRect, CompleterImpl);
+function CompleterImpl_ElementRect() {}
 // ********** Code for HashMapImplementation **************
 function HashMapImplementation() {
   // Initializers done
@@ -502,7 +602,7 @@ HashMapImplementation.prototype._probeForAdding = function(key) {
     else if ($eq(existingKey, key)) {
       return hash;
     }
-    else if ((insertionIndex < 0) && (const$2/*HashMapImplementation._DELETED_KEY*/ === existingKey)) {
+    else if ((insertionIndex < 0) && (const$3/*HashMapImplementation._DELETED_KEY*/ === existingKey)) {
       insertionIndex = hash;
     }
     hash = HashMapImplementation._nextProbe(hash, numberOfProbes++, this._keys.get$length());
@@ -545,7 +645,7 @@ HashMapImplementation.prototype._grow = function(newCapacity) {
   for (var i = 0;
    i < capacity; i++) {
     var key = oldKeys.$index(i);
-    if (key == null || key === const$2/*HashMapImplementation._DELETED_KEY*/) {
+    if (key == null || key === const$3/*HashMapImplementation._DELETED_KEY*/) {
       continue;
     }
     var value = oldValues.$index(i);
@@ -558,7 +658,7 @@ HashMapImplementation.prototype._grow = function(newCapacity) {
 HashMapImplementation.prototype.$setindex = function(key, value) {
   this._ensureCapacity();
   var index = this._probeForAdding(key);
-  if ((this._keys.$index(index) == null) || (this._keys.$index(index) === const$2/*HashMapImplementation._DELETED_KEY*/)) {
+  if ((this._keys.$index(index) == null) || (this._keys.$index(index) === const$3/*HashMapImplementation._DELETED_KEY*/)) {
     this._numberOfEntries++;
   }
   this._keys.$setindex(index, key);
@@ -576,243 +676,18 @@ HashMapImplementation.prototype.putIfAbsent = function(key, ifAbsent) {
   this.$setindex(key, value);
   return value;
 }
-HashMapImplementation.prototype.get$length = function() {
-  return this._numberOfEntries;
-}
-HashMapImplementation.prototype.containsKey = function(key) {
-  return (this._probeForLookup(key) != -1);
-}
 // ********** Code for HashMapImplementation_E$E **************
 $inherits(HashMapImplementation_E$E, HashMapImplementation);
 function HashMapImplementation_E$E() {}
-// ********** Code for HashMapImplementation_K$DoubleLinkedQueueEntry_KeyValuePair_K$V **************
-$inherits(HashMapImplementation_K$DoubleLinkedQueueEntry_KeyValuePair_K$V, HashMapImplementation);
-function HashMapImplementation_K$DoubleLinkedQueueEntry_KeyValuePair_K$V() {}
 // ********** Code for _DeletedKeySentinel **************
 function _DeletedKeySentinel() {
   // Initializers done
-}
-// ********** Code for KeyValuePair **************
-function KeyValuePair(key, value) {
-  this.key = key;
-  this.value = value;
-  // Initializers done
-}
-KeyValuePair.prototype.get$value = function() { return this.value; };
-KeyValuePair.prototype.set$value = function(value) { return this.value = value; };
-// ********** Code for KeyValuePair_K$V **************
-$inherits(KeyValuePair_K$V, KeyValuePair);
-function KeyValuePair_K$V(key, value) {
-  this.key = key;
-  this.value = value;
-  // Initializers done
-}
-// ********** Code for LinkedHashMapImplementation **************
-function LinkedHashMapImplementation() {
-  // Initializers done
-  this._map = new HashMapImplementation();
-  this._list = new DoubleLinkedQueue_KeyValuePair_K$V();
-}
-LinkedHashMapImplementation.prototype.$setindex = function(key, value) {
-  if (this._map.containsKey(key)) {
-    this._map.$index(key).get$element().set$value(value);
-  }
-  else {
-    this._list.addLast(new KeyValuePair_K$V(key, value));
-    this._map.$setindex(key, this._list.lastEntry());
-  }
-}
-LinkedHashMapImplementation.prototype.$index = function(key) {
-  var entry = this._map.$index(key);
-  if (entry == null) return null;
-  return entry.get$element().get$value();
-}
-LinkedHashMapImplementation.prototype.putIfAbsent = function(key, ifAbsent) {
-  var value = this.$index(key);
-  if ((this.$index(key) == null) && !(this.containsKey(key))) {
-    value = ifAbsent();
-    this.$setindex(key, value);
-  }
-  return value;
-}
-LinkedHashMapImplementation.prototype.containsKey = function(key) {
-  return this._map.containsKey(key);
-}
-LinkedHashMapImplementation.prototype.get$length = function() {
-  return this._map.get$length();
-}
-// ********** Code for DoubleLinkedQueueEntry **************
-function DoubleLinkedQueueEntry(e) {
-  // Initializers done
-  this._element = e;
-}
-DoubleLinkedQueueEntry.prototype._link = function(p, n) {
-  this._next = n;
-  this._previous = p;
-  p._next = this;
-  n._previous = this;
-}
-DoubleLinkedQueueEntry.prototype.prepend = function(e) {
-  new DoubleLinkedQueueEntry_E(e)._link(this._previous, this);
-}
-DoubleLinkedQueueEntry.prototype._asNonSentinelEntry = function() {
-  return this;
-}
-DoubleLinkedQueueEntry.prototype.previousEntry = function() {
-  return this._previous._asNonSentinelEntry();
-}
-DoubleLinkedQueueEntry.prototype.get$element = function() {
-  return this._element;
-}
-// ********** Code for DoubleLinkedQueueEntry_E **************
-$inherits(DoubleLinkedQueueEntry_E, DoubleLinkedQueueEntry);
-function DoubleLinkedQueueEntry_E(e) {
-  // Initializers done
-  this._element = e;
-}
-DoubleLinkedQueueEntry_E.prototype._link = function(p, n) {
-  this._next = n;
-  this._previous = p;
-  p._next = this;
-  n._previous = this;
-}
-DoubleLinkedQueueEntry_E.prototype.prepend = function(e) {
-  new DoubleLinkedQueueEntry_E(e)._link(this._previous, this);
-}
-DoubleLinkedQueueEntry_E.prototype._asNonSentinelEntry = function() {
-  return this;
-}
-DoubleLinkedQueueEntry_E.prototype.previousEntry = function() {
-  return this._previous._asNonSentinelEntry();
-}
-// ********** Code for DoubleLinkedQueueEntry_KeyValuePair_K$V **************
-$inherits(DoubleLinkedQueueEntry_KeyValuePair_K$V, DoubleLinkedQueueEntry);
-function DoubleLinkedQueueEntry_KeyValuePair_K$V(e) {
-  // Initializers done
-  this._element = e;
-}
-DoubleLinkedQueueEntry_KeyValuePair_K$V.prototype._link = function(p, n) {
-  this._next = n;
-  this._previous = p;
-  p._next = this;
-  n._previous = this;
-}
-DoubleLinkedQueueEntry_KeyValuePair_K$V.prototype.prepend = function(e) {
-  new DoubleLinkedQueueEntry_KeyValuePair_K$V(e)._link(this._previous, this);
-}
-DoubleLinkedQueueEntry_KeyValuePair_K$V.prototype._asNonSentinelEntry = function() {
-  return this;
-}
-DoubleLinkedQueueEntry_KeyValuePair_K$V.prototype.previousEntry = function() {
-  return this._previous._asNonSentinelEntry();
-}
-// ********** Code for _DoubleLinkedQueueEntrySentinel **************
-$inherits(_DoubleLinkedQueueEntrySentinel, DoubleLinkedQueueEntry_E);
-function _DoubleLinkedQueueEntrySentinel() {
-  // Initializers done
-  DoubleLinkedQueueEntry_E.call(this, null);
-  this._link(this, this);
-}
-_DoubleLinkedQueueEntrySentinel.prototype._asNonSentinelEntry = function() {
-  return null;
-}
-_DoubleLinkedQueueEntrySentinel.prototype.get$element = function() {
-  $throw(const$1/*const EmptyQueueException()*/);
-}
-// ********** Code for _DoubleLinkedQueueEntrySentinel_E **************
-$inherits(_DoubleLinkedQueueEntrySentinel_E, _DoubleLinkedQueueEntrySentinel);
-function _DoubleLinkedQueueEntrySentinel_E() {
-  // Initializers done
-  DoubleLinkedQueueEntry_E.call(this, null);
-  this._link(this, this);
-}
-// ********** Code for _DoubleLinkedQueueEntrySentinel_KeyValuePair_K$V **************
-$inherits(_DoubleLinkedQueueEntrySentinel_KeyValuePair_K$V, _DoubleLinkedQueueEntrySentinel);
-function _DoubleLinkedQueueEntrySentinel_KeyValuePair_K$V() {
-  // Initializers done
-  DoubleLinkedQueueEntry_KeyValuePair_K$V.call(this, null);
-  this._link(this, this);
-}
-// ********** Code for DoubleLinkedQueue **************
-function DoubleLinkedQueue() {
-  // Initializers done
-  this._sentinel = new _DoubleLinkedQueueEntrySentinel_E();
-}
-DoubleLinkedQueue.prototype.addLast = function(value) {
-  this._sentinel.prepend(value);
-}
-DoubleLinkedQueue.prototype.add = function(value) {
-  this.addLast(value);
-}
-DoubleLinkedQueue.prototype.lastEntry = function() {
-  return this._sentinel.previousEntry();
-}
-DoubleLinkedQueue.prototype.get$length = function() {
-  var counter = 0;
-  this.forEach(function _(element) {
-    counter++;
-  }
-  );
-  return counter;
-}
-DoubleLinkedQueue.prototype.forEach = function(f) {
-  var entry = this._sentinel._next;
-  while (entry !== this._sentinel) {
-    var nextEntry = entry._next;
-    f(entry._element);
-    entry = nextEntry;
-  }
-}
-DoubleLinkedQueue.prototype.iterator = function() {
-  return new _DoubleLinkedQueueIterator_E(this._sentinel);
-}
-DoubleLinkedQueue.prototype.add$1 = DoubleLinkedQueue.prototype.add;
-DoubleLinkedQueue.prototype.iterator$0 = DoubleLinkedQueue.prototype.iterator;
-// ********** Code for DoubleLinkedQueue_KeyValuePair_K$V **************
-$inherits(DoubleLinkedQueue_KeyValuePair_K$V, DoubleLinkedQueue);
-function DoubleLinkedQueue_KeyValuePair_K$V() {
-  // Initializers done
-  this._sentinel = new _DoubleLinkedQueueEntrySentinel_KeyValuePair_K$V();
-}
-DoubleLinkedQueue_KeyValuePair_K$V.prototype.addLast = function(value) {
-  this._sentinel.prepend(value);
-}
-DoubleLinkedQueue_KeyValuePair_K$V.prototype.lastEntry = function() {
-  return this._sentinel.previousEntry();
-}
-// ********** Code for _DoubleLinkedQueueIterator **************
-function _DoubleLinkedQueueIterator(_sentinel) {
-  this._sentinel = _sentinel;
-  // Initializers done
-  this._currentEntry = this._sentinel;
-}
-_DoubleLinkedQueueIterator.prototype.hasNext = function() {
-  return this._currentEntry._next !== this._sentinel;
-}
-_DoubleLinkedQueueIterator.prototype.next = function() {
-  if (!this.hasNext()) {
-    $throw(const$6/*const NoMoreElementsException()*/);
-  }
-  this._currentEntry = this._currentEntry._next;
-  return this._currentEntry.get$element();
-}
-_DoubleLinkedQueueIterator.prototype.hasNext$0 = _DoubleLinkedQueueIterator.prototype.hasNext;
-_DoubleLinkedQueueIterator.prototype.next$0 = _DoubleLinkedQueueIterator.prototype.next;
-// ********** Code for _DoubleLinkedQueueIterator_E **************
-$inherits(_DoubleLinkedQueueIterator_E, _DoubleLinkedQueueIterator);
-function _DoubleLinkedQueueIterator_E(_sentinel) {
-  this._sentinel = _sentinel;
-  // Initializers done
-  this._currentEntry = this._sentinel;
 }
 // ********** Code for StringBufferImpl **************
 function StringBufferImpl(content) {
   // Initializers done
   this.clear();
   this.add(content);
-}
-StringBufferImpl.prototype.get$length = function() {
-  return this._length;
 }
 StringBufferImpl.prototype.add = function(obj) {
   var str = obj.toString();
@@ -852,7 +727,6 @@ StringBase.concatAll = function(strings) {
 }
 // ********** Code for StringImplementation **************
 StringImplementation = String;
-StringImplementation.prototype.get$length = function() { return this.length; };
 StringImplementation.prototype.isEmpty = function() {
   return this.length == 0;
 }
@@ -1041,8 +915,6 @@ $dynamic("get$value").Attr = function() { return this.value; };
 $dynamic("set$value").Attr = function(value) { return this.value = value; };
 // ********** Code for dom_AudioBuffer **************
 var dom_AudioBuffer = {};
-$dynamic("get$length").AudioBuffer = function() { return this.length; };
-$dynamic("set$length").AudioBuffer = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").AudioBuffer = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").AudioBuffer = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_AudioBufferSourceNode **************
@@ -1112,14 +984,10 @@ CSSRule.prototype.get$dartObjectLocalStorage = function() { return this.dartObje
 CSSRule.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CSSRuleList **************
 var dom_CSSRuleList = {};
-$dynamic("get$length").CSSRuleList = function() { return this.length; };
-$dynamic("set$length").CSSRuleList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").CSSRuleList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").CSSRuleList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CSSStyleDeclaration **************
 var dom_CSSStyleDeclaration = {};
-$dynamic("get$length").CSSStyleDeclaration = function() { return this.length; };
-$dynamic("set$length").CSSStyleDeclaration = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").CSSStyleDeclaration = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").CSSStyleDeclaration = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CSSStyleRule **************
@@ -1134,8 +1002,6 @@ $dynamic("get$dartObjectLocalStorage").CSSValue = function() { return this.dartO
 $dynamic("set$dartObjectLocalStorage").CSSValue = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CSSValueList **************
 var dom_CSSValueList = {};
-$dynamic("get$length").CSSValueList = function() { return this.length; };
-$dynamic("set$length").CSSValueList = function(value) { return this.length = value; };
 // ********** Code for dom_CanvasGradient **************
 var dom_CanvasGradient = {};
 $dynamic("get$dartObjectLocalStorage").CanvasGradient = function() { return this.dartObjectLocalStorage; };
@@ -1146,8 +1012,6 @@ $dynamic("get$dartObjectLocalStorage").CanvasPattern = function() { return this.
 $dynamic("set$dartObjectLocalStorage").CanvasPattern = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CanvasPixelArray **************
 var dom_CanvasPixelArray = {};
-$dynamic("get$length").CanvasPixelArray = function() { return this.length; };
-$dynamic("set$length").CanvasPixelArray = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").CanvasPixelArray = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").CanvasPixelArray = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_CanvasRenderingContext **************
@@ -1210,20 +1074,20 @@ $dynamic("translate$2").CanvasRenderingContext2D = function($0, $1) {
   return this.translate($0, $1);
 };
 // ********** Code for CharacterData **************
-CharacterData.prototype.get$length = function() { return this.length; };
-CharacterData.prototype.set$length = function(value) { return this.length = value; };
 // ********** Code for dom_ClientRect **************
 var dom_ClientRect = {};
 $dynamic("get$height").ClientRect = function() { return this.height; };
 $dynamic("set$height").ClientRect = function(value) { return this.height = value; };
+$dynamic("get$left").ClientRect = function() { return this.left; };
+$dynamic("set$left").ClientRect = function(value) { return this.left = value; };
+$dynamic("get$top").ClientRect = function() { return this.top; };
+$dynamic("set$top").ClientRect = function(value) { return this.top = value; };
 $dynamic("get$width").ClientRect = function() { return this.width; };
 $dynamic("set$width").ClientRect = function(value) { return this.width = value; };
 $dynamic("get$dartObjectLocalStorage").ClientRect = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").ClientRect = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_ClientRectList **************
 var dom_ClientRectList = {};
-$dynamic("get$length").ClientRectList = function() { return this.length; };
-$dynamic("set$length").ClientRectList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").ClientRectList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").ClientRectList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_Clipboard **************
@@ -1295,8 +1159,6 @@ $dynamic("get$dartObjectLocalStorage").DOMMimeType = function() { return this.da
 $dynamic("set$dartObjectLocalStorage").DOMMimeType = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMMimeTypeArray **************
 var dom_DOMMimeTypeArray = {};
-$dynamic("get$length").DOMMimeTypeArray = function() { return this.length; };
-$dynamic("set$length").DOMMimeTypeArray = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").DOMMimeTypeArray = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DOMMimeTypeArray = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMParser **************
@@ -1305,14 +1167,10 @@ $dynamic("get$dartObjectLocalStorage").DOMParser = function() { return this.dart
 $dynamic("set$dartObjectLocalStorage").DOMParser = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMPlugin **************
 var dom_DOMPlugin = {};
-$dynamic("get$length").DOMPlugin = function() { return this.length; };
-$dynamic("set$length").DOMPlugin = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").DOMPlugin = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DOMPlugin = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMPluginArray **************
 var dom_DOMPluginArray = {};
-$dynamic("get$length").DOMPluginArray = function() { return this.length; };
-$dynamic("set$length").DOMPluginArray = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").DOMPluginArray = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DOMPluginArray = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMSelection **************
@@ -1328,8 +1186,6 @@ $dynamic("get$value").DOMSettableTokenList = function() { return this.value; };
 $dynamic("set$value").DOMSettableTokenList = function(value) { return this.value = value; };
 // ********** Code for dom_DOMTokenList **************
 var dom_DOMTokenList = {};
-$dynamic("get$length").DOMTokenList = function() { return this.length; };
-$dynamic("set$length").DOMTokenList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").DOMTokenList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DOMTokenList = function(value) { return this.dartObjectLocalStorage = value; };
 $dynamic("add$1").DOMTokenList = function($0) {
@@ -1344,12 +1200,18 @@ $dynamic("get$dartObjectLocalStorage").DOMURL = function() { return this.dartObj
 $dynamic("set$dartObjectLocalStorage").DOMURL = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DOMWindow **************
 var dom_DOMWindow = {};
-$dynamic("get$length").DOMWindow = function() { return this.length; };
-$dynamic("set$length").DOMWindow = function(value) { return this.length = value; };
+$dynamic("get$top").DOMWindow = function() { return this.top; };
+$dynamic("set$top").DOMWindow = function(value) { return this.top = value; };
 $dynamic("get$dartObjectLocalStorage").DOMWindow = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DOMWindow = function(value) { return this.dartObjectLocalStorage = value; };
 $dynamic("addEventListener$3").DOMWindow = function($0, $1, $2) {
   return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
+};
+$dynamic("postMessage$2").DOMWindow = function($0, $1) {
+  return this.postMessage($0, $1);
+};
+$dynamic("postMessage$3").DOMWindow = function($0, $1, $2) {
+  return this.postMessage($0, $1, $2);
 };
 $dynamic("webkitRequestAnimationFrame$2").DOMWindow = function($0, $1) {
   return this.webkitRequestAnimationFrame($wrap_call$1(to$call$1($0)), $1);
@@ -1360,8 +1222,6 @@ $dynamic("get$dartObjectLocalStorage").DataTransferItem = function() { return th
 $dynamic("set$dartObjectLocalStorage").DataTransferItem = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DataTransferItemList **************
 var dom_DataTransferItemList = {};
-$dynamic("get$length").DataTransferItemList = function() { return this.length; };
-$dynamic("set$length").DataTransferItemList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").DataTransferItemList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").DataTransferItemList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DataView **************
@@ -1376,6 +1236,12 @@ $dynamic("get$dartObjectLocalStorage").DatabaseSync = function() { return this.d
 $dynamic("set$dartObjectLocalStorage").DatabaseSync = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_DedicatedWorkerContext **************
 var dom_DedicatedWorkerContext = {};
+$dynamic("postMessage$1").DedicatedWorkerContext = function($0) {
+  return this.postMessage($0);
+};
+$dynamic("postMessage$2").DedicatedWorkerContext = function($0, $1) {
+  return this.postMessage($0, $1);
+};
 // ********** Code for dom_DelayNode **************
 var dom_DelayNode = {};
 // ********** Code for dom_DeviceMotionEvent **************
@@ -1431,14 +1297,10 @@ $dynamic("get$dartObjectLocalStorage").Entry = function() { return this.dartObje
 $dynamic("set$dartObjectLocalStorage").Entry = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_EntryArray **************
 var dom_EntryArray = {};
-$dynamic("get$length").EntryArray = function() { return this.length; };
-$dynamic("set$length").EntryArray = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").EntryArray = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").EntryArray = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_EntryArraySync **************
 var dom_EntryArraySync = {};
-$dynamic("get$length").EntryArraySync = function() { return this.length; };
-$dynamic("set$length").EntryArraySync = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").EntryArraySync = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").EntryArraySync = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_EntrySync **************
@@ -1490,8 +1352,6 @@ $dynamic("toString$0").FileException = function() {
 };
 // ********** Code for dom_FileList **************
 var dom_FileList = {};
-$dynamic("get$length").FileList = function() { return this.length; };
-$dynamic("set$length").FileList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").FileList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").FileList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_FileReader **************
@@ -1504,14 +1364,10 @@ $dynamic("get$dartObjectLocalStorage").FileReaderSync = function() { return this
 $dynamic("set$dartObjectLocalStorage").FileReaderSync = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_FileWriter **************
 var dom_FileWriter = {};
-$dynamic("get$length").FileWriter = function() { return this.length; };
-$dynamic("set$length").FileWriter = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").FileWriter = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").FileWriter = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_FileWriterSync **************
 var dom_FileWriterSync = {};
-$dynamic("get$length").FileWriterSync = function() { return this.length; };
-$dynamic("set$length").FileWriterSync = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").FileWriterSync = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").FileWriterSync = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_Float32Array **************
@@ -1532,8 +1388,6 @@ $dynamic("get$dartObjectLocalStorage").Geoposition = function() { return this.da
 $dynamic("set$dartObjectLocalStorage").Geoposition = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_HTMLAllCollection **************
 var dom_HTMLAllCollection = {};
-$dynamic("get$length").HTMLAllCollection = function() { return this.length; };
-$dynamic("set$length").HTMLAllCollection = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").HTMLAllCollection = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").HTMLAllCollection = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_HTMLAnchorElement **************
@@ -1573,8 +1427,6 @@ $dynamic("getContext$1").HTMLCanvasElement = function($0) {
   return this.getContext($0);
 };
 // ********** Code for HTMLCollection **************
-HTMLCollection.prototype.get$length = function() { return this.length; };
-HTMLCollection.prototype.set$length = function(value) { return this.length = value; };
 HTMLCollection.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
 HTMLCollection.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_HTMLDListElement **************
@@ -1608,8 +1460,6 @@ var dom_HTMLFieldSetElement = {};
 var dom_HTMLFontElement = {};
 // ********** Code for dom_HTMLFormElement **************
 var dom_HTMLFormElement = {};
-$dynamic("get$length").HTMLFormElement = function() { return this.length; };
-$dynamic("set$length").HTMLFormElement = function(value) { return this.length = value; };
 // ********** Code for dom_HTMLFrameElement **************
 var dom_HTMLFrameElement = {};
 $dynamic("get$height").HTMLFrameElement = function() { return this.height; };
@@ -1713,8 +1563,6 @@ $dynamic("get$value").HTMLOptionElement = function() { return this.value; };
 $dynamic("set$value").HTMLOptionElement = function(value) { return this.value = value; };
 // ********** Code for dom_HTMLOptionsCollection **************
 var dom_HTMLOptionsCollection = {};
-$dynamic("get$length").HTMLOptionsCollection = function() { return this.length; };
-$dynamic("set$length").HTMLOptionsCollection = function(value) { return this.length = value; };
 // ********** Code for dom_HTMLOutputElement **************
 var dom_HTMLOutputElement = {};
 $dynamic("get$value").HTMLOutputElement = function() { return this.value; };
@@ -1741,8 +1589,6 @@ $dynamic("get$src").HTMLScriptElement = function() { return this.src; };
 $dynamic("set$src").HTMLScriptElement = function(value) { return this.src = value; };
 // ********** Code for dom_HTMLSelectElement **************
 var dom_HTMLSelectElement = {};
-$dynamic("get$length").HTMLSelectElement = function() { return this.length; };
-$dynamic("set$length").HTMLSelectElement = function(value) { return this.length = value; };
 $dynamic("get$value").HTMLSelectElement = function() { return this.value; };
 $dynamic("set$value").HTMLSelectElement = function(value) { return this.value = value; };
 // ********** Code for dom_HTMLSourceElement **************
@@ -1799,8 +1645,6 @@ var dom_HashChangeEvent = {};
 var dom_HighPass2FilterNode = {};
 // ********** Code for dom_History **************
 var dom_History = {};
-$dynamic("get$length").History = function() { return this.length; };
-$dynamic("set$length").History = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").History = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").History = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_IDBAny **************
@@ -1927,8 +1771,6 @@ $dynamic("get$dartObjectLocalStorage").MediaError = function() { return this.dar
 $dynamic("set$dartObjectLocalStorage").MediaError = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_MediaList **************
 var dom_MediaList = {};
-$dynamic("get$length").MediaList = function() { return this.length; };
-$dynamic("set$length").MediaList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").MediaList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").MediaList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_MediaQueryList **************
@@ -1959,6 +1801,12 @@ $dynamic("set$dartObjectLocalStorage").MessagePort = function(value) { return th
 $dynamic("addEventListener$3").MessagePort = function($0, $1, $2) {
   return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
 };
+$dynamic("postMessage$1").MessagePort = function($0) {
+  return this.postMessage($0);
+};
+$dynamic("postMessage$2").MessagePort = function($0, $1) {
+  return this.postMessage($0, $1);
+};
 $dynamic("start$0").MessagePort = function() {
   return this.start();
 };
@@ -1968,6 +1816,10 @@ $dynamic("get$dartObjectLocalStorage").Metadata = function() { return this.dartO
 $dynamic("set$dartObjectLocalStorage").Metadata = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_MouseEvent **************
 var dom_MouseEvent = {};
+$dynamic("get$clientX").MouseEvent = function() { return this.clientX; };
+$dynamic("set$clientX").MouseEvent = function(value) { return this.clientX = value; };
+$dynamic("get$clientY").MouseEvent = function() { return this.clientY; };
+$dynamic("set$clientY").MouseEvent = function(value) { return this.clientY = value; };
 // ********** Code for dom_MutationCallback **************
 var dom_MutationCallback = {};
 $dynamic("get$dartObjectLocalStorage").MutationCallback = function() { return this.dartObjectLocalStorage; };
@@ -1980,8 +1832,6 @@ $dynamic("get$dartObjectLocalStorage").MutationRecord = function() { return this
 $dynamic("set$dartObjectLocalStorage").MutationRecord = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_NamedNodeMap **************
 var dom_NamedNodeMap = {};
-$dynamic("get$length").NamedNodeMap = function() { return this.length; };
-$dynamic("set$length").NamedNodeMap = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").NamedNodeMap = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").NamedNodeMap = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_Navigator **************
@@ -2014,8 +1864,6 @@ $dynamic("get$dartObjectLocalStorage").NodeIterator = function() { return this.d
 $dynamic("set$dartObjectLocalStorage").NodeIterator = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_NodeList **************
 var dom_NodeList = {};
-$dynamic("get$length").NodeList = function() { return this.length; };
-$dynamic("set$length").NodeList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").NodeList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").NodeList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_NodeSelector **************
@@ -2107,6 +1955,10 @@ $dynamic("toString$0").RangeException = function() {
 var dom_RealtimeAnalyserNode = {};
 // ********** Code for dom_Rect **************
 var dom_Rect = {};
+$dynamic("get$left").Rect = function() { return this.left; };
+$dynamic("set$left").Rect = function(value) { return this.left = value; };
+$dynamic("get$top").Rect = function() { return this.top; };
+$dynamic("set$top").Rect = function(value) { return this.top = value; };
 $dynamic("get$dartObjectLocalStorage").Rect = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").Rect = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_SQLError **************
@@ -2123,8 +1975,6 @@ $dynamic("get$dartObjectLocalStorage").SQLResultSet = function() { return this.d
 $dynamic("set$dartObjectLocalStorage").SQLResultSet = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_SQLResultSetRowList **************
 var dom_SQLResultSetRowList = {};
-$dynamic("get$length").SQLResultSetRowList = function() { return this.length; };
-$dynamic("set$length").SQLResultSetRowList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").SQLResultSetRowList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").SQLResultSetRowList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_SQLTransaction **************
@@ -2235,8 +2085,6 @@ $dynamic("addEventListener$3").SVGElementInstance = function($0, $1, $2) {
 };
 // ********** Code for dom_SVGElementInstanceList **************
 var dom_SVGElementInstanceList = {};
-$dynamic("get$length").SVGElementInstanceList = function() { return this.length; };
-$dynamic("set$length").SVGElementInstanceList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").SVGElementInstanceList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").SVGElementInstanceList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_SVGEllipseElement **************
@@ -2681,14 +2529,10 @@ $dynamic("get$dartObjectLocalStorage").SpeechInputResult = function() { return t
 $dynamic("set$dartObjectLocalStorage").SpeechInputResult = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_SpeechInputResultList **************
 var dom_SpeechInputResultList = {};
-$dynamic("get$length").SpeechInputResultList = function() { return this.length; };
-$dynamic("set$length").SpeechInputResultList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").SpeechInputResultList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").SpeechInputResultList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_Storage **************
 var dom_Storage = {};
-$dynamic("get$length").Storage = function() { return this.length; };
-$dynamic("set$length").Storage = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").Storage = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").Storage = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_StorageEvent **************
@@ -2706,8 +2550,6 @@ StyleSheet.prototype.get$dartObjectLocalStorage = function() { return this.dartO
 StyleSheet.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_StyleSheetList **************
 var dom_StyleSheetList = {};
-$dynamic("get$length").StyleSheetList = function() { return this.length; };
-$dynamic("set$length").StyleSheetList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").StyleSheetList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").StyleSheetList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for Text **************
@@ -2729,14 +2571,10 @@ $dynamic("get$dartObjectLocalStorage").TextTrackCue = function() { return this.d
 $dynamic("set$dartObjectLocalStorage").TextTrackCue = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_TextTrackCueList **************
 var dom_TextTrackCueList = {};
-$dynamic("get$length").TextTrackCueList = function() { return this.length; };
-$dynamic("set$length").TextTrackCueList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").TextTrackCueList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").TextTrackCueList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_TimeRanges **************
 var dom_TimeRanges = {};
-$dynamic("get$length").TimeRanges = function() { return this.length; };
-$dynamic("set$length").TimeRanges = function(value) { return this.length = value; };
 $dynamic("get$start").TimeRanges = function() {
   return this.start.bind(this);
 }
@@ -2744,14 +2582,16 @@ $dynamic("get$dartObjectLocalStorage").TimeRanges = function() { return this.dar
 $dynamic("set$dartObjectLocalStorage").TimeRanges = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_Touch **************
 var dom_Touch = {};
+$dynamic("get$clientX").Touch = function() { return this.clientX; };
+$dynamic("set$clientX").Touch = function(value) { return this.clientX = value; };
+$dynamic("get$clientY").Touch = function() { return this.clientY; };
+$dynamic("set$clientY").Touch = function(value) { return this.clientY = value; };
 $dynamic("get$dartObjectLocalStorage").Touch = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").Touch = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_TouchEvent **************
 var dom_TouchEvent = {};
 // ********** Code for dom_TouchList **************
 var dom_TouchList = {};
-$dynamic("get$length").TouchList = function() { return this.length; };
-$dynamic("set$length").TouchList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").TouchList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").TouchList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_TreeWalker **************
@@ -2840,8 +2680,6 @@ $dynamic("set$dartObjectLocalStorage").WebKitAnimation = function(value) { retur
 var dom_WebKitAnimationEvent = {};
 // ********** Code for dom_WebKitAnimationList **************
 var dom_WebKitAnimationList = {};
-$dynamic("get$length").WebKitAnimationList = function() { return this.length; };
-$dynamic("set$length").WebKitAnimationList = function(value) { return this.length = value; };
 $dynamic("get$dartObjectLocalStorage").WebKitAnimationList = function() { return this.dartObjectLocalStorage; };
 $dynamic("set$dartObjectLocalStorage").WebKitAnimationList = function(value) { return this.dartObjectLocalStorage = value; };
 // ********** Code for dom_WebKitBlobBuilder **************
@@ -2893,8 +2731,18 @@ $dynamic("addEventListener$3").WebSocket = function($0, $1, $2) {
 };
 // ********** Code for dom_WheelEvent **************
 var dom_WheelEvent = {};
+$dynamic("get$clientX").WheelEvent = function() { return this.clientX; };
+$dynamic("set$clientX").WheelEvent = function(value) { return this.clientX = value; };
+$dynamic("get$clientY").WheelEvent = function() { return this.clientY; };
+$dynamic("set$clientY").WheelEvent = function(value) { return this.clientY = value; };
 // ********** Code for dom_Worker **************
 var dom_Worker = {};
+$dynamic("postMessage$1").Worker = function($0) {
+  return this.postMessage($0);
+};
+$dynamic("postMessage$2").Worker = function($0, $1) {
+  return this.postMessage($0, $1);
+};
 // ********** Code for dom_WorkerContext **************
 var dom_WorkerContext = {};
 $dynamic("get$dartObjectLocalStorage").WorkerContext = function() { return this.dartObjectLocalStorage; };
@@ -2975,11 +2823,8 @@ function _VariableSizeListIterator_T() {}
 // ********** Code for _FixedSizeListIterator **************
 $inherits(_FixedSizeListIterator, _VariableSizeListIterator_T);
 function _FixedSizeListIterator() {}
-_FixedSizeListIterator.prototype.hasNext$0 = _FixedSizeListIterator.prototype.hasNext;
 // ********** Code for _VariableSizeListIterator **************
 function _VariableSizeListIterator() {}
-_VariableSizeListIterator.prototype.hasNext$0 = _VariableSizeListIterator.prototype.hasNext;
-_VariableSizeListIterator.prototype.next$0 = _VariableSizeListIterator.prototype.next;
 // ********** Code for _Lists **************
 function _Lists() {}
 // ********** Code for top level **************
@@ -3028,6 +2873,13 @@ ElementWrappingImplementation.ElementWrappingImplementation$tag$factory = functi
 }
 ElementWrappingImplementation.prototype.query = function(selectors) {
   return LevelDom.wrapElement(this._ptr.querySelector$1(selectors));
+}
+ElementWrappingImplementation.prototype.get$rect = function() {
+  var $this = this; // closure support
+  return _createMeasurementFuture((function () {
+    return new ElementRectWrappingImplementation($this._ptr);
+  })
+  , new CompleterImpl());
 }
 ElementWrappingImplementation.prototype.get$on = function() {
   if (this._on == null) {
@@ -3119,9 +2971,6 @@ ButtonElementWrappingImplementation._wrap$ctor = function(ptr) {
 ButtonElementWrappingImplementation._wrap$ctor.prototype = ButtonElementWrappingImplementation.prototype;
 ButtonElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-ButtonElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for CanvasElementWrappingImplementation **************
 $inherits(CanvasElementWrappingImplementation, ElementWrappingImplementation);
@@ -3314,6 +3163,26 @@ CanvasRenderingContext2DWrappingImplementation.prototype.rotate$1 = CanvasRender
 CanvasRenderingContext2DWrappingImplementation.prototype.save$0 = CanvasRenderingContext2DWrappingImplementation.prototype.save;
 CanvasRenderingContext2DWrappingImplementation.prototype.stroke$0 = CanvasRenderingContext2DWrappingImplementation.prototype.stroke;
 CanvasRenderingContext2DWrappingImplementation.prototype.translate$2 = CanvasRenderingContext2DWrappingImplementation.prototype.translate;
+// ********** Code for ClientRectWrappingImplementation **************
+$inherits(ClientRectWrappingImplementation, DOMWrapperBase);
+function ClientRectWrappingImplementation() {}
+ClientRectWrappingImplementation._wrap$ctor = function(ptr) {
+  // Initializers done
+  DOMWrapperBase._wrap$ctor.call(this, ptr);
+}
+ClientRectWrappingImplementation._wrap$ctor.prototype = ClientRectWrappingImplementation.prototype;
+ClientRectWrappingImplementation.prototype.get$height = function() {
+  return this._ptr.get$height();
+}
+ClientRectWrappingImplementation.prototype.get$left = function() {
+  return this._ptr.get$left();
+}
+ClientRectWrappingImplementation.prototype.get$top = function() {
+  return this._ptr.get$top();
+}
+ClientRectWrappingImplementation.prototype.get$width = function() {
+  return this._ptr.get$width();
+}
 // ********** Code for DListElementWrappingImplementation **************
 $inherits(DListElementWrappingImplementation, ElementWrappingImplementation);
 function DListElementWrappingImplementation() {}
@@ -3396,9 +3265,6 @@ FormElementWrappingImplementation._wrap$ctor = function(ptr) {
   ElementWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 FormElementWrappingImplementation._wrap$ctor.prototype = FormElementWrappingImplementation.prototype;
-FormElementWrappingImplementation.prototype.get$length = function() {
-  return this._ptr.get$length();
-}
 // ********** Code for HRElementWrappingImplementation **************
 $inherits(HRElementWrappingImplementation, ElementWrappingImplementation);
 function HRElementWrappingImplementation() {}
@@ -3507,9 +3373,6 @@ InputElementWrappingImplementation.prototype.set$src = function(value) {
 InputElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
 }
-InputElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
-}
 // ********** Code for KeygenElementWrappingImplementation **************
 $inherits(KeygenElementWrappingImplementation, ElementWrappingImplementation);
 function KeygenElementWrappingImplementation() {}
@@ -3528,9 +3391,6 @@ LIElementWrappingImplementation._wrap$ctor = function(ptr) {
 LIElementWrappingImplementation._wrap$ctor.prototype = LIElementWrappingImplementation.prototype;
 LIElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-LIElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for LabelElementWrappingImplementation **************
 $inherits(LabelElementWrappingImplementation, ElementWrappingImplementation);
@@ -3619,9 +3479,6 @@ MeterElementWrappingImplementation._wrap$ctor.prototype = MeterElementWrappingIm
 MeterElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
 }
-MeterElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
-}
 // ********** Code for ModElementWrappingImplementation **************
 $inherits(ModElementWrappingImplementation, ElementWrappingImplementation);
 function ModElementWrappingImplementation() {}
@@ -3671,9 +3528,6 @@ OptionElementWrappingImplementation._wrap$ctor.prototype = OptionElementWrapping
 OptionElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
 }
-OptionElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
-}
 // ********** Code for OutputElementWrappingImplementation **************
 $inherits(OutputElementWrappingImplementation, ElementWrappingImplementation);
 function OutputElementWrappingImplementation() {}
@@ -3684,9 +3538,6 @@ OutputElementWrappingImplementation._wrap$ctor = function(ptr) {
 OutputElementWrappingImplementation._wrap$ctor.prototype = OutputElementWrappingImplementation.prototype;
 OutputElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-OutputElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for ParagraphElementWrappingImplementation **************
 $inherits(ParagraphElementWrappingImplementation, ElementWrappingImplementation);
@@ -3706,9 +3557,6 @@ ParamElementWrappingImplementation._wrap$ctor = function(ptr) {
 ParamElementWrappingImplementation._wrap$ctor.prototype = ParamElementWrappingImplementation.prototype;
 ParamElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-ParamElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for PreElementWrappingImplementation **************
 $inherits(PreElementWrappingImplementation, ElementWrappingImplementation);
@@ -3734,9 +3582,6 @@ ProgressElementWrappingImplementation._wrap$ctor = function(ptr) {
 ProgressElementWrappingImplementation._wrap$ctor.prototype = ProgressElementWrappingImplementation.prototype;
 ProgressElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-ProgressElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for QuoteElementWrappingImplementation **************
 $inherits(QuoteElementWrappingImplementation, ElementWrappingImplementation);
@@ -4602,14 +4447,8 @@ SelectElementWrappingImplementation._wrap$ctor = function(ptr) {
   ElementWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 SelectElementWrappingImplementation._wrap$ctor.prototype = SelectElementWrappingImplementation.prototype;
-SelectElementWrappingImplementation.prototype.get$length = function() {
-  return this._ptr.get$length();
-}
 SelectElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
-}
-SelectElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
 }
 // ********** Code for SourceElementWrappingImplementation **************
 $inherits(SourceElementWrappingImplementation, ElementWrappingImplementation);
@@ -4732,9 +4571,6 @@ TextAreaElementWrappingImplementation._wrap$ctor.prototype = TextAreaElementWrap
 TextAreaElementWrappingImplementation.prototype.get$value = function() {
   return this._ptr.get$value();
 }
-TextAreaElementWrappingImplementation.prototype.set$value = function(value) {
-  this._ptr.set$value(value);
-}
 // ********** Code for TitleElementWrappingImplementation **************
 $inherits(TitleElementWrappingImplementation, ElementWrappingImplementation);
 function TitleElementWrappingImplementation() {}
@@ -4839,6 +4675,9 @@ LevelDom.wrapCanvasRenderingContext = function(raw) {
       $throw(new UnsupportedOperationException("Unknown type:" + raw.toString$0()));
 
   }
+}
+LevelDom.wrapClientRect = function(raw) {
+  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new ClientRectWrappingImplementation._wrap$ctor(raw);
 }
 LevelDom.wrapDocument = function(raw) {
   if (raw == null) {
@@ -5705,9 +5544,6 @@ EventsImplementation._wrap$ctor = function(_ptr) {
 EventsImplementation._wrap$ctor.prototype = EventsImplementation.prototype;
 EventsImplementation.prototype.get$_ptr = function() { return this._ptr; };
 EventsImplementation.prototype.set$_ptr = function(value) { return this._ptr = value; };
-EventsImplementation.prototype.$index = function(type) {
-  return this._get(type.toLowerCase());
-}
 EventsImplementation.prototype._get = function(type) {
   var $this = this; // closure support
   return this._listenerMap.putIfAbsent(type, (function () {
@@ -5723,11 +5559,48 @@ ElementEventsImplementation._wrap$ctor = function(_ptr) {
   EventsImplementation._wrap$ctor.call(this, _ptr);
 }
 ElementEventsImplementation._wrap$ctor.prototype = ElementEventsImplementation.prototype;
+ElementEventsImplementation.prototype.get$click = function() {
+  return this._get("click");
+}
 ElementEventsImplementation.prototype.get$error = function() {
   return this._get("error");
 }
 ElementEventsImplementation.prototype.get$load = function() {
   return this._get("load");
+}
+ElementEventsImplementation.prototype.get$mouseMove = function() {
+  return this._get("mousemove");
+}
+// ********** Code for SimpleClientRect **************
+function SimpleClientRect(left, top, width, height) {
+  this.left = left;
+  this.top = top;
+  this.width = width;
+  this.height = height;
+  // Initializers done
+}
+SimpleClientRect.prototype.get$left = function() { return this.left; };
+SimpleClientRect.prototype.get$top = function() { return this.top; };
+SimpleClientRect.prototype.get$width = function() { return this.width; };
+SimpleClientRect.prototype.get$height = function() { return this.height; };
+SimpleClientRect.prototype.$eq = function(other) {
+  return other != null && this.left == other.get$left() && this.top == other.get$top() && this.width == other.get$width() && this.height == other.get$height();
+}
+SimpleClientRect.prototype.toString = function() {
+  return ("(" + this.left + ", " + this.top + ", " + this.width + ", " + this.height + ")");
+}
+SimpleClientRect.prototype.toString$0 = SimpleClientRect.prototype.toString;
+// ********** Code for ElementRectWrappingImplementation **************
+function ElementRectWrappingImplementation(element) {
+  this.client = new SimpleClientRect(element.clientLeft, element.clientTop, element.clientWidth, element.clientHeight);
+  this.offset = new SimpleClientRect(element.offsetLeft, element.offsetTop, element.offsetWidth, element.offsetHeight);
+  this.scroll = new SimpleClientRect(element.scrollLeft, element.scrollTop, element.scrollWidth, element.scrollHeight);
+  this._boundingClientRect = element.getBoundingClientRect();
+  this._clientRects = element.getClientRects();
+  // Initializers done
+}
+ElementRectWrappingImplementation.prototype.get$bounding = function() {
+  return LevelDom.wrapClientRect(this._boundingClientRect);
 }
 // ********** Code for ErrorEventWrappingImplementation **************
 $inherits(ErrorEventWrappingImplementation, EventWrappingImplementation);
@@ -5798,6 +5671,15 @@ KeyboardEventWrappingImplementation._wrap$ctor = function(ptr) {
   UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 KeyboardEventWrappingImplementation._wrap$ctor.prototype = KeyboardEventWrappingImplementation.prototype;
+// ********** Code for _MeasurementRequest **************
+function _MeasurementRequest(computeValue, completer) {
+  this.exception = false
+  this.computeValue = computeValue;
+  this.completer = completer;
+  // Initializers done
+}
+_MeasurementRequest.prototype.get$value = function() { return this.value; };
+_MeasurementRequest.prototype.set$value = function(value) { return this.value = value; };
 // ********** Code for MessageEventWrappingImplementation **************
 $inherits(MessageEventWrappingImplementation, EventWrappingImplementation);
 function MessageEventWrappingImplementation() {}
@@ -5814,6 +5696,12 @@ MouseEventWrappingImplementation._wrap$ctor = function(ptr) {
   UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 MouseEventWrappingImplementation._wrap$ctor.prototype = MouseEventWrappingImplementation.prototype;
+MouseEventWrappingImplementation.prototype.get$clientX = function() {
+  return this._ptr.get$clientX();
+}
+MouseEventWrappingImplementation.prototype.get$clientY = function() {
+  return this._ptr.get$clientY();
+}
 // ********** Code for MutationEventWrappingImplementation **************
 $inherits(MutationEventWrappingImplementation, EventWrappingImplementation);
 function MutationEventWrappingImplementation() {}
@@ -5936,6 +5824,23 @@ WheelEventWrappingImplementation._wrap$ctor = function(ptr) {
   UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 WheelEventWrappingImplementation._wrap$ctor.prototype = WheelEventWrappingImplementation.prototype;
+WheelEventWrappingImplementation.prototype.get$clientX = function() {
+  return this._ptr.get$clientX();
+}
+WheelEventWrappingImplementation.prototype.get$clientY = function() {
+  return this._ptr.get$clientY();
+}
+// ********** Code for WindowEventsImplementation **************
+$inherits(WindowEventsImplementation, EventsImplementation);
+function WindowEventsImplementation() {}
+WindowEventsImplementation._wrap$ctor = function(_ptr) {
+  // Initializers done
+  EventsImplementation._wrap$ctor.call(this, _ptr);
+}
+WindowEventsImplementation._wrap$ctor.prototype = WindowEventsImplementation.prototype;
+WindowEventsImplementation.prototype.get$message = function() {
+  return this._get('message');
+}
 // ********** Code for WindowWrappingImplementation **************
 $inherits(WindowWrappingImplementation, EventTargetWrappingImplementation);
 function WindowWrappingImplementation() {}
@@ -5944,12 +5849,38 @@ WindowWrappingImplementation._wrap$ctor = function(ptr) {
   EventTargetWrappingImplementation._wrap$ctor.call(this, ptr);
 }
 WindowWrappingImplementation._wrap$ctor.prototype = WindowWrappingImplementation.prototype;
-WindowWrappingImplementation.prototype.get$length = function() {
-  return this._ptr.get$length();
+WindowWrappingImplementation.prototype.get$top = function() {
+  return LevelDom.wrapWindow(this._ptr.get$top());
+}
+WindowWrappingImplementation.prototype.postMessage = function(message, messagePort, targetOrigin) {
+  if (targetOrigin == null) {
+    if (messagePort == null) {
+      this._ptr.postMessage$1(message);
+      return;
+    }
+    else {
+      this._ptr.postMessage$2(message, messagePort);
+      return;
+    }
+  }
+  else {
+    this._ptr.postMessage$3(message, LevelDom.unwrap(messagePort), targetOrigin);
+    return;
+  }
+  $throw("Incorrect number or type of arguments");
 }
 WindowWrappingImplementation.prototype.webkitRequestAnimationFrame = function(callback, element) {
   return this._ptr.webkitRequestAnimationFrame$2(callback, LevelDom.unwrap(element));
 }
+WindowWrappingImplementation.prototype.get$on = function() {
+  if (this._on == null) {
+    this._on = new WindowEventsImplementation._wrap$ctor(this._ptr);
+  }
+  return this._on;
+}
+WindowWrappingImplementation.prototype.postMessage$1 = WindowWrappingImplementation.prototype.postMessage;
+WindowWrappingImplementation.prototype.postMessage$2 = WindowWrappingImplementation.prototype.postMessage;
+WindowWrappingImplementation.prototype.postMessage$3 = WindowWrappingImplementation.prototype.postMessage;
 WindowWrappingImplementation.prototype.webkitRequestAnimationFrame$2 = function($0, $1) {
   return this.webkitRequestAnimationFrame(to$call$1($0), $1);
 };
@@ -5964,6 +5895,66 @@ XMLHttpRequestProgressEventWrappingImplementation._wrap$ctor.prototype = XMLHttp
 // ********** Code for top level **************
 var _pendingRequests;
 var _pendingMeasurementFrameCallbacks;
+function _maybeScheduleMeasurementFrame() {
+  if ($globals._nextMeasurementFrameScheduled) return;
+  $globals._nextMeasurementFrameScheduled = true;
+  if ($globals._firstMeasurementRequest) {
+    html_get$window().get$on().get$message().add$1((function (e) {
+      return _completeMeasurementFutures();
+    })
+    );
+    $globals._firstMeasurementRequest = false;
+  }
+  html_get$window().postMessage("DART-MEASURE"/*null._MEASUREMENT_MESSAGE*/, "*");
+}
+function _createMeasurementFuture(computeValue, completer) {
+  if ($globals._pendingRequests == null) {
+    $globals._pendingRequests = [];
+    _maybeScheduleMeasurementFrame();
+  }
+  $globals._pendingRequests.add(new _MeasurementRequest(computeValue, completer));
+  return completer.get$future();
+}
+function _completeMeasurementFutures() {
+  if ($eq($globals._nextMeasurementFrameScheduled, false)) {
+    return;
+  }
+  $globals._nextMeasurementFrameScheduled = false;
+  if ($globals._pendingRequests != null) {
+    var $$list = $globals._pendingRequests;
+    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+      var request = $$list.$index($$i);
+      try {
+        request.value = request.computeValue();
+      } catch (e) {
+        e = _toDartException(e);
+        request.value = e;
+        request.exception = true;
+      }
+    }
+  }
+  var completedRequests = $globals._pendingRequests;
+  var readyMeasurementFrameCallbacks = $globals._pendingMeasurementFrameCallbacks;
+  $globals._pendingRequests = null;
+  $globals._pendingMeasurementFrameCallbacks = null;
+  if (completedRequests != null) {
+    for (var $$i = 0;$$i < completedRequests.get$length(); $$i++) {
+      var request = completedRequests.$index($$i);
+      if (request.exception) {
+        request.completer.completeException(request.value);
+      }
+      else {
+        request.completer.complete(request.value);
+      }
+    }
+  }
+  if (readyMeasurementFrameCallbacks != null) {
+    for (var $$i = 0;$$i < readyMeasurementFrameCallbacks.get$length(); $$i++) {
+      var handler = readyMeasurementFrameCallbacks.$index($$i);
+      handler();
+    }
+  }
+}
 //  ********** Library html **************
 // ********** Code for top level **************
 var secretWindow;
@@ -5985,21 +5976,21 @@ function html_get$document() {
 function AssetManager() {
   this.successCount = 0
   this.errorCount = 0
-  this.cache = const$4/*const {}*/
-  this.downloadQueue = const$7/*const []*/
   // Initializers done
+  this.downloadQueue = [];
+  this.cache = new HashMapImplementation();
 }
 AssetManager.prototype.queueDownload = function(path) {
-  this.downloadQueue.add$1(path);
+  this.downloadQueue.add(path);
 }
 AssetManager.prototype.downloadAll = function(downloadCallback) {
   var $this = this; // closure support
-  if ($eq(this.downloadQueue.get$length(), 0)) {
+  if (this.downloadQueue.get$length() == 0) {
     downloadCallback.call$0();
   }
   var $$list = this.downloadQueue;
-  for (var $$i = this.downloadQueue.iterator$0(); $$i.hasNext$0(); ) {
-    var path = $$i.next$0();
+  for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
+    var path = $$list.$index($$i);
     var img = ElementWrappingImplementation.ElementWrappingImplementation$tag$factory("img");
     img.get$on().get$load().add$1((function (img, event) {
       dart_core_print(img.get$src() + ' is loaded');
@@ -6024,7 +6015,7 @@ AssetManager.prototype.getAsset = function(path) {
   return this.cache.$index(path);
 }
 AssetManager.prototype.isDone = function() {
-  return ($eq(this.downloadQueue.get$length(), this.successCount + this.errorCount));
+  return (this.downloadQueue.get$length() == this.successCount + this.errorCount);
 }
 // ********** Code for Animation **************
 function Animation(spriteSheet, frameWidth, frameDuration, loop) {
@@ -6126,28 +6117,61 @@ GameEntity.prototype.rotateAndCache = function(image, angle) {
 GameEntity.prototype.update$0 = GameEntity.prototype.update;
 // ********** Code for Game **************
 function Game(assetManager) {
-  this.entities = const$7/*const []*/
   this.showOutlines = false
   this.assetManager = assetManager;
   // Initializers done
   this.timer = new Timer();
+  this.entities = [];
+}
+Game.prototype.init = function(ctx) {
+  var $this = this; // closure support
+  this.ctx = ctx;
+  this.surfaceWidth = ctx.get$canvas().get$width();
+  this.surfaceHeight = ctx.get$canvas().get$height();
+  this.halfSurfaceWidth = this.surfaceWidth / 2;
+  this.halfSurfaceHeight = this.surfaceHeight / 2;
+  var futureRect = ctx.get$canvas().get$rect();
+  futureRect.then((function (rect) {
+    $this.clientBoundingRect = new Point(rect.get$bounding().get$left(), rect.get$bounding().get$top());
+  })
+  );
+  this.startInput();
+  dart_core_print('game initialized');
 }
 Game.prototype.start = function() {
   dart_core_print("starting game");
-  html_get$window().webkitRequestAnimationFrame(to$call$1(this.get$loop()), this.ctx.get$canvas());
+  html_get$window().webkitRequestAnimationFrame(this.get$loop(), this.ctx.get$canvas());
 }
 Game.prototype.get$start = function() {
   return this.start.bind(this);
 }
-Game.prototype.loop = function() {
+Game.prototype.loop = function(time) {
   this.clockTick = this.timer.tick();
   this.update();
   this.draw();
   this.click = null;
-  html_get$window().webkitRequestAnimationFrame(to$call$1(this.get$loop()), this.ctx.get$canvas());
+  html_get$window().webkitRequestAnimationFrame(this.get$loop(), this.ctx.get$canvas());
 }
 Game.prototype.get$loop = function() {
   return this.loop.bind(this);
+}
+Game.prototype.startInput = function() {
+  var $this = this; // closure support
+  dart_core_print('Starting input');
+  function getXandY(e) {
+    var x = e.get$clientX() - $this.clientBoundingRect.x - ($this.ctx.get$canvas().get$width() / 2);
+    var y = e.get$clientY() - $this.clientBoundingRect.y - ($this.ctx.get$canvas().get$height() / 2);
+    return new Point(x, y);
+  }
+  this.ctx.get$canvas().get$on().get$click().add$1((function (e) {
+    $this.click = getXandY(e);
+  })
+  );
+  this.ctx.get$canvas().get$on().get$mouseMove().add$1((function (e) {
+    $this.mouse = getXandY(e);
+  })
+  );
+  dart_core_print('Input started');
 }
 Game.prototype.addEntity = function(entity) {
   this.entities.add(entity);
@@ -6183,8 +6207,15 @@ Game.prototype.update = function() {
     }
   }
 }
+Game.prototype.init$1 = Game.prototype.init;
 Game.prototype.start$0 = Game.prototype.start;
 Game.prototype.update$0 = Game.prototype.update;
+// ********** Code for Point **************
+function Point(x, y) {
+  this.x = x;
+  this.y = y;
+  // Initializers done
+}
 // ********** Code for Alien **************
 $inherits(Alien, GameEntity);
 function Alien(game, radialDistance, angle) {
@@ -6420,31 +6451,17 @@ function main() {
   assetManager.queueDownload('img/explosion.png');
   var game = new EvilAliens(assetManager);
   assetManager.downloadAll((function () {
-    game.init$0();
+    game.init$1(ctx);
     game.start$0();
   })
   );
 }
-// ********** Generic Type Inheritance **************
-/** Implements extends for generic types. */
-function $inheritsMembers(child, parent) {
-  child = child.prototype;
-  parent = parent.prototype;
-  Object.getOwnPropertyNames(parent).forEach(function(name) {
-    if (typeof(child[name]) == 'undefined') child[name] = parent[name];
-  });
-}
-$inheritsMembers(_DoubleLinkedQueueEntrySentinel_E, DoubleLinkedQueueEntry_E);
-$inheritsMembers(_DoubleLinkedQueueEntrySentinel_KeyValuePair_K$V, DoubleLinkedQueueEntry_KeyValuePair_K$V);
 //  ********** Globals **************
 function $static_init(){
+  $globals._firstMeasurementRequest = true;
+  $globals._nextMeasurementFrameScheduled = false;
 }
-var const$1 = new EmptyQueueException()/*const EmptyQueueException()*/;
-var const$2 = new _DeletedKeySentinel()/*const _DeletedKeySentinel()*/;
-var const$4 = _constMap([])/*const {}*/;
-var const$5 = new IllegalAccessException()/*const IllegalAccessException()*/;
-var const$6 = new NoMoreElementsException()/*const NoMoreElementsException()*/;
-var const$7 = ImmutableList.ImmutableList$from$factory([])/*const []*/;
+var const$3 = new _DeletedKeySentinel()/*const _DeletedKeySentinel()*/;
 var $globals = {};
 $static_init();
 main();
