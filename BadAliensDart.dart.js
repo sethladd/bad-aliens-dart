@@ -6052,15 +6052,14 @@ Animation.prototype.currentFrame = function() {
 // ********** Code for Timer **************
 function Timer() {
   this.gameTime = 0
-  this.maxStep = 0.05
   this.wallLastTimestamp = 0
   // Initializers done
 }
 Timer.prototype.tick = function() {
-  var wallCurrent = new DateImplementation.now$ctor().get$milliseconds();
+  var wallCurrent = new DateImplementation.now$ctor().value;
   var wallDelta = (wallCurrent - this.wallLastTimestamp) / 1000;
   this.wallLastTimestamp = wallCurrent;
-  var gameDelta = Math.min(wallDelta, this.maxStep);
+  var gameDelta = Math.min(wallDelta, 0.05/*Timer.MAX_STEP*/);
   this.gameTime += gameDelta;
   return gameDelta;
 }

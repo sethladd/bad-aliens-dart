@@ -62219,8 +62219,8 @@ unnamed48ba40$Timer$Dart.prototype.gameTime$setter = function(tmp$0){
   this.gameTime$field = tmp$0;
 }
 ;
-unnamed48ba40$Timer$Dart.prototype.maxStep$getter = function(){
-  return this.maxStep$field;
+unnamed48ba40$Timer$Dart.MAX_STEP$getter = function(){
+  return 0.05;
 }
 ;
 unnamed48ba40$Timer$Dart.prototype.wallLastTimestamp$getter = function(){
@@ -62233,10 +62233,10 @@ unnamed48ba40$Timer$Dart.prototype.wallLastTimestamp$setter = function(tmp$0){
 ;
 unnamed48ba40$Timer$Dart.prototype.tick$member = function(){
   var tmp$1, tmp$0;
-  var wallCurrent = DateImplementation$Dart.DateImplementation$now$18$Factory().milliseconds$getter();
+  var wallCurrent = DateImplementation$Dart.DateImplementation$now$18$Factory().value$getter();
   var wallDelta = DIV$operator(SUB$operator(wallCurrent, this.wallLastTimestamp$getter()), 1000);
   this.wallLastTimestamp$setter(tmp$0 = wallCurrent) , tmp$0;
-  var gameDelta = Math$Dart.min$member(wallDelta, this.maxStep$getter());
+  var gameDelta = Math$Dart.min$member(wallDelta, unnamed48ba40$Timer$Dart.MAX_STEP$getter());
   this.gameTime$setter(tmp$1 = ADD$operator(this.gameTime$getter(), gameDelta)) , tmp$1;
   return gameDelta;
 }
@@ -62252,7 +62252,6 @@ unnamed48ba40$Timer$Dart.$Constructor = function(){
 ;
 unnamed48ba40$Timer$Dart.$Initializer = function(){
   this.gameTime$field = 0;
-  this.maxStep$field = 0.05;
   this.wallLastTimestamp$field = 0;
 }
 ;
@@ -62377,7 +62376,6 @@ isolate$inits.push(function(){
 );
 isolate$inits.push(function(){
   this.gameTime$field = 0;
-  this.maxStep$field = 0.05;
   this.wallLastTimestamp$field = 0;
 }
 );
