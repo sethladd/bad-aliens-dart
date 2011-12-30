@@ -3,8 +3,6 @@ class Alien extends GameEntity {
   num radialDistance;
   num angle;
   num speed = 100;
-  var sprite;
-  num radius;
 
   Alien(Game game, num this.radialDistance, num this.angle) : super(game) {
     sprite = rotateAndCache(game.assetManager.getAsset('img/alien.png'),

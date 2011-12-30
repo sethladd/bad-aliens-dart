@@ -5149,6 +5149,20 @@ function native__CanvasRenderingContextWrappingImplementation__get_canvas(_this)
     throw __dom_wrap_exception(e);
   }
 }
+function native__CanvasRenderingContext2DWrappingImplementation__set_fillStyle(_this, value) {
+  try {
+    _this.$dom.fillStyle = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__set_font(_this, value) {
+  try {
+    _this.$dom.font = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__CanvasRenderingContext2DWrappingImplementation__set_strokeStyle(_this, value) {
   try {
     _this.$dom.strokeStyle = __dom_unwrap(value);
@@ -5243,6 +5257,20 @@ function native__CanvasRenderingContext2DWrappingImplementation__drawImage_8(_th
 function native__CanvasRenderingContext2DWrappingImplementation__drawImage_9(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
   try {
     return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh), __dom_unwrap(dx), __dom_unwrap(dy), __dom_unwrap(dw), __dom_unwrap(dh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__fillText(_this, text, x, y) {
+  try {
+    return __dom_wrap(_this.$dom.fillText(__dom_unwrap(text), __dom_unwrap(x), __dom_unwrap(y)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__fillText_2(_this, text, x, y, maxWidth) {
+  try {
+    return __dom_wrap(_this.$dom.fillText(__dom_unwrap(text), __dom_unwrap(x), __dom_unwrap(y), __dom_unwrap(maxWidth)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -20592,6 +20620,22 @@ _CanvasRenderingContext2DWrappingImplementation$Dart.create__CanvasRenderingCont
 function native__CanvasRenderingContext2DWrappingImplementation_create__CanvasRenderingContext2DWrappingImplementation(){
   return _CanvasRenderingContext2DWrappingImplementation$Dart.create__CanvasRenderingContext2DWrappingImplementation$member();
 }
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillStyle$setter = function(value){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._set_fillStyle$$member_(this, value);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._set_fillStyle$$member_ = function(_this, value){
+  return native__CanvasRenderingContext2DWrappingImplementation__set_fillStyle(_this, value);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.font$setter = function(value){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._set_font$$member_(this, value);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._set_font$$member_ = function(_this, value){
+  return native__CanvasRenderingContext2DWrappingImplementation__set_font(_this, value);
+}
+;
 _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.strokeStyle$setter = function(value){
   _CanvasRenderingContext2DWrappingImplementation$Dart._set_strokeStyle$$member_(this, value);
 }
@@ -20821,6 +20865,37 @@ _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_8$$member_ = fun
 ;
 _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_9$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
   return native__CanvasRenderingContext2DWrappingImplementation__drawImage_9(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$member = function(text, x, y, maxWidth){
+  if (maxWidth == null) {
+    _CanvasRenderingContext2DWrappingImplementation$Dart._fillText$$member_(this, text, x, y);
+    return;
+  }
+   else {
+    _CanvasRenderingContext2DWrappingImplementation$Dart._fillText_2$$member_(this, text, x, y, maxWidth);
+    return;
+  }
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$named = function($n, $o, text, x, y, maxWidth){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 3:
+      maxWidth = '$p_maxWidth' in $o?(++seen , $o.$p_maxWidth):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 4)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$member.call(this, text, x, y, maxWidth);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._fillText$$member_ = function(receiver, text, x, y){
+  return native__CanvasRenderingContext2DWrappingImplementation__fillText(receiver, text, x, y);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._fillText_2$$member_ = function(receiver, text, x, y, maxWidth){
+  return native__CanvasRenderingContext2DWrappingImplementation__fillText_2(receiver, text, x, y, maxWidth);
 }
 ;
 _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member = function(x, y, width, height){
@@ -48904,6 +48979,16 @@ htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.CanvasRenderi
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillStyle$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().fillStyle$setter(tmp$0 = htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(value)) , tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.font$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().font$setter(tmp$0 = value) , tmp$0;
+}
+;
 htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.strokeStyle$setter = function(value){
   var tmp$0;
   this._ptr$htmlimpl0a8e4b$$getter_().strokeStyle$setter(tmp$0 = htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(value)) , tmp$0;
@@ -49044,6 +49129,29 @@ htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.dra
   if (seen != $o.count || seen + def + $n != 9)
     $nsme();
   return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$member.call(this, canvas_OR_image, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$member = function(text, x, y, maxWidth){
+  if (maxWidth == null) {
+    this._ptr$htmlimpl0a8e4b$$getter_().fillText$named(3, $noargs, text, x, y);
+    return;
+  }
+   else {
+    this._ptr$htmlimpl0a8e4b$$getter_().fillText$named(4, $noargs, text, x, y, maxWidth);
+    return;
+  }
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$named = function($n, $o, text, x, y, maxWidth){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 3:
+      maxWidth = '$p_maxWidth' in $o?(++seen , $o.$p_maxWidth):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 4)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.fillText$member.call(this, text, x, y, maxWidth);
 }
 ;
 htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member = function(x, y, width, height){
@@ -61418,7 +61526,7 @@ unnamed48ba40$Game$Dart.prototype.draw$member = function(){
       }
     }
   }
-  this.drawBeforeContextRestore$member(0, $noargs);
+  this.drawBeforeCtxRestore$member();
   this.ctx$getter().restore$named(0, $noargs);
 }
 ;
@@ -61426,6 +61534,9 @@ unnamed48ba40$Game$Dart.prototype.draw$named = function($n, $o){
   if ($o.count || $n != 0)
     $nsme();
   return unnamed48ba40$Game$Dart.prototype.draw$member.call(this);
+}
+;
+unnamed48ba40$Game$Dart.prototype.drawBeforeCtxRestore$member = function(){
 }
 ;
 unnamed48ba40$Game$Dart.prototype.update$member = function(){
@@ -61571,6 +61682,25 @@ unnamed48ba40$EvilAliens$Dart.prototype.update$named = function($n, $o){
   return unnamed48ba40$EvilAliens$Dart.prototype.update$member.call(this);
 }
 ;
+unnamed48ba40$EvilAliens$Dart.prototype.drawBeforeCtxRestore$member = function(){
+  this.drawScore$member();
+  this.drawLives$member();
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.drawLives$member = function(){
+  var tmp$1, tmp$0;
+  this.ctx$getter().fillStyle$setter(tmp$0 = 'red') , tmp$0;
+  this.ctx$getter().font$setter(tmp$1 = 'bold 2em Arial') , tmp$1;
+  this.ctx$getter().fillText$named(3, $noargs, ADD$operator('Lives: ', this.lives$getter()), ADD$operator(DIV$operator(negate$operator(this.ctx$getter().canvas$getter().width$getter()), 2), 50), SUB$operator(DIV$operator(this.ctx$getter().canvas$getter().height$getter(), 2), 80));
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.drawScore$member = function(){
+  var tmp$1, tmp$0;
+  this.ctx$getter().fillStyle$setter(tmp$0 = 'red') , tmp$0;
+  this.ctx$getter().font$setter(tmp$1 = 'bold 2em Arial') , tmp$1;
+  this.ctx$getter().fillText$named(3, $noargs, ADD$operator('Score: ', this.score$getter()), ADD$operator(DIV$operator(negate$operator(this.ctx$getter().canvas$getter().width$getter()), 2), 50), SUB$operator(DIV$operator(this.ctx$getter().canvas$getter().height$getter(), 2), 50));
+}
+;
 function unnamed48ba40$GameEntity$Dart(){
 }
 unnamed48ba40$GameEntity$Dart.$lookupRTT = function(){
@@ -61587,7 +61717,6 @@ unnamed48ba40$GameEntity$Dart.$Constructor = function(game){
 ;
 unnamed48ba40$GameEntity$Dart.$Initializer = function(game){
   this.removeFromWorld$field = false;
-  this.sprite$field = $Dart$Null;
   this.game$field = game;
 }
 ;
@@ -61596,7 +61725,6 @@ unnamed48ba40$GameEntity$Dart.withPosition$Constructor = function(game, x, y){
 ;
 unnamed48ba40$GameEntity$Dart.withPosition$Initializer = function(game, x, y){
   this.removeFromWorld$field = false;
-  this.sprite$field = $Dart$Null;
   this.game$field = game;
   this.x$field = x;
   this.y$field = y;
@@ -61631,16 +61759,7 @@ unnamed48ba40$GameEntity$Dart.prototype.removeFromWorld$setter = function(tmp$0)
 }
 ;
 unnamed48ba40$GameEntity$Dart.prototype.sprite$getter = function(){
-  var tmp$0 = this.sprite$field;
-  var tmp$1 = static$initializing;
-  if (tmp$0 === tmp$1)
-    throw 'circular initialization';
-  if (tmp$0 !== static$uninitialized)
-    return tmp$0;
-  this.sprite$field = tmp$1;
-  var tmp$2 = $Dart$Null;
-  this.sprite$field = tmp$2;
-  return tmp$2;
+  return this.sprite$field;
 }
 ;
 unnamed48ba40$GameEntity$Dart.prototype.sprite$setter = function(tmp$0){
@@ -61766,22 +61885,6 @@ unnamed48ba40$Alien$Dart.prototype.angle$setter = function(tmp$0){
 ;
 unnamed48ba40$Alien$Dart.prototype.speed$getter = function(){
   return this.speed$field;
-}
-;
-unnamed48ba40$Alien$Dart.prototype.sprite$getter = function(){
-  return this.sprite$field;
-}
-;
-unnamed48ba40$Alien$Dart.prototype.sprite$setter = function(tmp$0){
-  this.sprite$field = tmp$0;
-}
-;
-unnamed48ba40$Alien$Dart.prototype.radius$getter = function(){
-  return this.radius$field;
-}
-;
-unnamed48ba40$Alien$Dart.prototype.radius$setter = function(tmp$0){
-  this.radius$field = tmp$0;
 }
 ;
 unnamed48ba40$Alien$Dart.prototype.setCoords$member = function(){
@@ -61965,14 +62068,6 @@ unnamed48ba40$Bullet$Dart.prototype.radialDistance$setter = function(tmp$0){
   this.radialDistance$field = tmp$0;
 }
 ;
-unnamed48ba40$Bullet$Dart.prototype.sprite$getter = function(){
-  return this.sprite$field;
-}
-;
-unnamed48ba40$Bullet$Dart.prototype.sprite$setter = function(tmp$0){
-  this.sprite$field = tmp$0;
-}
-;
 unnamed48ba40$Bullet$Dart.prototype.animation$getter = function(){
   return this.animation$field;
 }
@@ -62039,7 +62134,7 @@ unnamed48ba40$BulletExplosion$Dart.$addTo = function(target){
 }
 ;
 unnamed48ba40$BulletExplosion$Dart.$Constructor = function(game, x, y){
-  $nsme();
+  unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, x, y);
   var tmp$1, tmp$2, tmp$0;
   this.sprite$setter(tmp$0 = game.assetManager$getter().getAsset$named(1, $noargs, 'img/explosion.png')) , tmp$0;
   this.animation$setter(tmp$1 = unnamed48ba40$Animation$Dart.Animation$$Factory(this.sprite$getter(), 34, 0.05, false)) , tmp$1;
@@ -62047,7 +62142,7 @@ unnamed48ba40$BulletExplosion$Dart.$Constructor = function(game, x, y){
 }
 ;
 unnamed48ba40$BulletExplosion$Dart.$Initializer = function(game, x, y){
-  unnamed48ba40$GameEntity$Dart.$Initializer.call();
+  unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, x, y);
 }
 ;
 unnamed48ba40$BulletExplosion$Dart.BulletExplosion$$Factory = function(game, x, y){
@@ -62058,28 +62153,12 @@ unnamed48ba40$BulletExplosion$Dart.BulletExplosion$$Factory = function(game, x, 
   return tmp$0;
 }
 ;
-unnamed48ba40$BulletExplosion$Dart.prototype.sprite$getter = function(){
-  return this.sprite$field;
-}
-;
-unnamed48ba40$BulletExplosion$Dart.prototype.sprite$setter = function(tmp$0){
-  this.sprite$field = tmp$0;
-}
-;
 unnamed48ba40$BulletExplosion$Dart.prototype.animation$getter = function(){
   return this.animation$field;
 }
 ;
 unnamed48ba40$BulletExplosion$Dart.prototype.animation$setter = function(tmp$0){
   this.animation$field = tmp$0;
-}
-;
-unnamed48ba40$BulletExplosion$Dart.prototype.radius$getter = function(){
-  return this.radius$field;
-}
-;
-unnamed48ba40$BulletExplosion$Dart.prototype.radius$setter = function(tmp$0){
-  this.radius$field = tmp$0;
 }
 ;
 unnamed48ba40$BulletExplosion$Dart.prototype.update$member = function(){
@@ -62148,7 +62227,7 @@ unnamed48ba40$Earth$Dart.$addTo = function(target){
 unnamed48ba40$Earth$Dart.$Constructor = function(game){
   unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, 0, 0);
   var tmp$0;
-  this.sprite$setter(tmp$0 = this.ASSET_MANAGER$getter().getAsset$named(1, $noargs, 'img/earth.png')) , tmp$0;
+  this.sprite$setter(tmp$0 = game.assetManager$getter().getAsset$named(1, $noargs, 'img/earth.png')) , tmp$0;
 }
 ;
 unnamed48ba40$Earth$Dart.$Initializer = function(game){
@@ -62165,14 +62244,6 @@ unnamed48ba40$Earth$Dart.Earth$$Factory = function(game){
 ;
 unnamed48ba40$Earth$Dart.RADIUS$getter = function(){
   return 67;
-}
-;
-unnamed48ba40$Earth$Dart.prototype.sprite$getter = function(){
-  return this.sprite$field;
-}
-;
-unnamed48ba40$Earth$Dart.prototype.sprite$setter = function(tmp$0){
-  this.sprite$field = tmp$0;
 }
 ;
 unnamed48ba40$Earth$Dart.prototype.draw$member = function(ctx){
@@ -62241,7 +62312,6 @@ unnamed48ba40$Sentry$Dart.$Constructor = function(game){
 ;
 unnamed48ba40$Sentry$Dart.$Initializer = function(game){
   unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, 0, unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter());
-  this.sprite$field = $Dart$Null;
   this.angle$field = 0;
 }
 ;
@@ -62255,23 +62325,6 @@ unnamed48ba40$Sentry$Dart.Sentry$$Factory = function(game){
 ;
 unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter = function(){
   return 85;
-}
-;
-unnamed48ba40$Sentry$Dart.prototype.sprite$getter = function(){
-  var tmp$0 = this.sprite$field;
-  var tmp$1 = static$initializing;
-  if (tmp$0 === tmp$1)
-    throw 'circular initialization';
-  if (tmp$0 !== static$uninitialized)
-    return tmp$0;
-  this.sprite$field = tmp$1;
-  var tmp$2 = $Dart$Null;
-  this.sprite$field = tmp$2;
-  return tmp$2;
-}
-;
-unnamed48ba40$Sentry$Dart.prototype.sprite$setter = function(tmp$0){
-  this.sprite$field = tmp$0;
 }
 ;
 unnamed48ba40$Sentry$Dart.prototype.angle$getter = function(){
@@ -62490,7 +62543,6 @@ isolate$inits.push(function(){
 );
 isolate$inits.push(function(){
   this.removeFromWorld$field = false;
-  this.sprite$field = static$uninitialized;
 }
 );
 isolate$inits.push(function(){

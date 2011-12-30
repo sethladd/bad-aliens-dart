@@ -1,7 +1,6 @@
 class Sentry extends GameEntity {
 
   static final num distanceFromEarthCenter = 85;
-  var sprite = null;
   num angle;
   
   Sentry(Game game) : super.withPosition(game, 0, distanceFromEarthCenter), angle = 0 {

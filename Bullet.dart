@@ -4,7 +4,6 @@ class Bullet extends GameEntity {
   Point explodesAt;
   static final num speed = 250;
   num radialDistance = 95;
-  var sprite;
   Animation animation;
   
   Bullet(Game game, num x, num y, num angle, Point this.explodesAt) : super.withPosition(game, x, y) {

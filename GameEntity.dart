@@ -3,7 +3,7 @@ class GameEntity {
   num x;
   num y;
   bool removeFromWorld = false;
-  var sprite = null;
+  var sprite;
   num radius;
   
   GameEntity(Game this.game);

@@ -80,7 +80,7 @@ class Game {
     for (final GameEntity entity in entities) {
       entity.draw(ctx);
     }
-    drawBeforeContextRestore();
+    drawBeforeCtxRestore();
     ctx.restore();
   }
   
