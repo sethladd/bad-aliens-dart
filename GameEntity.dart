@@ -10,7 +10,7 @@ class GameEntity {
   
   GameEntity.withPosition(Game this.game, num this.x, num this.y);
   
-  abstract void update();
+  void update() { }
   
   void draw(ctx) {
     if (game.showOutlines) {
