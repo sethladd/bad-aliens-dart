@@ -6,6 +6,7 @@
 #source('Game.dart');
 #source('Point.dart');
 #source('Alien.dart');
+#source('AlienExplosion.dart');
 
 class BadAliensDart {
 

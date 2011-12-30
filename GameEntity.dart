@@ -8,6 +8,8 @@ class GameEntity {
   
   GameEntity(Game this.game);
   
+  GameEntity.withPosition(Game this.game, num this.x, num this.y);
+  
   abstract void update();
   
   void draw(ctx) {
