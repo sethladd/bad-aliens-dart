@@ -13,21 +13,23 @@
 #source('Earth.dart');
 #source('EvilAliens.dart');
 
-class BadAliensDart {
-
-  BadAliensDart() {
-  }
-
-  void run() {
-    write("Hello World!");
-  }
-
-  void write(String message) {
-    // the HTML library defines a global "document" variable
-    html.document.query('#status').innerHTML = message;
-  }
-}
-
 void main() {
-  new BadAliensDart().run();
+  var canvas = html.document.query('#surface');
+  var ctx = canvas.getContext('2d');
+  
+  AssetManager assetManager = new AssetManager();
+  
+  assetManager.queueDownload('img/alien-explosion.png');
+  assetManager.queueDownload('img/alien.png');
+  assetManager.queueDownload('img/bullet.png');
+  assetManager.queueDownload('img/earth.png');
+  assetManager.queueDownload('img/sentry.png');
+  assetManager.queueDownload('img/explosion.png');
+  
+  var game = new EvilAliens(assetManager);
+  
+  assetManager.downloadAll(() {
+    game.init();
+    game.start();
+  });
 }

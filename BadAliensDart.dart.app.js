@@ -18,6 +18,9 @@ function native_ListImplementation__setLength(length) {
 function native_ListImplementation__add(element) {
   this.push(element);
 }
+function native_ListImplementation__removeRange(start, length) {
+  this.splice(start, length);
+}
 function native_BoolImplementation_EQ(other) {
   return typeof other == 'boolean' && this == other;
 }
@@ -92,6 +95,11 @@ function MUL$operator(val1, val2) {
       ? val1 * val2
       : val1.MUL$operator(val2);
 }
+function DIV$operator(val1, val2) {
+  return (typeof(val1) == 'number' && typeof(val2) == 'number')
+      ? val1 / val2
+      : val1.DIV$operator(val2);
+}
 function TRUNC$operator(val1, val2) {
   if (typeof(val1) == 'number' && typeof(val2) == 'number') {
     var tmp = val1 / val2;
@@ -132,6 +140,9 @@ function EQ$operator(val1, val2) {
   } 
   return val1.EQ$operator(val2);
 }
+function NE$operator(val1, val2) {
+  return !EQ$operator(val1, val2);
+}
 function INDEX$operator(obj, index) {
   return obj.INDEX$operator(index);
 }
@@ -147,6 +158,28 @@ function $Dart$ThrowException(e) {
 }
 function $toString(x) {
   return native__StringJsUtil_toDartString(x);
+}
+function $transformBrowserException(e) {
+  if (e instanceof TypeError) {
+    switch(e.type) {
+    case "property_not_function":
+    case "called_non_callable":
+      if (e.arguments[0] == "undefined") {
+        return native_ExceptionHelper_createNullPointerException();
+      }
+      return native_ExceptionHelper_createObjectNotClosureException();
+    case "non_object_property_call":
+    case "non_object_property_load":
+      return native_ExceptionHelper_createNullPointerException();
+    case "undefined_method":
+      if (e.arguments[0] == "call" || e.arguments[0] == "apply") {
+        return native_ExceptionHelper_createObjectNotClosureException();
+      }
+      return native_ExceptionHelper_createNoSuchMethodException(
+          "", e.arguments[0], []);
+    }
+  }
+  return e;
 }
 function $nsme() {
   var e = native_ExceptionHelper_createNoSuchMethodException("", "", []);
@@ -224,6 +257,48 @@ function $intern(o, type_args) {
   o.$dartConstId = id;
   $consts[key] = o;
   return o;
+}
+function native_DateImplementation__now() {
+  return new Date().valueOf();
+}
+function date$dateFrom(dartDate, value) {
+  // Lazily keep a JS Date stored in the dart object.
+  var date = dartDate.date;
+  if (!date) {
+    date = new Date(value);
+    dartDate.date = date;
+  }
+  return date;
+}
+function native_DateImplementation__getYear(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCFullYear() : date.getFullYear();
+}
+function native_DateImplementation__getMonth(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  var jsMonth = isUtc ? date.getUTCMonth() : date.getMonth();
+  // JavaScript has 0-based months.
+  return jsMonth + 1;
+}
+function native_DateImplementation__getDay(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCDate() : date.getDate();
+}
+function native_DateImplementation__getHours(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCHours() : date.getHours();
+}
+function native_DateImplementation__getMinutes(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCMinutes() : date.getMinutes();
+}
+function native_DateImplementation__getSeconds(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCSeconds() : date.getSeconds();
+}
+function native_DateImplementation__getMilliseconds(value, isUtc) {
+  var date = date$dateFrom(this, value);
+  return isUtc ? date.getUTCMilliseconds() : date.getMilliseconds();
 }
 var isolate$current = null;
 var isolate$rootIsolate = null;
@@ -599,6 +674,10 @@ function isolate$deserializeMessage(message) {
     return message;
   }
 }
+function native_MathNatives_random() { return Math.random(); }
+function native_MathNatives_sin(x) { return Math.sin(x); }
+function native_MathNatives_cos(x) { return Math.cos(x); }
+function native_MathNatives_atan2(x, y) { return Math.atan2(x, y); }
 function native_NumberImplementation_BIT_XOR(other) {
   "use strict";
   return this ^ other;
@@ -622,6 +701,10 @@ function native_NumberImplementation_SUB(other) {
 function native_NumberImplementation_MUL(other) {
   "use strict";
   return this * other;
+}
+function native_NumberImplementation_DIV(other) {
+  "use strict";
+  return this / other;
 }
 function native_NumberImplementation_TRUNC(other) {
   "use strict";
@@ -655,6 +738,24 @@ function native_NumberImplementation_EQ(other) {
 function native_NumberImplementation_negate() {
   "use strict";
   return -this;
+}
+function native_NumberImplementation_abs() {
+  "use strict";
+  return Math.abs(this);
+}
+function native_NumberImplementation_floor() {
+  "use strict";
+  return Math.floor(this);
+}
+function native_NumberImplementation_isNegative() {
+  "use strict";
+  // TODO(floitsch): is there a faster way to detect -0?
+  if (this == 0) return (1 / this) < 0;
+  return this < 0;
+}
+function native_NumberImplementation_isNaN() {
+  "use strict";
+  return isNaN(this);
 }
 function native_NumberImplementation_toDouble() {
   "use strict";
@@ -786,6 +887,9 @@ function $cls(cls) {
 function $isBool(o) {
   return typeof o == 'boolean';
 }
+function $isNum(o) {
+  return typeof o == 'number';
+}
 function $isString(o) {
   return typeof o == 'string';
 }
@@ -804,6 +908,10 @@ function native_StringImplementation_EQ(other) {
 function native_StringImplementation_concat(other) {
   "use strict";
   return this.concat(other);
+}
+function native_StringImplementation_toLowerCase() {
+  "use strict";
+  return this.toLowerCase();
 }
 function native_StringImplementation_hashCode() {
   "use strict";
@@ -826,6 +934,12 @@ function native_StringImplementation_toString() {
   "use strict";
   // Return the primitive string of this String object.
   return String(this);
+}
+function native_StringImplementation_compareTo(other) {
+  "use strict";
+  if (this == other) return 0;
+  if (this < other) return -1;
+  return 1;
 }
 function _SPAWNED_SIGNAL$$getter_(){
   return 'spawned';
@@ -961,6 +1075,10 @@ Array.prototype._add$$member_ = function(value){
   return native_ListImplementation__add.call(this, value);
 }
 ;
+Array.prototype._removeRange$$member_ = function(start, length_0){
+  return native_ListImplementation__removeRange.call(this, start, length_0);
+}
+;
 Array.prototype.forEach$member = function(f){
   Collections$Dart.forEach$member(this, f);
 }
@@ -981,6 +1099,23 @@ Array.prototype.isEmpty$named = function($n, $o){
   return Array.prototype.isEmpty$member.call(this);
 }
 ;
+Array.prototype.removeRange$member = function(start, length_0){
+  if (this._isFixed$$getter_()) {
+    $Dart$ThrowException($intern(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot remove range of a non-extendable list')));
+  }
+  if (EQ$operator(length_0, 0)) {
+    return;
+  }
+  Arrays$Dart.rangeCheck$member(this, start, length_0);
+  this._removeRange$$member_(start, length_0);
+}
+;
+Array.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return Array.prototype.removeRange$member.call(this, start, length_0);
+}
+;
 Array.prototype.add$member = function(element){
   if (this._isFixed$$getter_()) {
     $Dart$ThrowException($intern(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to a non-extendable list')));
@@ -994,6 +1129,16 @@ Array.prototype.add$named = function($n, $o, element){
   if ($o.count || $n != 1)
     $nsme();
   return Array.prototype.add$member.call(this, element);
+}
+;
+Array.prototype.addLast$member = function(element){
+  this.add$member(element);
+}
+;
+Array.prototype.addLast$named = function($n, $o, element){
+  if ($o.count || $n != 1)
+    $nsme();
+  return Array.prototype.addLast$member.call(this, element);
 }
 ;
 Array.prototype.clear$member = function(){
@@ -1147,6 +1292,20 @@ _ListJsUtil$Dart._listLength$$member_ = function(list){
 function native__ListJsUtil__listLength(list){
   return _ListJsUtil$Dart._listLength$$member_(list);
 }
+function Arrays$Dart(){
+}
+Arrays$Dart.rangeCheck$member = function(a, start, length_0){
+  if (LT$operator(length_0, 0)) {
+    $Dart$ThrowException(IllegalArgumentException$Dart.IllegalArgumentException$$Factory('negative length ' + $toString(length_0) + ''));
+  }
+  if (LT$operator(start, 0) || GTE$operator(start, a.length$getter())) {
+    $Dart$ThrowException(IndexOutOfRangeException$Dart.IndexOutOfRangeException$$Factory(start));
+  }
+  if (GT$operator(ADD$operator(start, length_0), a.length$getter())) {
+    $Dart$ThrowException(IndexOutOfRangeException$Dart.IndexOutOfRangeException$$Factory(ADD$operator(start, length_0)));
+  }
+}
+;
 Boolean.$lookupRTT = function(){
   return RTT.create($cls('Boolean'), Boolean.$RTTimplements);
 }
@@ -1232,6 +1391,20 @@ function native_ConstHelper_getConstMapId(map){
 }
 function ExceptionHelper$Dart(){
 }
+ExceptionHelper$Dart.createNullPointerException$member = function(){
+  return NullPointerException$Dart.NullPointerException$$Factory();
+}
+;
+function native_ExceptionHelper_createNullPointerException(){
+  return ExceptionHelper$Dart.createNullPointerException$member();
+}
+ExceptionHelper$Dart.createObjectNotClosureException$member = function(){
+  return ObjectNotClosureException$Dart.ObjectNotClosureException$$Factory();
+}
+;
+function native_ExceptionHelper_createObjectNotClosureException(){
+  return ExceptionHelper$Dart.createObjectNotClosureException$member();
+}
 ExceptionHelper$Dart.createNoSuchMethodException$member = function(receiver, functionName, arguments_0){
   return NoSuchMethodException$Dart.NoSuchMethodException$$Factory(receiver, functionName, arguments_0);
 }
@@ -1239,6 +1412,227 @@ ExceptionHelper$Dart.createNoSuchMethodException$member = function(receiver, fun
 function native_ExceptionHelper_createNoSuchMethodException(receiver, functionName, arguments_0){
   return ExceptionHelper$Dart.createNoSuchMethodException$member(receiver, functionName, arguments_0);
 }
+function DateImplementation$Dart(){
+}
+DateImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('DateImplementation$Dart'), DateImplementation$Dart.$RTTimplements);
+}
+;
+DateImplementation$Dart.$RTTimplements = function(rtt){
+  DateImplementation$Dart.$addTo(rtt);
+}
+;
+DateImplementation$Dart.$addTo = function(target){
+  var rtt = DateImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Date$Dart.$addTo(target);
+}
+;
+DateImplementation$Dart.prototype.$implements$DateImplementation$Dart = 1;
+DateImplementation$Dart.now$Constructor = function(){
+}
+;
+DateImplementation$Dart.now$Initializer = function(){
+  this.timeZone$field = TimeZoneImplementation$Dart.TimeZoneImplementation$local$22$Factory();
+  this.value$field = DateImplementation$Dart._now$$member_();
+}
+;
+DateImplementation$Dart.DateImplementation$now$18$Factory = function(){
+  var tmp$0 = new DateImplementation$Dart;
+  tmp$0.$typeInfo = DateImplementation$Dart.$lookupRTT();
+  DateImplementation$Dart.now$Initializer.call(tmp$0);
+  DateImplementation$Dart.now$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+DateImplementation$Dart.fromEpoch$Constructor = function(value, timeZone){
+}
+;
+DateImplementation$Dart.fromEpoch$Initializer = function(value, timeZone){
+  this.value$field = value;
+  this.timeZone$field = timeZone;
+}
+;
+DateImplementation$Dart.DateImplementation$fromEpoch$18$Factory = function(value, timeZone){
+  var tmp$0 = new DateImplementation$Dart;
+  tmp$0.$typeInfo = DateImplementation$Dart.$lookupRTT();
+  DateImplementation$Dart.fromEpoch$Initializer.call(tmp$0, value, timeZone);
+  DateImplementation$Dart.fromEpoch$Constructor.call(tmp$0, value, timeZone);
+  return tmp$0;
+}
+;
+DateImplementation$Dart.prototype.EQ$operator = function(other){
+  var tmp$0;
+  if (!!!(tmp$0 = other , tmp$0 != null && tmp$0.$implements$DateImplementation$Dart)) {
+    return false;
+  }
+  return EQ$operator(this.value$getter(), other.value$getter()) && EQ$operator(this.timeZone$getter(), other.timeZone$getter());
+}
+;
+DateImplementation$Dart.prototype.compareTo$member = function(other){
+  return this.value$getter().compareTo$named(1, $noargs, other.value$getter());
+}
+;
+DateImplementation$Dart.prototype.compareTo$named = function($n, $o, other){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DateImplementation$Dart.prototype.compareTo$member.call(this, other);
+}
+;
+DateImplementation$Dart.prototype.year$getter = function(){
+  return this._getYear$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.month$getter = function(){
+  return this._getMonth$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.day$getter = function(){
+  return this._getDay$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.hours$getter = function(){
+  return this._getHours$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.minutes$getter = function(){
+  return this._getMinutes$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.seconds$getter = function(){
+  return this._getSeconds$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.milliseconds$getter = function(){
+  return this._getMilliseconds$$member_(this.value$getter(), this.isUtc$member());
+}
+;
+DateImplementation$Dart.prototype.isUtc$member = function(){
+  return this.timeZone$getter().isUtc$getter();
+}
+;
+DateImplementation$Dart.prototype.isUtc$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DateImplementation$Dart.prototype.isUtc$member.call(this);
+}
+;
+DateImplementation$Dart.prototype.isUtc$named_$lookupRTT = function(){
+  return RTT.createFunction(null, bool$Dart.$lookupRTT());
+}
+;
+DateImplementation$Dart.prototype.isUtc$getter = function(){
+  return $bind(DateImplementation$Dart.prototype.isUtc$named, DateImplementation$Dart.prototype.isUtc$named_$lookupRTT, this);
+}
+;
+function DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted(n){
+  if (GTE$operator(n, 100)) {
+    return '' + $toString(n) + '';
+  }
+  if (GT$operator(n, 10)) {
+    return '0' + $toString(n) + '';
+  }
+  return '00' + $toString(n) + '';
+}
+function DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted$named($n, $o, n){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted(n);
+}
+function DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([int$Dart.$lookupRTT()], String$Dart.$lookupRTT());
+}
+function DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted(n){
+  if (GTE$operator(n, 10)) {
+    return '' + $toString(n) + '';
+  }
+  return '0' + $toString(n) + '';
+}
+function DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted$named($n, $o, n){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted(n);
+}
+function DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([int$Dart.$lookupRTT()], String$Dart.$lookupRTT());
+}
+DateImplementation$Dart.prototype.toString$member = function(){
+  var threeDigits = $bind(DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted$named, DateImplementation$Dart$toString$c0$threeDigits$23_8_2$Hoisted$named$named_$lookupRTT, $Dart$Null);
+  var twoDigits = $bind(DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted$named, DateImplementation$Dart$toString$c1$twoDigits$23_8_2$Hoisted$named$named_$lookupRTT, $Dart$Null);
+  var m = twoDigits(1, $noargs, this.month$getter());
+  var d = twoDigits(1, $noargs, this.day$getter());
+  var h = twoDigits(1, $noargs, this.hours$getter());
+  var min = twoDigits(1, $noargs, this.minutes$getter());
+  var sec = twoDigits(1, $noargs, this.seconds$getter());
+  var ms = threeDigits(1, $noargs, this.milliseconds$getter());
+  if (this.timeZone$getter().isUtc$getter()) {
+    return '' + $toString(this.year$getter()) + '-' + $toString(m) + '-' + $toString(d) + ' ' + $toString(h) + ':' + $toString(min) + ':' + $toString(sec) + '.' + $toString(ms) + 'Z';
+  }
+   else {
+    return '' + $toString(this.year$getter()) + '-' + $toString(m) + '-' + $toString(d) + ' ' + $toString(h) + ':' + $toString(min) + ':' + $toString(sec) + '.' + $toString(ms) + '';
+  }
+}
+;
+DateImplementation$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DateImplementation$Dart.prototype.toString$member.call(this);
+}
+;
+DateImplementation$Dart.prototype.add$member = function(duration){
+  return DateImplementation$Dart.DateImplementation$fromEpoch$18$Factory(ADD$operator(this.value$getter(), duration.inMilliseconds$getter()), this.timeZone$getter());
+}
+;
+DateImplementation$Dart.prototype.add$named = function($n, $o, duration){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DateImplementation$Dart.prototype.add$member.call(this, duration);
+}
+;
+DateImplementation$Dart.prototype.value$getter = function(){
+  return this.value$field;
+}
+;
+DateImplementation$Dart.prototype.timeZone$getter = function(){
+  return this.timeZone$field;
+}
+;
+DateImplementation$Dart._now$$member_ = function(){
+  return native_DateImplementation__now();
+}
+;
+DateImplementation$Dart.prototype._getYear$$member_ = function(value, isUtc){
+  return native_DateImplementation__getYear.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getMonth$$member_ = function(value, isUtc){
+  return native_DateImplementation__getMonth.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getDay$$member_ = function(value, isUtc){
+  return native_DateImplementation__getDay.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getHours$$member_ = function(value, isUtc){
+  return native_DateImplementation__getHours.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getMinutes$$member_ = function(value, isUtc){
+  return native_DateImplementation__getMinutes.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getSeconds$$member_ = function(value, isUtc){
+  return native_DateImplementation__getSeconds.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype._getMilliseconds$$member_ = function(value, isUtc){
+  return native_DateImplementation__getMilliseconds.call(this, value, isUtc);
+}
+;
+DateImplementation$Dart.prototype.$const_id = function(){
+  return $cls('DateImplementation$Dart') + (':' + $dart_const_id(this.year$field)) + (':' + $dart_const_id(this.month$field)) + (':' + $dart_const_id(this.day$field)) + (':' + $dart_const_id(this.hours$field)) + (':' + $dart_const_id(this.minutes$field)) + (':' + $dart_const_id(this.seconds$field)) + (':' + $dart_const_id(this.milliseconds$field)) + (':' + $dart_const_id(this.weekday$field)) + (':' + $dart_const_id(this.value$field)) + (':' + $dart_const_id(this.timeZone$field));
+}
+;
 function SendPortImpl$Dart(){
 }
 SendPortImpl$Dart.$lookupRTT = function(){
@@ -1964,6 +2358,24 @@ Deserializer$Dart._jsArrayLength$$member_ = function(x){
   return native_Deserializer__jsArrayLength(x);
 }
 ;
+function MathNatives$Dart(){
+}
+MathNatives$Dart.cos$member = function(d){
+  return native_MathNatives_cos(d);
+}
+;
+MathNatives$Dart.sin$member = function(d){
+  return native_MathNatives_sin(d);
+}
+;
+MathNatives$Dart.atan2$member = function(a, b){
+  return native_MathNatives_atan2(a, b);
+}
+;
+MathNatives$Dart.random$member = function(){
+  return native_MathNatives_random();
+}
+;
 Number.$lookupRTT = function(){
   return RTT.create($cls('Number'), Number.$RTTimplements);
 }
@@ -1990,6 +2402,10 @@ Number.prototype.SUB$operator = function(other){
 ;
 Number.prototype.MUL$operator = function(other){
   return native_NumberImplementation_MUL.call(this, other);
+}
+;
+Number.prototype.DIV$operator = function(other){
+  return native_NumberImplementation_DIV.call(this, other);
 }
 ;
 Number.prototype.TRUNC$operator = function(other){
@@ -2030,6 +2446,91 @@ Number.prototype.GT$operator = function(other){
 ;
 Number.prototype.GTE$operator = function(other){
   return native_NumberImplementation_GTE.call(this, other);
+}
+;
+Number.prototype.abs$member = function(){
+  return native_NumberImplementation_abs.call(this);
+}
+;
+Number.prototype.abs$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return Number.prototype.abs$member.call(this);
+}
+;
+Number.prototype.floor$member = function(){
+  return native_NumberImplementation_floor.call(this);
+}
+;
+Number.prototype.floor$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return Number.prototype.floor$member.call(this);
+}
+;
+Number.prototype.compareTo$member = function(other){
+  var thisValue = this.toDouble$member();
+  if (LT$operator(thisValue, other)) {
+    return negate$operator(1);
+  }
+   else {
+    if (GT$operator(thisValue, other)) {
+      return 1;
+    }
+     else {
+      if (EQ$operator(thisValue, other)) {
+        if (EQ$operator(thisValue, 0)) {
+          var thisIsNegative = this.isNegative$member();
+          var otherIsNegative = other.isNegative$named(0, $noargs);
+          if (EQ$operator(thisIsNegative, otherIsNegative)) {
+            return 0;
+          }
+          if (thisIsNegative) {
+            return negate$operator(1);
+          }
+          return 1;
+        }
+        return 0;
+      }
+       else {
+        if (this.isNaN$member()) {
+          if (other.isNaN$named(0, $noargs)) {
+            return 0;
+          }
+          return 1;
+        }
+         else {
+          return negate$operator(1);
+        }
+      }
+    }
+  }
+}
+;
+Number.prototype.compareTo$named = function($n, $o, other){
+  if ($o.count || $n != 1)
+    $nsme();
+  return Number.prototype.compareTo$member.call(this, other);
+}
+;
+Number.prototype.isNegative$member = function(){
+  return native_NumberImplementation_isNegative.call(this);
+}
+;
+Number.prototype.isNegative$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return Number.prototype.isNegative$member.call(this);
+}
+;
+Number.prototype.isNaN$member = function(){
+  return native_NumberImplementation_isNaN.call(this);
+}
+;
+Number.prototype.isNaN$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return Number.prototype.isNaN$member.call(this);
 }
 ;
 Number.prototype.toDouble$member = function(){
@@ -2113,6 +2614,16 @@ String.prototype.ADD$operator = function(obj){
   return this.concat$named(1, $noargs, obj.toString$named(0, $noargs));
 }
 ;
+String.prototype.toLowerCase$member = function(){
+  return native_StringImplementation_toLowerCase.call(this);
+}
+;
+String.prototype.toLowerCase$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return String.prototype.toLowerCase$member.call(this);
+}
+;
 String.prototype.hashCode$member = function(){
   return native_StringImplementation_hashCode.call(this);
 }
@@ -2131,6 +2642,16 @@ String.prototype.toString$named = function($n, $o){
   if ($o.count || $n != 0)
     $nsme();
   return String.prototype.toString$member.call(this);
+}
+;
+String.prototype.compareTo$member = function(other){
+  return native_StringImplementation_compareTo.call(this, other);
+}
+;
+String.prototype.compareTo$named = function($n, $o, other){
+  if ($o.count || $n != 1)
+    $nsme();
+  return String.prototype.compareTo$member.call(this, other);
 }
 ;
 String.prototype._indexOperator$$member_ = function(index){
@@ -2293,6 +2814,67 @@ StringBufferImpl$Dart.prototype._length$$setter_ = function(tmp$0){
   this._length$$field_ = tmp$0;
 }
 ;
+function TimeZoneImplementation$Dart(){
+}
+TimeZoneImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('TimeZoneImplementation$Dart'), TimeZoneImplementation$Dart.$RTTimplements);
+}
+;
+TimeZoneImplementation$Dart.$RTTimplements = function(rtt){
+  TimeZoneImplementation$Dart.$addTo(rtt);
+}
+;
+TimeZoneImplementation$Dart.$addTo = function(target){
+  var rtt = TimeZoneImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  TimeZone$Dart.$addTo(target);
+}
+;
+TimeZoneImplementation$Dart.prototype.$implements$TimeZoneImplementation$Dart = 1;
+TimeZoneImplementation$Dart.local$Constructor = function(){
+}
+;
+TimeZoneImplementation$Dart.local$Initializer = function(){
+  this.isUtc$field = false;
+}
+;
+TimeZoneImplementation$Dart.TimeZoneImplementation$local$22$Factory = function(){
+  var tmp$0 = new TimeZoneImplementation$Dart;
+  tmp$0.$typeInfo = TimeZoneImplementation$Dart.$lookupRTT();
+  TimeZoneImplementation$Dart.local$Initializer.call(tmp$0);
+  TimeZoneImplementation$Dart.local$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+TimeZoneImplementation$Dart.prototype.EQ$operator = function(other){
+  var tmp$0;
+  if (!!!(tmp$0 = other , tmp$0 != null && tmp$0.$implements$TimeZoneImplementation$Dart)) {
+    return false;
+  }
+  return EQ$operator(this.isUtc$getter(), other.isUtc$getter());
+}
+;
+TimeZoneImplementation$Dart.prototype.toString$member = function(){
+  if (this.isUtc$getter()) {
+    return 'TimeZone (UTC)';
+  }
+  return 'TimeZone (Local)';
+}
+;
+TimeZoneImplementation$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return TimeZoneImplementation$Dart.prototype.toString$member.call(this);
+}
+;
+TimeZoneImplementation$Dart.prototype.isUtc$getter = function(){
+  return this.isUtc$field;
+}
+;
+TimeZoneImplementation$Dart.prototype.$const_id = function(){
+  return $cls('TimeZoneImplementation$Dart') + (':' + $dart_const_id(this.isUtc$field));
+}
+;
 function TypeToken$Dart(){
 }
 TypeToken$Dart.$lookupRTT = function(typeArgs){
@@ -2364,6 +2946,317 @@ ExceptionImplementation$Dart.prototype._msg$$getter_ = function(){
 ;
 ExceptionImplementation$Dart.prototype.$const_id = function(){
   return $cls('ExceptionImplementation$Dart') + (':' + $dart_const_id(this._msg$$field_));
+}
+;
+function FutureNotCompleteException$Dart(){
+}
+FutureNotCompleteException$Dart.$lookupRTT = function(){
+  return RTT.create($cls('FutureNotCompleteException$Dart'), FutureNotCompleteException$Dart.$RTTimplements);
+}
+;
+FutureNotCompleteException$Dart.$RTTimplements = function(rtt){
+  FutureNotCompleteException$Dart.$addTo(rtt);
+}
+;
+FutureNotCompleteException$Dart.$addTo = function(target){
+  var rtt = FutureNotCompleteException$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Exception$Dart.$addTo(target);
+}
+;
+FutureNotCompleteException$Dart.$Constructor = function(){
+}
+;
+FutureNotCompleteException$Dart.$Initializer = function(){
+}
+;
+FutureNotCompleteException$Dart.FutureNotCompleteException$$Factory = function(){
+  var tmp$0 = new FutureNotCompleteException$Dart;
+  tmp$0.$typeInfo = FutureNotCompleteException$Dart.$lookupRTT();
+  FutureNotCompleteException$Dart.$Initializer.call(tmp$0);
+  FutureNotCompleteException$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+function FutureAlreadyCompleteException$Dart(){
+}
+FutureAlreadyCompleteException$Dart.$lookupRTT = function(){
+  return RTT.create($cls('FutureAlreadyCompleteException$Dart'), FutureAlreadyCompleteException$Dart.$RTTimplements);
+}
+;
+FutureAlreadyCompleteException$Dart.$RTTimplements = function(rtt){
+  FutureAlreadyCompleteException$Dart.$addTo(rtt);
+}
+;
+FutureAlreadyCompleteException$Dart.$addTo = function(target){
+  var rtt = FutureAlreadyCompleteException$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Exception$Dart.$addTo(target);
+}
+;
+FutureAlreadyCompleteException$Dart.$Constructor = function(){
+}
+;
+FutureAlreadyCompleteException$Dart.$Initializer = function(){
+}
+;
+FutureAlreadyCompleteException$Dart.FutureAlreadyCompleteException$$Factory = function(){
+  var tmp$0 = new FutureAlreadyCompleteException$Dart;
+  tmp$0.$typeInfo = FutureAlreadyCompleteException$Dart.$lookupRTT();
+  FutureAlreadyCompleteException$Dart.$Initializer.call(tmp$0);
+  FutureAlreadyCompleteException$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+function FutureImpl$Dart(){
+}
+FutureImpl$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('FutureImpl$Dart'), FutureImpl$Dart.$RTTimplements, typeArgs);
+}
+;
+FutureImpl$Dart.$RTTimplements = function(rtt, typeArgs){
+  FutureImpl$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+FutureImpl$Dart.$addTo = function(target, typeArgs){
+  var rtt = FutureImpl$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  Future$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
+}
+;
+FutureImpl$Dart.$Constructor = function(){
+  var tmp$1, tmp$0;
+  this._isComplete$$setter_(tmp$0 = false) , tmp$0;
+  this._exceptionHandled$$setter_(tmp$1 = false) , tmp$1;
+}
+;
+FutureImpl$Dart.$Initializer = function(){
+  this._listeners$$field_ = ListFactory$Dart.List$$Factory(null, $Dart$Null);
+  this._exceptionHandlers$$field_ = ListFactory$Dart.List$$Factory(null, $Dart$Null);
+}
+;
+FutureImpl$Dart.FutureImpl$$Factory = function($rtt){
+  var tmp$0 = new FutureImpl$Dart;
+  tmp$0.$typeInfo = $rtt;
+  FutureImpl$Dart.$Initializer.call(tmp$0);
+  FutureImpl$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+FutureImpl$Dart.prototype._isComplete$$getter_ = function(){
+  return this._isComplete$$field_;
+}
+;
+FutureImpl$Dart.prototype._isComplete$$setter_ = function(tmp$0){
+  this._isComplete$$field_ = tmp$0;
+}
+;
+FutureImpl$Dart.prototype._value$$getter_ = function(){
+  return this._value$$field_;
+}
+;
+FutureImpl$Dart.prototype._value$$setter_ = function(tmp$0){
+  this._value$$field_ = tmp$0;
+}
+;
+FutureImpl$Dart.prototype._exception$$getter_ = function(){
+  return this._exception$$field_;
+}
+;
+FutureImpl$Dart.prototype._exception$$setter_ = function(tmp$0){
+  this._exception$$field_ = tmp$0;
+}
+;
+FutureImpl$Dart.prototype._exceptionHandled$$getter_ = function(){
+  return this._exceptionHandled$$field_;
+}
+;
+FutureImpl$Dart.prototype._exceptionHandled$$setter_ = function(tmp$0){
+  this._exceptionHandled$$field_ = tmp$0;
+}
+;
+FutureImpl$Dart.prototype._listeners$$getter_ = function(){
+  return this._listeners$$field_;
+}
+;
+FutureImpl$Dart.prototype._exceptionHandlers$$getter_ = function(){
+  return this._exceptionHandlers$$field_;
+}
+;
+FutureImpl$Dart.prototype.value$getter = function(){
+  if (!this.isComplete$getter()) {
+    $Dart$ThrowException(FutureNotCompleteException$Dart.FutureNotCompleteException$$Factory());
+  }
+  if (this._exception$$getter_() != null) {
+    $Dart$ThrowException(this._exception$$getter_());
+  }
+  return this._value$$getter_();
+}
+;
+FutureImpl$Dart.prototype.exception$getter = function(){
+  if (!this.isComplete$getter()) {
+    $Dart$ThrowException(FutureNotCompleteException$Dart.FutureNotCompleteException$$Factory());
+  }
+  return this._exception$$getter_();
+}
+;
+FutureImpl$Dart.prototype.isComplete$getter = function(){
+  return this._isComplete$$getter_();
+}
+;
+FutureImpl$Dart.prototype.hasValue$getter = function(){
+  return this.isComplete$getter() && this._exception$$getter_() == null;
+}
+;
+FutureImpl$Dart.prototype.then$member = function(onComplete){
+  if (this.hasValue$getter()) {
+    onComplete(1, $noargs, this.value$getter());
+  }
+   else {
+    this._listeners$$getter_().add$named(1, $noargs, onComplete);
+  }
+}
+;
+FutureImpl$Dart.prototype.then$named = function($n, $o, onComplete){
+  if ($o.count || $n != 1)
+    $nsme();
+  return FutureImpl$Dart.prototype.then$member.call(this, onComplete);
+}
+;
+FutureImpl$Dart.prototype._complete$$member_ = function(){
+  var tmp$1, tmp$0;
+  this._isComplete$$setter_(tmp$0 = true) , tmp$0;
+  if (this._exception$$getter_() != null) {
+    {
+      var $0 = this._exceptionHandlers$$getter_().iterator$named(0, $noargs);
+      while ($0.hasNext$named(0, $noargs)) {
+        var handler = $0.next$named(0, $noargs);
+        {
+          if (handler(1, $noargs, this._exception$$getter_())) {
+            this._exceptionHandled$$setter_(tmp$1 = true) , tmp$1;
+          }
+        }
+      }
+    }
+  }
+  if (this.hasValue$getter()) {
+    {
+      var $1 = this._listeners$$getter_().iterator$named(0, $noargs);
+      while ($1.hasNext$named(0, $noargs)) {
+        var listener = $1.next$named(0, $noargs);
+        {
+          listener(1, $noargs, this.value$getter());
+        }
+      }
+    }
+  }
+   else {
+    if (!this._exceptionHandled$$getter_() && GT$operator(this._listeners$$getter_().length$getter(), 0)) {
+      $Dart$ThrowException(this._exception$$getter_());
+    }
+  }
+}
+;
+FutureImpl$Dart.prototype._setValue$$member_ = function(value){
+  var tmp$0;
+  if (this._isComplete$$getter_()) {
+    $Dart$ThrowException(FutureAlreadyCompleteException$Dart.FutureAlreadyCompleteException$$Factory());
+  }
+  this._value$$setter_(tmp$0 = value) , tmp$0;
+  this._complete$$member_();
+}
+;
+FutureImpl$Dart.prototype._setValue$$named_ = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return FutureImpl$Dart.prototype._setValue$$member_.call(this, value);
+}
+;
+FutureImpl$Dart.prototype._setException$$member_ = function(exception){
+  var tmp$0;
+  if (exception == null) {
+    $Dart$ThrowException(IllegalArgumentException$Dart.IllegalArgumentException$$Factory($Dart$Null));
+  }
+  if (this._isComplete$$getter_()) {
+    $Dart$ThrowException(FutureAlreadyCompleteException$Dart.FutureAlreadyCompleteException$$Factory());
+  }
+  this._exception$$setter_(tmp$0 = exception) , tmp$0;
+  this._complete$$member_();
+}
+;
+FutureImpl$Dart.prototype._setException$$named_ = function($n, $o, exception){
+  if ($o.count || $n != 1)
+    $nsme();
+  return FutureImpl$Dart.prototype._setException$$member_.call(this, exception);
+}
+;
+function CompleterImpl$Dart(){
+}
+CompleterImpl$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('CompleterImpl$Dart'), CompleterImpl$Dart.$RTTimplements, typeArgs);
+}
+;
+CompleterImpl$Dart.$RTTimplements = function(rtt, typeArgs){
+  CompleterImpl$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+CompleterImpl$Dart.$addTo = function(target, typeArgs){
+  var rtt = CompleterImpl$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  Completer$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
+}
+;
+CompleterImpl$Dart.$Constructor = function(){
+}
+;
+CompleterImpl$Dart.$Initializer = function(){
+  this._futureImpl$$field_ = FutureImpl$Dart.FutureImpl$$Factory(FutureImpl$Dart.$lookupRTT());
+}
+;
+CompleterImpl$Dart.CompleterImpl$$Factory = function($rtt){
+  var tmp$0 = new CompleterImpl$Dart;
+  tmp$0.$typeInfo = $rtt;
+  CompleterImpl$Dart.$Initializer.call(tmp$0);
+  CompleterImpl$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+CompleterImpl$Dart.prototype._futureImpl$$getter_ = function(){
+  return this._futureImpl$$field_;
+}
+;
+CompleterImpl$Dart.prototype.future$getter = function(){
+  return this._futureImpl$$getter_();
+}
+;
+CompleterImpl$Dart.prototype.complete$member = function(value){
+  this._futureImpl$$getter_()._setValue$$named_(1, $noargs, value);
+}
+;
+CompleterImpl$Dart.prototype.complete$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return CompleterImpl$Dart.prototype.complete$member.call(this, value);
+}
+;
+CompleterImpl$Dart.prototype.complete$named_$lookupRTT = function(){
+  return RTT.createFunction([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('CompleterImpl$Dart')), 0)], null);
+}
+;
+CompleterImpl$Dart.prototype.complete$getter = function(){
+  return $bind(CompleterImpl$Dart.prototype.complete$named, CompleterImpl$Dart.prototype.complete$named_$lookupRTT, this);
+}
+;
+CompleterImpl$Dart.prototype.completeException$member = function(exception){
+  this._futureImpl$$getter_()._setException$$named_(1, $noargs, exception);
+}
+;
+CompleterImpl$Dart.prototype.completeException$named = function($n, $o, exception){
+  if ($o.count || $n != 1)
+    $nsme();
+  return CompleterImpl$Dart.prototype.completeException$member.call(this, exception);
 }
 ;
 function HashMapImplementation$Dart(){
@@ -2604,6 +3497,23 @@ HashMapImplementation$Dart.prototype.INDEX$operator = function(key){
   return this._values$$getter_().INDEX$operator(index);
 }
 ;
+HashMapImplementation$Dart.prototype.putIfAbsent$member = function(key, ifAbsent){
+  var tmp$0;
+  var index = this._probeForLookup$$member_(key);
+  if (GTE$operator(index, 0)) {
+    return this._values$$getter_().INDEX$operator(index);
+  }
+  var value = ifAbsent(0, $noargs);
+  this.ASSIGN_INDEX$operator(key, tmp$0 = value) , tmp$0;
+  return value;
+}
+;
+HashMapImplementation$Dart.prototype.putIfAbsent$named = function($n, $o, key, ifAbsent){
+  if ($o.count || $n != 2)
+    $nsme();
+  return HashMapImplementation$Dart.prototype.putIfAbsent$member.call(this, key, ifAbsent);
+}
+;
 HashMapImplementation$Dart.prototype.isEmpty$member = function(){
   return EQ$operator(this._numberOfEntries$$getter_(), 0);
 }
@@ -2693,6 +3603,16 @@ HashMapImplementation$Dart.prototype.getValues$named = function($n, $o){
   return HashMapImplementation$Dart.prototype.getValues$member.call(this);
 }
 ;
+HashMapImplementation$Dart.prototype.containsKey$member = function(key){
+  return NE$operator(this._probeForLookup$$member_(key), negate$operator(1));
+}
+;
+HashMapImplementation$Dart.prototype.containsKey$named = function($n, $o, key){
+  if ($o.count || $n != 1)
+    $nsme();
+  return HashMapImplementation$Dart.prototype.containsKey$member.call(this, key);
+}
+;
 function _DeletedKeySentinel$Dart(){
 }
 _DeletedKeySentinel$Dart.$lookupRTT = function(){
@@ -2715,6 +3635,615 @@ _DeletedKeySentinel$Dart._DeletedKeySentinel$$Factory = function(){
 ;
 _DeletedKeySentinel$Dart.prototype.$const_id = function(){
   return $cls('_DeletedKeySentinel$Dart');
+}
+;
+function KeyValuePair$Dart(){
+}
+KeyValuePair$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('KeyValuePair$Dart'), null, typeArgs);
+}
+;
+KeyValuePair$Dart.$Constructor = function(key, value){
+}
+;
+KeyValuePair$Dart.$Initializer = function(key, value){
+  this.key$field = key;
+  this.value$field = value;
+}
+;
+KeyValuePair$Dart.KeyValuePair$$Factory = function($rtt, key, value){
+  var tmp$0 = new KeyValuePair$Dart;
+  tmp$0.$typeInfo = $rtt;
+  KeyValuePair$Dart.$Initializer.call(tmp$0, key, value);
+  KeyValuePair$Dart.$Constructor.call(tmp$0, key, value);
+  return tmp$0;
+}
+;
+KeyValuePair$Dart.prototype.key$getter = function(){
+  return this.key$field;
+}
+;
+KeyValuePair$Dart.prototype.value$getter = function(){
+  return this.value$field;
+}
+;
+KeyValuePair$Dart.prototype.value$setter = function(tmp$0){
+  this.value$field = tmp$0;
+}
+;
+function LinkedHashMapImplementation$Dart(){
+}
+LinkedHashMapImplementation$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('LinkedHashMapImplementation$Dart'), LinkedHashMapImplementation$Dart.$RTTimplements, typeArgs);
+}
+;
+LinkedHashMapImplementation$Dart.$RTTimplements = function(rtt, typeArgs){
+  LinkedHashMapImplementation$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+LinkedHashMapImplementation$Dart.$addTo = function(target, typeArgs){
+  var rtt = LinkedHashMapImplementation$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  LinkedHashMap$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0), RTT.getTypeArg(target.typeArgs, 1)]);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.$implements$Map$Dart = 1;
+LinkedHashMapImplementation$Dart.$Constructor = function(){
+  var tmp$1, tmp$0;
+  this._map$$setter_(tmp$0 = HashMapImplementation$Dart.HashMapImplementation$$Factory(HashMapImplementation$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), DoubleLinkedQueueEntry$Dart.$lookupRTT([KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)])])]))) , tmp$0;
+  this._list$$setter_(tmp$1 = DoubleLinkedQueue$Dart.DoubleLinkedQueue$$Factory(DoubleLinkedQueue$Dart.$lookupRTT([KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)])]))) , tmp$1;
+}
+;
+LinkedHashMapImplementation$Dart.$Initializer = function(){
+}
+;
+LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory = function($rtt){
+  var tmp$0 = new LinkedHashMapImplementation$Dart;
+  tmp$0.$typeInfo = $rtt;
+  LinkedHashMapImplementation$Dart.$Initializer.call(tmp$0);
+  LinkedHashMapImplementation$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+LinkedHashMapImplementation$Dart.prototype._list$$getter_ = function(){
+  return this._list$$field_;
+}
+;
+LinkedHashMapImplementation$Dart.prototype._list$$setter_ = function(tmp$0){
+  this._list$$field_ = tmp$0;
+}
+;
+LinkedHashMapImplementation$Dart.prototype._map$$getter_ = function(){
+  return this._map$$field_;
+}
+;
+LinkedHashMapImplementation$Dart.prototype._map$$setter_ = function(tmp$0){
+  this._map$$field_ = tmp$0;
+}
+;
+LinkedHashMapImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(key, value){
+  var tmp$1, tmp$0;
+  if (this._map$$getter_().containsKey$named(1, $noargs, key)) {
+    this._map$$getter_().INDEX$operator(key).element$getter().value$setter(tmp$0 = value) , tmp$0;
+  }
+   else {
+    this._list$$getter_().addLast$named(1, $noargs, KeyValuePair$Dart.KeyValuePair$$Factory(KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)]), key, value));
+    this._map$$getter_().ASSIGN_INDEX$operator(key, tmp$1 = this._list$$getter_().lastEntry$named(0, $noargs)) , tmp$1;
+  }
+}
+;
+LinkedHashMapImplementation$Dart.prototype.INDEX$operator = function(key){
+  var entry = this._map$$getter_().INDEX$operator(key);
+  if (entry == null) {
+    return $Dart$Null;
+  }
+  return entry.element$getter().value$getter();
+}
+;
+LinkedHashMapImplementation$Dart.prototype.putIfAbsent$member = function(key, ifAbsent){
+  var tmp$0;
+  var value = this.INDEX$operator(key);
+  if (this.INDEX$operator(key) == null && !this.containsKey$member(key)) {
+    value = ifAbsent(0, $noargs);
+    this.ASSIGN_INDEX$operator(key, tmp$0 = value) , tmp$0;
+  }
+  return value;
+}
+;
+LinkedHashMapImplementation$Dart.prototype.putIfAbsent$named = function($n, $o, key, ifAbsent){
+  if ($o.count || $n != 2)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.putIfAbsent$member.call(this, key, ifAbsent);
+}
+;
+function LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted(dartc_scp$1, entry){
+  var tmp$1, tmp$0;
+  dartc_scp$1.list.ASSIGN_INDEX$operator((tmp$0 = dartc_scp$1.index , (dartc_scp$1.index = ADD$operator(tmp$0, 1) , tmp$0)), tmp$1 = entry.key$getter()) , tmp$1;
+}
+function LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted$named($s0, $n, $o, entry){
+  if ($o.count || $n != 1)
+    $nsme();
+  return LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted($s0, entry);
+}
+function LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)])], null);
+}
+LinkedHashMapImplementation$Dart.prototype.getKeys$member = function(){
+  var dartc_scp$1;
+  dartc_scp$1 = {};
+  dartc_scp$1.list = ListFactory$Dart.List$$Factory([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0)], this.length$getter());
+  dartc_scp$1.index = 0;
+  this._list$$getter_().forEach$named(1, $noargs, $bind(LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted$named, LinkedHashMapImplementation$Dart$getKeys$c0$_$32_7_2$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$1));
+  ;
+  return dartc_scp$1.list;
+  dartc_scp$1 = $Dart$Null;
+}
+;
+LinkedHashMapImplementation$Dart.prototype.getKeys$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.getKeys$member.call(this);
+}
+;
+function LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted(dartc_scp$1, entry){
+  var tmp$1, tmp$0;
+  dartc_scp$1.list.ASSIGN_INDEX$operator((tmp$0 = dartc_scp$1.index , (dartc_scp$1.index = ADD$operator(tmp$0, 1) , tmp$0)), tmp$1 = entry.value$getter()) , tmp$1;
+}
+function LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted$named($s0, $n, $o, entry){
+  if ($o.count || $n != 1)
+    $nsme();
+  return LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted($s0, entry);
+}
+function LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)])], null);
+}
+LinkedHashMapImplementation$Dart.prototype.getValues$member = function(){
+  var dartc_scp$1;
+  dartc_scp$1 = {};
+  dartc_scp$1.list = ListFactory$Dart.List$$Factory([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)], this.length$getter());
+  dartc_scp$1.index = 0;
+  this._list$$getter_().forEach$named(1, $noargs, $bind(LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted$named, LinkedHashMapImplementation$Dart$getValues$c0$_$32_9_2$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$1));
+  ;
+  return dartc_scp$1.list;
+  dartc_scp$1 = $Dart$Null;
+}
+;
+LinkedHashMapImplementation$Dart.prototype.getValues$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.getValues$member.call(this);
+}
+;
+function LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted(dartc_scp$0, entry){
+  dartc_scp$0.f(2, $noargs, entry.key$getter(), entry.value$getter());
+}
+function LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted$named($s0, $n, $o, entry){
+  if ($o.count || $n != 1)
+    $nsme();
+  return LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted($s0, entry);
+}
+function LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([KeyValuePair$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 0), RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('LinkedHashMapImplementation$Dart')), 1)])], null);
+}
+LinkedHashMapImplementation$Dart.prototype.forEach$member = function(f){
+  var dartc_scp$0 = {f:f};
+  this._list$$getter_().forEach$named(1, $noargs, $bind(LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted$named, LinkedHashMapImplementation$Dart$forEach$c0$_$32_7_2$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$0));
+}
+;
+LinkedHashMapImplementation$Dart.prototype.forEach$named = function($n, $o, f){
+  if ($o.count || $n != 1)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.containsKey$member = function(key){
+  return this._map$$getter_().containsKey$named(1, $noargs, key);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.containsKey$named = function($n, $o, key){
+  if ($o.count || $n != 1)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.containsKey$member.call(this, key);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.length$getter = function(){
+  return this._map$$getter_().length$getter();
+}
+;
+LinkedHashMapImplementation$Dart.prototype.isEmpty$member = function(){
+  return EQ$operator(this.length$getter(), 0);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.isEmpty$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.isEmpty$member.call(this);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.clear$member = function(){
+  this._map$$getter_().clear$named(0, $noargs);
+  this._list$$getter_().clear$named(0, $noargs);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.clear$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return LinkedHashMapImplementation$Dart.prototype.clear$member.call(this);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.clear$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+LinkedHashMapImplementation$Dart.prototype.clear$getter = function(){
+  return $bind(LinkedHashMapImplementation$Dart.prototype.clear$named, LinkedHashMapImplementation$Dart.prototype.clear$named_$lookupRTT, this);
+}
+;
+function DoubleLinkedQueueEntry$Dart(){
+}
+DoubleLinkedQueueEntry$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('DoubleLinkedQueueEntry$Dart'), null, typeArgs);
+}
+;
+DoubleLinkedQueueEntry$Dart.$addTo = function(target, typeArgs){
+  var rtt = DoubleLinkedQueueEntry$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+DoubleLinkedQueueEntry$Dart.$Constructor = function(e){
+  var tmp$0;
+  this._element$$setter_(tmp$0 = e) , tmp$0;
+}
+;
+DoubleLinkedQueueEntry$Dart.$Initializer = function(e){
+}
+;
+DoubleLinkedQueueEntry$Dart.DoubleLinkedQueueEntry$$Factory = function($rtt, e){
+  var tmp$0 = new DoubleLinkedQueueEntry$Dart;
+  tmp$0.$typeInfo = $rtt;
+  DoubleLinkedQueueEntry$Dart.$Initializer.call(tmp$0, e);
+  DoubleLinkedQueueEntry$Dart.$Constructor.call(tmp$0, e);
+  return tmp$0;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._previous$$getter_ = function(){
+  return this._previous$$field_;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._previous$$setter_ = function(tmp$0){
+  this._previous$$field_ = tmp$0;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._next$$getter_ = function(){
+  return this._next$$field_;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._next$$setter_ = function(tmp$0){
+  this._next$$field_ = tmp$0;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._element$$getter_ = function(){
+  return this._element$$field_;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._element$$setter_ = function(tmp$0){
+  this._element$$field_ = tmp$0;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._link$$member_ = function(p, n){
+  var tmp$1, tmp$2, tmp$3, tmp$0;
+  this._next$$setter_(tmp$0 = n) , tmp$0;
+  this._previous$$setter_(tmp$1 = p) , tmp$1;
+  p._next$$setter_(tmp$2 = this) , tmp$2;
+  n._previous$$setter_(tmp$3 = this) , tmp$3;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._link$$named_ = function($n, $o, p, n){
+  if ($o.count || $n != 2)
+    $nsme();
+  return DoubleLinkedQueueEntry$Dart.prototype._link$$member_.call(this, p, n);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype.prepend$member = function(e){
+  DoubleLinkedQueueEntry$Dart.DoubleLinkedQueueEntry$$Factory(DoubleLinkedQueueEntry$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('DoubleLinkedQueueEntry$Dart')), 0)]), e)._link$$named_(2, $noargs, this._previous$$getter_(), this);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype.prepend$named = function($n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DoubleLinkedQueueEntry$Dart.prototype.prepend$member.call(this, e);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._asNonSentinelEntry$$member_ = function(){
+  return this;
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype._asNonSentinelEntry$$named_ = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueueEntry$Dart.prototype._asNonSentinelEntry$$member_.call(this);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype.previousEntry$member = function(){
+  return this._previous$$getter_()._asNonSentinelEntry$$named_(0, $noargs);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype.previousEntry$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueueEntry$Dart.prototype.previousEntry$member.call(this);
+}
+;
+DoubleLinkedQueueEntry$Dart.prototype.element$getter = function(){
+  return this._element$$getter_();
+}
+;
+function _DoubleLinkedQueueEntrySentinel$Dart(){
+}
+$inherits(_DoubleLinkedQueueEntrySentinel$Dart, DoubleLinkedQueueEntry$Dart);
+_DoubleLinkedQueueEntrySentinel$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('_DoubleLinkedQueueEntrySentinel$Dart'), _DoubleLinkedQueueEntrySentinel$Dart.$RTTimplements, typeArgs);
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.$RTTimplements = function(rtt, typeArgs){
+  _DoubleLinkedQueueEntrySentinel$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.$addTo = function(target, typeArgs){
+  var rtt = _DoubleLinkedQueueEntrySentinel$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  DoubleLinkedQueueEntry$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.$Constructor = function(){
+  DoubleLinkedQueueEntry$Dart.$Constructor.call(this, $Dart$Null);
+  this._link$$member_(this, this);
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.$Initializer = function(){
+  DoubleLinkedQueueEntry$Dart.$Initializer.call(this, $Dart$Null);
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart._DoubleLinkedQueueEntrySentinel$$Factory = function($rtt){
+  var tmp$0 = new _DoubleLinkedQueueEntrySentinel$Dart;
+  tmp$0.$typeInfo = $rtt;
+  _DoubleLinkedQueueEntrySentinel$Dart.$Initializer.call(tmp$0);
+  _DoubleLinkedQueueEntrySentinel$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.prototype._asNonSentinelEntry$$member_ = function(){
+  return $Dart$Null;
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.prototype._asNonSentinelEntry$$named_ = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _DoubleLinkedQueueEntrySentinel$Dart.prototype._asNonSentinelEntry$$member_.call(this);
+}
+;
+_DoubleLinkedQueueEntrySentinel$Dart.prototype.element$getter = function(){
+  $Dart$ThrowException($intern(EmptyQueueException$Dart.EmptyQueueException$$Factory()));
+}
+;
+function DoubleLinkedQueue$Dart(){
+}
+DoubleLinkedQueue$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('DoubleLinkedQueue$Dart'), DoubleLinkedQueue$Dart.$RTTimplements, typeArgs);
+}
+;
+DoubleLinkedQueue$Dart.$RTTimplements = function(rtt, typeArgs){
+  DoubleLinkedQueue$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+DoubleLinkedQueue$Dart.$addTo = function(target, typeArgs){
+  var rtt = DoubleLinkedQueue$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  Queue$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
+}
+;
+DoubleLinkedQueue$Dart.$Constructor = function(){
+  var tmp$0;
+  this._sentinel$$setter_(tmp$0 = _DoubleLinkedQueueEntrySentinel$Dart._DoubleLinkedQueueEntrySentinel$$Factory(_DoubleLinkedQueueEntrySentinel$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('DoubleLinkedQueue$Dart')), 0)]))) , tmp$0;
+}
+;
+DoubleLinkedQueue$Dart.$Initializer = function(){
+}
+;
+DoubleLinkedQueue$Dart.DoubleLinkedQueue$$Factory = function($rtt){
+  var tmp$0 = new DoubleLinkedQueue$Dart;
+  tmp$0.$typeInfo = $rtt;
+  DoubleLinkedQueue$Dart.$Initializer.call(tmp$0);
+  DoubleLinkedQueue$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+DoubleLinkedQueue$Dart.prototype._sentinel$$getter_ = function(){
+  return this._sentinel$$field_;
+}
+;
+DoubleLinkedQueue$Dart.prototype._sentinel$$setter_ = function(tmp$0){
+  this._sentinel$$field_ = tmp$0;
+}
+;
+DoubleLinkedQueue$Dart.prototype.addLast$member = function(value){
+  this._sentinel$$getter_().prepend$named(1, $noargs, value);
+}
+;
+DoubleLinkedQueue$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.addLast$member.call(this, value);
+}
+;
+DoubleLinkedQueue$Dart.prototype.add$member = function(value){
+  this.addLast$member(value);
+}
+;
+DoubleLinkedQueue$Dart.prototype.add$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.add$member.call(this, value);
+}
+;
+DoubleLinkedQueue$Dart.prototype.lastEntry$member = function(){
+  return this._sentinel$$getter_().previousEntry$named(0, $noargs);
+}
+;
+DoubleLinkedQueue$Dart.prototype.lastEntry$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.lastEntry$member.call(this);
+}
+;
+function DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted(dartc_scp$1, element){
+  var tmp$0;
+  tmp$0 = dartc_scp$1.counter , (dartc_scp$1.counter = ADD$operator(tmp$0, 1) , tmp$0);
+}
+function DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted$named($s0, $n, $o, element){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted($s0, element);
+}
+function DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('DoubleLinkedQueue$Dart')), 0)], null);
+}
+DoubleLinkedQueue$Dart.prototype.length$getter = function(){
+  var dartc_scp$1;
+  dartc_scp$1 = {};
+  dartc_scp$1.counter = 0;
+  this.forEach$member($bind(DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted$named, DoubleLinkedQueue$Dart$length$c0$_$22_6_2$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$1));
+  return dartc_scp$1.counter;
+  dartc_scp$1 = $Dart$Null;
+}
+;
+DoubleLinkedQueue$Dart.prototype.isEmpty$member = function(){
+  return this._sentinel$$getter_()._next$$getter_() === this._sentinel$$getter_();
+}
+;
+DoubleLinkedQueue$Dart.prototype.isEmpty$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.isEmpty$member.call(this);
+}
+;
+DoubleLinkedQueue$Dart.prototype.clear$member = function(){
+  var tmp$1, tmp$0;
+  this._sentinel$$getter_()._next$$setter_(tmp$0 = this._sentinel$$getter_()) , tmp$0;
+  this._sentinel$$getter_()._previous$$setter_(tmp$1 = this._sentinel$$getter_()) , tmp$1;
+}
+;
+DoubleLinkedQueue$Dart.prototype.clear$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.clear$member.call(this);
+}
+;
+DoubleLinkedQueue$Dart.prototype.clear$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+DoubleLinkedQueue$Dart.prototype.clear$getter = function(){
+  return $bind(DoubleLinkedQueue$Dart.prototype.clear$named, DoubleLinkedQueue$Dart.prototype.clear$named_$lookupRTT, this);
+}
+;
+DoubleLinkedQueue$Dart.prototype.forEach$member = function(f){
+  var entry = this._sentinel$$getter_()._next$$getter_();
+  while (entry !== this._sentinel$$getter_()) {
+    var nextEntry = entry._next$$getter_();
+    f(1, $noargs, entry._element$$getter_());
+    entry = nextEntry;
+  }
+}
+;
+DoubleLinkedQueue$Dart.prototype.forEach$named = function($n, $o, f){
+  if ($o.count || $n != 1)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.forEach$member.call(this, f);
+}
+;
+DoubleLinkedQueue$Dart.prototype.iterator$member = function(){
+  return _DoubleLinkedQueueIterator$Dart._DoubleLinkedQueueIterator$$Factory(_DoubleLinkedQueueIterator$Dart.$lookupRTT([RTT.getTypeArg(RTT.getTypeArgsFor(this, $cls('DoubleLinkedQueue$Dart')), 0)]), this._sentinel$$getter_());
+}
+;
+DoubleLinkedQueue$Dart.prototype.iterator$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return DoubleLinkedQueue$Dart.prototype.iterator$member.call(this);
+}
+;
+function _DoubleLinkedQueueIterator$Dart(){
+}
+_DoubleLinkedQueueIterator$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('_DoubleLinkedQueueIterator$Dart'), _DoubleLinkedQueueIterator$Dart.$RTTimplements, typeArgs);
+}
+;
+_DoubleLinkedQueueIterator$Dart.$RTTimplements = function(rtt, typeArgs){
+  _DoubleLinkedQueueIterator$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+_DoubleLinkedQueueIterator$Dart.$addTo = function(target, typeArgs){
+  var rtt = _DoubleLinkedQueueIterator$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  Iterator$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
+}
+;
+_DoubleLinkedQueueIterator$Dart.$Constructor = function(_sentinel){
+  var tmp$0;
+  this._currentEntry$$setter_(tmp$0 = this._sentinel$$getter_()) , tmp$0;
+}
+;
+_DoubleLinkedQueueIterator$Dart.$Initializer = function(_sentinel){
+  this._sentinel$$field_ = _sentinel;
+}
+;
+_DoubleLinkedQueueIterator$Dart._DoubleLinkedQueueIterator$$Factory = function($rtt, _sentinel){
+  var tmp$0 = new _DoubleLinkedQueueIterator$Dart;
+  tmp$0.$typeInfo = $rtt;
+  _DoubleLinkedQueueIterator$Dart.$Initializer.call(tmp$0, _sentinel);
+  _DoubleLinkedQueueIterator$Dart.$Constructor.call(tmp$0, _sentinel);
+  return tmp$0;
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype._sentinel$$getter_ = function(){
+  return this._sentinel$$field_;
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype._currentEntry$$getter_ = function(){
+  return this._currentEntry$$field_;
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype._currentEntry$$setter_ = function(tmp$0){
+  this._currentEntry$$field_ = tmp$0;
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype.hasNext$member = function(){
+  return this._currentEntry$$getter_()._next$$getter_() !== this._sentinel$$getter_();
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype.hasNext$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _DoubleLinkedQueueIterator$Dart.prototype.hasNext$member.call(this);
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype.next$member = function(){
+  var tmp$0;
+  if (!this.hasNext$member()) {
+    $Dart$ThrowException($intern(NoMoreElementsException$Dart.NoMoreElementsException$$Factory()));
+  }
+  this._currentEntry$$setter_(tmp$0 = this._currentEntry$$getter_()._next$$getter_()) , tmp$0;
+  return this._currentEntry$$getter_().element$getter();
+}
+;
+_DoubleLinkedQueueIterator$Dart.prototype.next$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _DoubleLinkedQueueIterator$Dart.prototype.next$member.call(this);
 }
 ;
 function _Logger$Dart(){
@@ -2788,6 +4317,22 @@ Comparable$Dart.$lookupRTT = function(){
 Comparable$Dart.$addTo = function(target){
   var rtt = Comparable$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function Date$Dart(){
+}
+Date$Dart.$lookupRTT = function(){
+  return RTT.create($cls('Date$Dart'), Date$Dart.$RTTimplements);
+}
+;
+Date$Dart.$RTTimplements = function(rtt){
+  Date$Dart.$addTo(rtt);
+}
+;
+Date$Dart.$addTo = function(target){
+  var rtt = Date$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Comparable$Dart.$addTo(target);
 }
 ;
 function double$Dart(){
@@ -2937,6 +4482,50 @@ NoSuchMethodException$Dart.prototype.$const_id = function(){
   return $cls('NoSuchMethodException$Dart') + (':' + $dart_const_id(this._receiver$$field_)) + (':' + $dart_const_id(this._functionName$$field_)) + (':' + $dart_const_id(this._arguments$$field_));
 }
 ;
+function ObjectNotClosureException$Dart(){
+}
+ObjectNotClosureException$Dart.$lookupRTT = function(){
+  return RTT.create($cls('ObjectNotClosureException$Dart'), ObjectNotClosureException$Dart.$RTTimplements);
+}
+;
+ObjectNotClosureException$Dart.$RTTimplements = function(rtt){
+  ObjectNotClosureException$Dart.$addTo(rtt);
+}
+;
+ObjectNotClosureException$Dart.$addTo = function(target){
+  var rtt = ObjectNotClosureException$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Exception$Dart.$addTo(target);
+}
+;
+ObjectNotClosureException$Dart.$Constructor = function(){
+}
+;
+ObjectNotClosureException$Dart.$Initializer = function(){
+}
+;
+ObjectNotClosureException$Dart.ObjectNotClosureException$$Factory = function(){
+  var tmp$0 = new ObjectNotClosureException$Dart;
+  tmp$0.$typeInfo = ObjectNotClosureException$Dart.$lookupRTT();
+  ObjectNotClosureException$Dart.$Initializer.call(tmp$0);
+  ObjectNotClosureException$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+ObjectNotClosureException$Dart.prototype.toString$member = function(){
+  return 'Object is not closure';
+}
+;
+ObjectNotClosureException$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return ObjectNotClosureException$Dart.prototype.toString$member.call(this);
+}
+;
+ObjectNotClosureException$Dart.prototype.$const_id = function(){
+  return $cls('ObjectNotClosureException$Dart');
+}
+;
 function IllegalArgumentException$Dart(){
 }
 IllegalArgumentException$Dart.$lookupRTT = function(){
@@ -2986,6 +4575,50 @@ IllegalArgumentException$Dart.prototype.$const_id = function(){
   return $cls('IllegalArgumentException$Dart') + (':' + $dart_const_id(this._args$$field_));
 }
 ;
+function NullPointerException$Dart(){
+}
+NullPointerException$Dart.$lookupRTT = function(){
+  return RTT.create($cls('NullPointerException$Dart'), NullPointerException$Dart.$RTTimplements);
+}
+;
+NullPointerException$Dart.$RTTimplements = function(rtt){
+  NullPointerException$Dart.$addTo(rtt);
+}
+;
+NullPointerException$Dart.$addTo = function(target){
+  var rtt = NullPointerException$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Exception$Dart.$addTo(target);
+}
+;
+NullPointerException$Dart.$Constructor = function(){
+}
+;
+NullPointerException$Dart.$Initializer = function(){
+}
+;
+NullPointerException$Dart.NullPointerException$$Factory = function(){
+  var tmp$0 = new NullPointerException$Dart;
+  tmp$0.$typeInfo = NullPointerException$Dart.$lookupRTT();
+  NullPointerException$Dart.$Initializer.call(tmp$0);
+  NullPointerException$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+NullPointerException$Dart.prototype.toString$member = function(){
+  return 'NullPointerException';
+}
+;
+NullPointerException$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return NullPointerException$Dart.prototype.toString$member.call(this);
+}
+;
+NullPointerException$Dart.prototype.$const_id = function(){
+  return $cls('NullPointerException$Dart');
+}
+;
 function NoMoreElementsException$Dart(){
 }
 NoMoreElementsException$Dart.$lookupRTT = function(){
@@ -3028,6 +4661,50 @@ NoMoreElementsException$Dart.prototype.toString$named = function($n, $o){
 ;
 NoMoreElementsException$Dart.prototype.$const_id = function(){
   return $cls('NoMoreElementsException$Dart');
+}
+;
+function EmptyQueueException$Dart(){
+}
+EmptyQueueException$Dart.$lookupRTT = function(){
+  return RTT.create($cls('EmptyQueueException$Dart'), EmptyQueueException$Dart.$RTTimplements);
+}
+;
+EmptyQueueException$Dart.$RTTimplements = function(rtt){
+  EmptyQueueException$Dart.$addTo(rtt);
+}
+;
+EmptyQueueException$Dart.$addTo = function(target){
+  var rtt = EmptyQueueException$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  Exception$Dart.$addTo(target);
+}
+;
+EmptyQueueException$Dart.$Constructor = function(){
+}
+;
+EmptyQueueException$Dart.$Initializer = function(){
+}
+;
+EmptyQueueException$Dart.EmptyQueueException$$Factory = function(){
+  var tmp$0 = new EmptyQueueException$Dart;
+  tmp$0.$typeInfo = EmptyQueueException$Dart.$lookupRTT();
+  EmptyQueueException$Dart.$Initializer.call(tmp$0);
+  EmptyQueueException$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+EmptyQueueException$Dart.prototype.toString$member = function(){
+  return 'EmptyQueueException';
+}
+;
+EmptyQueueException$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return EmptyQueueException$Dart.prototype.toString$member.call(this);
+}
+;
+EmptyQueueException$Dart.prototype.$const_id = function(){
+  return $cls('EmptyQueueException$Dart');
 }
 ;
 function UnsupportedOperationException$Dart(){
@@ -3077,6 +4754,28 @@ UnsupportedOperationException$Dart.prototype._message$$getter_ = function(){
 ;
 UnsupportedOperationException$Dart.prototype.$const_id = function(){
   return $cls('UnsupportedOperationException$Dart') + (':' + $dart_const_id(this._message$$field_));
+}
+;
+function Future$Dart(){
+}
+Future$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('Future$Dart'), null, typeArgs);
+}
+;
+Future$Dart.$addTo = function(target, typeArgs){
+  var rtt = Future$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function Completer$Dart(){
+}
+Completer$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('Completer$Dart'), null, typeArgs);
+}
+;
+Completer$Dart.$addTo = function(target, typeArgs){
+  var rtt = Completer$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
 function Hashable$Dart(){
@@ -3200,6 +4899,66 @@ HashMap$Dart.$addTo = function(target, typeArgs){
   Map$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0), RTT.getTypeArg(target.typeArgs, 1)]);
 }
 ;
+function LinkedHashMap$Dart(){
+}
+LinkedHashMap$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('LinkedHashMap$Dart'), LinkedHashMap$Dart.$RTTimplements, typeArgs);
+}
+;
+LinkedHashMap$Dart.$RTTimplements = function(rtt, typeArgs){
+  LinkedHashMap$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+LinkedHashMap$Dart.$addTo = function(target, typeArgs){
+  var rtt = LinkedHashMap$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  HashMap$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0), RTT.getTypeArg(target.typeArgs, 1)]);
+}
+;
+function Math$Dart(){
+}
+Math$Dart.PI$getter = function(){
+  return 3.141592653589793;
+}
+;
+Math$Dart.min$member = function(a, b){
+  var c = a.compareTo$named(1, $noargs, b);
+  if (EQ$operator(c, 0)) {
+    return a;
+  }
+  if (LT$operator(c, 0)) {
+    if ($isNum(b) && b.isNaN$named(0, $noargs)) {
+      return b;
+    }
+    return a;
+  }
+  if ($isNum(a) && a.isNaN$named(0, $noargs)) {
+    return a;
+  }
+  return b;
+}
+;
+Math$Dart.max$member = function(a, b){
+  return LT$operator(a.compareTo$named(1, $noargs, b), 0)?b:a;
+}
+;
+Math$Dart.atan2$member = function(a, b){
+  return MathNatives$Dart.atan2$member(a, b);
+}
+;
+Math$Dart.random$member = function(){
+  return MathNatives$Dart.random$member();
+}
+;
+Math$Dart.sin$member = function(x){
+  return MathNatives$Dart.sin$member(x);
+}
+;
+Math$Dart.cos$member = function(x){
+  return MathNatives$Dart.cos$member(x);
+}
+;
 function num$Dart(){
 }
 num$Dart.$lookupRTT = function(){
@@ -3226,6 +4985,23 @@ Pattern$Dart.$lookupRTT = function(){
 Pattern$Dart.$addTo = function(target){
   var rtt = Pattern$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function Queue$Dart(){
+}
+Queue$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('Queue$Dart'), Queue$Dart.$RTTimplements, typeArgs);
+}
+;
+Queue$Dart.$RTTimplements = function(rtt, typeArgs){
+  Queue$Dart.$addTo(rtt, typeArgs);
+  rtt.derivedTypes = [];
+}
+;
+Queue$Dart.$addTo = function(target, typeArgs){
+  var rtt = Queue$Dart.$lookupRTT(typeArgs);
+  target.implementedTypes[rtt.classKey] = rtt;
+  Collection$Dart.$addTo(target, [RTT.getTypeArg(target.typeArgs, 0)]);
 }
 ;
 function String$Dart(){
@@ -3257,9 +5033,69 @@ StringBuffer$Dart.$addTo = function(target){
   target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
+function TimeZone$Dart(){
+}
+TimeZone$Dart.$lookupRTT = function(){
+  return RTT.create($cls('TimeZone$Dart'));
+}
+;
+TimeZone$Dart.$addTo = function(target){
+  var rtt = TimeZone$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function native__AbstractWorkerWrappingImplementation__addEventListener_AbstractWorker(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AbstractWorkerWrappingImplementation__addEventListener_AbstractWorker_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AttrWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AttrWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__AudioBufferWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AudioBufferSourceNodeWrappingImplementation__get_loop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.loop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AudioParamWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__AudioParamWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3306,6 +5142,153 @@ function native__CanvasPixelArrayWrappingImplementation__set_index(_this, index,
     throw __dom_wrap_exception(e);
   }
 }
+function native__CanvasRenderingContextWrappingImplementation__get_canvas(_this) {
+  try {
+    return __dom_wrap(_this.$dom.canvas);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__set_strokeStyle(_this, value) {
+  try {
+    _this.$dom.strokeStyle = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__arc(_this, x, y, radius, startAngle, endAngle, anticlockwise) {
+  try {
+    return __dom_wrap(_this.$dom.arc(__dom_unwrap(x), __dom_unwrap(y), __dom_unwrap(radius), __dom_unwrap(startAngle), __dom_unwrap(endAngle), __dom_unwrap(anticlockwise)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__beginPath(_this) {
+  try {
+    return __dom_wrap(_this.$dom.beginPath());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__clearRect(_this, x, y, width, height) {
+  try {
+    return __dom_wrap(_this.$dom.clearRect(__dom_unwrap(x), __dom_unwrap(y), __dom_unwrap(width), __dom_unwrap(height)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__closePath(_this) {
+  try {
+    return __dom_wrap(_this.$dom.closePath());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_2(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_3(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh), __dom_unwrap(dx), __dom_unwrap(dy), __dom_unwrap(dw), __dom_unwrap(dh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_4(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_5(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_6(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh), __dom_unwrap(dx), __dom_unwrap(dy), __dom_unwrap(dw), __dom_unwrap(dh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_7(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_8(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__drawImage_9(_this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
+  try {
+    return __dom_wrap(_this.$dom.drawImage(__dom_unwrap(canvas_OR_image_OR_video), __dom_unwrap(sx_OR_x), __dom_unwrap(sy_OR_y), __dom_unwrap(sw_OR_width), __dom_unwrap(height_OR_sh), __dom_unwrap(dx), __dom_unwrap(dy), __dom_unwrap(dw), __dom_unwrap(dh)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__rect(_this, x, y, width, height) {
+  try {
+    return __dom_wrap(_this.$dom.rect(__dom_unwrap(x), __dom_unwrap(y), __dom_unwrap(width), __dom_unwrap(height)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__restore(_this) {
+  try {
+    return __dom_wrap(_this.$dom.restore());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__rotate(_this, angle) {
+  try {
+    return __dom_wrap(_this.$dom.rotate(__dom_unwrap(angle)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__save(_this) {
+  try {
+    return __dom_wrap(_this.$dom.save());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__stroke(_this) {
+  try {
+    return __dom_wrap(_this.$dom.stroke());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CanvasRenderingContext2DWrappingImplementation__translate(_this, tx, ty) {
+  try {
+    return __dom_wrap(_this.$dom.translate(__dom_unwrap(tx), __dom_unwrap(ty)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__CharacterDataWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3313,9 +5296,79 @@ function native__CharacterDataWrappingImplementation__get_length(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__ClientRectWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ClientRectWrappingImplementation__get_left(_this) {
+  try {
+    return __dom_wrap(_this.$dom.left);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ClientRectWrappingImplementation__get_top(_this) {
+  try {
+    return __dom_wrap(_this.$dom.top);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ClientRectWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__ClientRectListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ConsoleWrappingImplementation__error(_this, arg) {
+  try {
+    return __dom_wrap(_this.$dom.error(__dom_unwrap(arg)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__CoordinatesWrappingImplementation__get_speed(_this) {
+  try {
+    return __dom_wrap(_this.$dom.speed);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMApplicationCacheWrappingImplementation__addEventListener_DOMApplicationCache(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMApplicationCacheWrappingImplementation__addEventListener_DOMApplicationCache_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMApplicationCacheWrappingImplementation__update(_this) {
+  try {
+    return __dom_wrap(_this.$dom.update());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3351,6 +5404,20 @@ function native__DOMPluginArrayWrappingImplementation__get_length(_this) {
 function native__DOMSelectionWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMSettableTokenListWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMSettableTokenListWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3397,6 +5464,13 @@ function native__DOMWindowWrappingImplementation__set_length(_this, value) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__DOMWindowWrappingImplementation__get_top(_this) {
+  try {
+    return __dom_wrap(_this.$dom.top);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__DOMWindowWrappingImplementation__get_window(_this) {
   try {
     return __dom_wrap(_this.$dom.window);
@@ -3404,9 +5478,44 @@ function native__DOMWindowWrappingImplementation__get_window(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__DOMWindowWrappingImplementation__addEventListener_DOMWindow(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMWindowWrappingImplementation__addEventListener_DOMWindow_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMWindowWrappingImplementation__postMessage(_this, message, messagePorts_OR_targetOrigin) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message), __dom_unwrap(messagePorts_OR_targetOrigin)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMWindowWrappingImplementation__postMessage_2(_this, message, messagePorts_OR_targetOrigin, targetOrigin) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message), __dom_unwrap(messagePorts_OR_targetOrigin), __dom_unwrap(targetOrigin)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__DOMWindowWrappingImplementation__print(_this) {
   try {
     return __dom_wrap(_this.$dom.print());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DOMWindowWrappingImplementation__webkitRequestAnimationFrame(_this, callback, element) {
+  try {
+    return __dom_wrap(_this.$dom.webkitRequestAnimationFrame(__dom_unwrap(callback), __dom_unwrap(element)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3432,6 +5541,20 @@ function native__DataTransferItemListWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__DedicatedWorkerContextWrappingImplementation__postMessage(_this, message) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DedicatedWorkerContextWrappingImplementation__postMessage_2(_this, message, messagePorts) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message), __dom_unwrap(messagePorts)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__DocumentWrappingImplementation__get_defaultView(_this) {
   try {
     return __dom_wrap(_this.$dom.defaultView);
@@ -3446,6 +5569,13 @@ function native__DocumentWrappingImplementation__get_documentElement(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__DocumentWrappingImplementation__createElement(_this, tagName) {
+  try {
+    return __dom_wrap(_this.$dom.createElement(__dom_unwrap(tagName)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__DocumentWrappingImplementation__querySelector(_this, selectors) {
   try {
     return __dom_wrap(_this.$dom.querySelector(__dom_unwrap(selectors)));
@@ -3456,6 +5586,111 @@ function native__DocumentWrappingImplementation__querySelector(_this, selectors)
 function native__DocumentFragmentWrappingImplementation__querySelector(_this, selectors) {
   try {
     return __dom_wrap(_this.$dom.querySelector(__dom_unwrap(selectors)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__DocumentTypeWrappingImplementation__get_entities(_this) {
+  try {
+    return __dom_wrap(_this.$dom.entities);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_clientHeight(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientHeight);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_clientLeft(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientLeft);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_clientTop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientTop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_clientWidth(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientWidth);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_offsetHeight(_this) {
+  try {
+    return __dom_wrap(_this.$dom.offsetHeight);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_offsetLeft(_this) {
+  try {
+    return __dom_wrap(_this.$dom.offsetLeft);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_offsetTop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.offsetTop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_offsetWidth(_this) {
+  try {
+    return __dom_wrap(_this.$dom.offsetWidth);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_scrollHeight(_this) {
+  try {
+    return __dom_wrap(_this.$dom.scrollHeight);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_scrollLeft(_this) {
+  try {
+    return __dom_wrap(_this.$dom.scrollLeft);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_scrollTop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.scrollTop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__get_scrollWidth(_this) {
+  try {
+    return __dom_wrap(_this.$dom.scrollWidth);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__getBoundingClientRect(_this) {
+  try {
+    return __dom_wrap(_this.$dom.getBoundingClientRect());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ElementWrappingImplementation__getClientRects(_this) {
+  try {
+    return __dom_wrap(_this.$dom.getClientRects());
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3481,9 +5716,58 @@ function native__EntryArraySyncWrappingImplementation__get_length(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__ErrorEventWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__EventExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__EventExceptionWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__EventSourceWrappingImplementation__addEventListener_EventSource(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__EventSourceWrappingImplementation__addEventListener_EventSource_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__EventTargetWrappingImplementation__addEventListener(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__EventTargetWrappingImplementation__addEventListener_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__FileExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3502,6 +5786,20 @@ function native__FileListWrappingImplementation__get_length(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__FileReaderWrappingImplementation__get_error(_this) {
+  try {
+    return __dom_wrap(_this.$dom.error);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__FileWriterWrappingImplementation__get_error(_this) {
+  try {
+    return __dom_wrap(_this.$dom.error);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__FileWriterWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3509,23 +5807,9 @@ function native__FileWriterWrappingImplementation__get_length(_this) {
     throw __dom_wrap_exception(e);
   }
 }
-function native__FileWriterWrappingImplementation__write(_this, data) {
-  try {
-    return __dom_wrap(_this.$dom.write(__dom_unwrap(data)));
-  } catch (e) {
-    throw __dom_wrap_exception(e);
-  }
-}
 function native__FileWriterSyncWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
-  } catch (e) {
-    throw __dom_wrap_exception(e);
-  }
-}
-function native__FileWriterSyncWrappingImplementation__write(_this, data) {
-  try {
-    return __dom_wrap(_this.$dom.write(__dom_unwrap(data)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3586,9 +5870,93 @@ function native__HTMLAnchorElementWrappingImplementation__toString(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__HTMLAppletElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLAppletElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLAppletElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLAppletElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__HTMLBRElementWrappingImplementation__get_clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLButtonElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLButtonElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLButtonElementWrappingImplementation__click(_this) {
+  try {
+    return __dom_wrap(_this.$dom.click());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLCanvasElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLCanvasElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLCanvasElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLCanvasElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLCanvasElementWrappingImplementation__getContext(_this, contextId) {
+  try {
+    return __dom_wrap(_this.$dom.getContext(__dom_unwrap(contextId)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3607,6 +5975,20 @@ function native__HTMLCollectionWrappingImplementation__index(_this, index) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__HTMLDocumentWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLDocumentWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__HTMLDocumentWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
@@ -3614,16 +5996,44 @@ function native__HTMLDocumentWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
-function native__HTMLDocumentWrappingImplementation__write(_this, text) {
+function native__HTMLEmbedElementWrappingImplementation__get_height(_this) {
   try {
-    return __dom_wrap(_this.$dom.write(__dom_unwrap(text)));
+    return __dom_wrap(_this.$dom.height);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
 }
-function native__HTMLElementWrappingImplementation__set_innerHTML(_this, value) {
+function native__HTMLEmbedElementWrappingImplementation__set_height(_this, value) {
   try {
-    _this.$dom.innerHTML = __dom_unwrap(value);
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLEmbedElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLEmbedElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLEmbedElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLEmbedElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3631,6 +6041,342 @@ function native__HTMLElementWrappingImplementation__set_innerHTML(_this, value) 
 function native__HTMLFormElementWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLFrameElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLFrameElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLFrameElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLFrameElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLHRElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLHRElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLIFrameElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_complete(_this) {
+  try {
+    return __dom_wrap(_this.$dom.complete);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLImageElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLInputElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLInputElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLInputElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLInputElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLInputElementWrappingImplementation__click(_this) {
+  try {
+    return __dom_wrap(_this.$dom.click());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLLIElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLLIElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__get_loop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.loop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMarqueeElementWrappingImplementation__start(_this) {
+  try {
+    return __dom_wrap(_this.$dom.start());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMediaElementWrappingImplementation__get_error(_this) {
+  try {
+    return __dom_wrap(_this.$dom.error);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMediaElementWrappingImplementation__get_loop(_this) {
+  try {
+    return __dom_wrap(_this.$dom.loop);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMediaElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMediaElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMediaElementWrappingImplementation__load(_this) {
+  try {
+    return __dom_wrap(_this.$dom.load());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMeterElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLMeterElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLOListElementWrappingImplementation__get_start(_this) {
+  try {
+    return __dom_wrap(_this.$dom.start);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLObjectElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLObjectElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLObjectElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLObjectElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLOptionElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLOptionElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3649,6 +6395,76 @@ function native__HTMLOptionsCollectionWrappingImplementation__set_length_HTMLOpt
     throw __dom_wrap_exception(e);
   }
 }
+function native__HTMLOutputElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLOutputElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLParamElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLParamElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLPreElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLPreElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLProgressElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLProgressElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLScriptElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLScriptElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__HTMLSelectElementWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3663,6 +6479,20 @@ function native__HTMLSelectElementWrappingImplementation__set_length(_this, valu
     throw __dom_wrap_exception(e);
   }
 }
+function native__HTMLSelectElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLSelectElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__HTMLSelectElementWrappingImplementation__add(_this, element, before) {
   try {
     return __dom_wrap(_this.$dom.add(__dom_unwrap(element), __dom_unwrap(before)));
@@ -3670,9 +6500,184 @@ function native__HTMLSelectElementWrappingImplementation__add(_this, element, be
     throw __dom_wrap_exception(e);
   }
 }
+function native__HTMLSourceElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLSourceElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableCellElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableCellElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableCellElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableCellElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableColElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableColElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTableElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTextAreaElementWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTextAreaElementWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTrackElementWrappingImplementation__get_src(_this) {
+  try {
+    return __dom_wrap(_this.$dom.src);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLTrackElementWrappingImplementation__set_src(_this, value) {
+  try {
+    _this.$dom.src = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLVideoElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLVideoElementWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLVideoElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__HTMLVideoElementWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__HistoryWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBCursorWrappingImplementation__get_key(_this) {
+  try {
+    return __dom_wrap(_this.$dom.key);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBCursorWrappingImplementation__update(_this, value) {
+  try {
+    return __dom_wrap(_this.$dom.update(__dom_unwrap(value)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBCursorWithValueWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBDatabaseWrappingImplementation__addEventListener(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBDatabaseWrappingImplementation__addEventListener_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBDatabaseErrorWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBDatabaseExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3701,6 +6706,55 @@ function native__IDBObjectStoreWrappingImplementation__add_2(_this, value, key) 
 function native__IDBObjectStoreWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBObjectStoreWrappingImplementation__index(_this, name) {
+  try {
+    return __dom_wrap(_this.$dom.index(__dom_unwrap(name)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBRequestWrappingImplementation__addEventListener(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBRequestWrappingImplementation__addEventListener_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBTransactionWrappingImplementation__addEventListener(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__IDBTransactionWrappingImplementation__addEventListener_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ImageDataWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ImageDataWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3789,6 +6843,69 @@ function native__MediaListWrappingImplementation__index(_this, index) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__MessagePortWrappingImplementation__addEventListener_MessagePort(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MessagePortWrappingImplementation__addEventListener_MessagePort_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MessagePortWrappingImplementation__postMessage(_this, message) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MessagePortWrappingImplementation__postMessage_2(_this, message, messagePorts) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message), __dom_unwrap(messagePorts)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MessagePortWrappingImplementation__start(_this) {
+  try {
+    return __dom_wrap(_this.$dom.start());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MouseEventWrappingImplementation__get_clientX(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientX);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MouseEventWrappingImplementation__get_clientY(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientY);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MouseEventWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__MouseEventWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__NamedNodeMapWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3817,6 +6934,20 @@ function native__NodeWrappingImplementation__get_parentNode(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__NodeWrappingImplementation__addEventListener_Node(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__NodeWrappingImplementation__addEventListener_Node_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__NodeListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3838,9 +6969,51 @@ function native__NodeSelectorWrappingImplementation__querySelector(_this, select
     throw __dom_wrap_exception(e);
   }
 }
+function native__NotificationWrappingImplementation__addEventListener_Notification(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__NotificationWrappingImplementation__addEventListener_Notification_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__OperationNotAllowedExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__OperationNotAllowedExceptionWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__PositionErrorWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__RangeWrappingImplementation__getBoundingClientRect(_this) {
+  try {
+    return __dom_wrap(_this.$dom.getBoundingClientRect());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__RangeWrappingImplementation__getClientRects(_this) {
+  try {
+    return __dom_wrap(_this.$dom.getClientRects());
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3852,6 +7025,13 @@ function native__RangeWrappingImplementation__toString(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__RangeExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__RangeExceptionWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
@@ -3859,9 +7039,65 @@ function native__RangeExceptionWrappingImplementation__toString(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__RectWrappingImplementation__get_left(_this) {
+  try {
+    return __dom_wrap(_this.$dom.left);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__RectWrappingImplementation__get_top(_this) {
+  try {
+    return __dom_wrap(_this.$dom.top);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SQLErrorWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SQLExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SQLResultSetRowListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGAngleWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGAngleWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGCursorElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGCursorElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3880,9 +7116,30 @@ function native__SVGElementInstanceWrappingImplementation__get_parentNode(_this)
     throw __dom_wrap_exception(e);
   }
 }
+function native__SVGElementInstanceWrappingImplementation__addEventListener_SVGElementInstance(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGElementInstanceWrappingImplementation__addEventListener_SVGElementInstance_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SVGElementInstanceListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3894,9 +7151,723 @@ function native__SVGExceptionWrappingImplementation__toString(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__SVGFEBlendElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEBlendElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEBlendElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEBlendElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEColorMatrixElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEColorMatrixElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEColorMatrixElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEColorMatrixElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEComponentTransferElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEComponentTransferElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEComponentTransferElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEComponentTransferElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFECompositeElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFECompositeElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFECompositeElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFECompositeElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEConvolveMatrixElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEConvolveMatrixElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEConvolveMatrixElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEConvolveMatrixElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDiffuseLightingElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDiffuseLightingElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDiffuseLightingElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDiffuseLightingElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDisplacementMapElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDisplacementMapElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDisplacementMapElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDisplacementMapElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDropShadowElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDropShadowElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDropShadowElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEDropShadowElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEFloodElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEFloodElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEFloodElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEFloodElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEGaussianBlurElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEGaussianBlurElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEGaussianBlurElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEGaussianBlurElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEImageElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEImageElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEImageElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEImageElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMergeElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMergeElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMergeElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMergeElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMorphologyElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMorphologyElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMorphologyElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEMorphologyElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEOffsetElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEOffsetElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEOffsetElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEOffsetElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEPointLightElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFEPointLightElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpecularLightingElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpecularLightingElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpecularLightingElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpecularLightingElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpotLightElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFESpotLightElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETileElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETileElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETileElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETileElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETurbulenceElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETurbulenceElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETurbulenceElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFETurbulenceElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGForeignObjectElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGForeignObjectElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGForeignObjectElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGForeignObjectElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGGlyphRefElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGGlyphRefElementWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGGlyphRefElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGGlyphRefElementWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGImageElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGImageElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGImageElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGImageElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGLengthWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGLengthWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SVGLengthListWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMaskElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMaskElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMaskElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMaskElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMatrixWrappingImplementation__rotate(_this, angle) {
+  try {
+    return __dom_wrap(_this.$dom.rotate(__dom_unwrap(angle)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGMatrixWrappingImplementation__translate(_this, x, y) {
+  try {
+    return __dom_wrap(_this.$dom.translate(__dom_unwrap(x), __dom_unwrap(y)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGNumberWrappingImplementation__get_value(_this) {
+  try {
+    return __dom_wrap(_this.$dom.value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGNumberWrappingImplementation__set_value(_this, value) {
+  try {
+    _this.$dom.value = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3908,9 +7879,541 @@ function native__SVGNumberListWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__SVGPathSegArcAbsWrappingImplementation__get_angle(_this) {
+  try {
+    return __dom_wrap(_this.$dom.angle);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcAbsWrappingImplementation__set_angle(_this, value) {
+  try {
+    _this.$dom.angle = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__get_angle(_this) {
+  try {
+    return __dom_wrap(_this.$dom.angle);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__set_angle(_this, value) {
+  try {
+    _this.$dom.angle = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegArcRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoHorizontalAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoHorizontalAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoHorizontalRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoHorizontalRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoVerticalAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoVerticalAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoVerticalRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegLinetoVerticalRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SVGPathSegListWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoAbsWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoAbsWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoAbsWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoAbsWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoRelWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoRelWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoRelWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPathSegMovetoRelWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPatternElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPatternElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPatternElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPatternElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPointWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPointWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPointWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGPointWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3922,6 +8425,118 @@ function native__SVGPointListWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__SVGRectWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__set_height(_this, value) {
+  try {
+    _this.$dom.height = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__set_width(_this, value) {
+  try {
+    _this.$dom.width = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGRectElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGSVGElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGSVGElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGSVGElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGSVGElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SVGStringListWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
@@ -3929,9 +8544,86 @@ function native__SVGStringListWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__SVGTextPositioningElementWrappingImplementation__get_rotate(_this) {
+  try {
+    return __dom_wrap(_this.$dom.rotate);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGTextPositioningElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGTextPositioningElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGTransformWrappingImplementation__get_angle(_this) {
+  try {
+    return __dom_wrap(_this.$dom.angle);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__SVGTransformListWrappingImplementation__clear(_this) {
   try {
     return __dom_wrap(_this.$dom.clear());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGUseElementWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGUseElementWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGUseElementWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__SVGUseElementWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ScreenWrappingImplementation__get_height(_this) {
+  try {
+    return __dom_wrap(_this.$dom.height);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ScreenWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__ScriptProfileNodeWrappingImplementation__get_totalTime(_this) {
+  try {
+    return __dom_wrap(_this.$dom.totalTime);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -3957,6 +8649,20 @@ function native__StorageWrappingImplementation__clear(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__StorageWrappingImplementation__key(_this, index) {
+  try {
+    return __dom_wrap(_this.$dom.key(__dom_unwrap(index)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__StorageEventWrappingImplementation__get_key(_this) {
+  try {
+    return __dom_wrap(_this.$dom.key);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__StyleSheetListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3971,6 +8677,13 @@ function native__StyleSheetListWrappingImplementation__index(_this, index) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__TextMetricsWrappingImplementation__get_width(_this) {
+  try {
+    return __dom_wrap(_this.$dom.width);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__TextTrackCueListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
@@ -3981,6 +8694,27 @@ function native__TextTrackCueListWrappingImplementation__get_length(_this) {
 function native__TimeRangesWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__TimeRangesWrappingImplementation__start(_this, index) {
+  try {
+    return __dom_wrap(_this.$dom.start(__dom_unwrap(index)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__TouchWrappingImplementation__get_clientX(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientX);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__TouchWrappingImplementation__get_clientY(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientY);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -4076,9 +8810,37 @@ function native__WebGLRenderingContextWrappingImplementation__clear(_this, mask)
     throw __dom_wrap_exception(e);
   }
 }
+function native__WebKitAnimationWrappingImplementation__get_elapsedTime(_this) {
+  try {
+    return __dom_wrap(_this.$dom.elapsedTime);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitAnimationWrappingImplementation__set_elapsedTime(_this, value) {
+  try {
+    _this.$dom.elapsedTime = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitAnimationEventWrappingImplementation__get_elapsedTime(_this) {
+  try {
+    return __dom_wrap(_this.$dom.elapsedTime);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__WebKitAnimationListWrappingImplementation__get_length(_this) {
   try {
     return __dom_wrap(_this.$dom.length);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitCSSMatrixWrappingImplementation__rotate(_this, rotX, rotY, rotZ) {
+  try {
+    return __dom_wrap(_this.$dom.rotate(__dom_unwrap(rotX), __dom_unwrap(rotY), __dom_unwrap(rotZ)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -4090,6 +8852,62 @@ function native__WebKitCSSMatrixWrappingImplementation__toString(_this) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__WebKitCSSMatrixWrappingImplementation__translate(_this, x, y, z) {
+  try {
+    return __dom_wrap(_this.$dom.translate(__dom_unwrap(x), __dom_unwrap(y), __dom_unwrap(z)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitPointWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitPointWrappingImplementation__set_x(_this, value) {
+  try {
+    _this.$dom.x = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitPointWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitPointWrappingImplementation__set_y(_this, value) {
+  try {
+    _this.$dom.y = __dom_unwrap(value);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebKitTransitionEventWrappingImplementation__get_elapsedTime(_this) {
+  try {
+    return __dom_wrap(_this.$dom.elapsedTime);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebSocketWrappingImplementation__addEventListener_WebSocket(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WebSocketWrappingImplementation__addEventListener_WebSocket_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__WebSocketWrappingImplementation__send(_this, data) {
   try {
     return __dom_wrap(_this.$dom.send(__dom_unwrap(data)));
@@ -4097,9 +8915,79 @@ function native__WebSocketWrappingImplementation__send(_this, data) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__WheelEventWrappingImplementation__get_clientX(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientX);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WheelEventWrappingImplementation__get_clientY(_this) {
+  try {
+    return __dom_wrap(_this.$dom.clientY);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WheelEventWrappingImplementation__get_x(_this) {
+  try {
+    return __dom_wrap(_this.$dom.x);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WheelEventWrappingImplementation__get_y(_this) {
+  try {
+    return __dom_wrap(_this.$dom.y);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WorkerWrappingImplementation__postMessage(_this, message) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WorkerWrappingImplementation__postMessage_2(_this, message, messagePorts) {
+  try {
+    return __dom_wrap(_this.$dom.postMessage(__dom_unwrap(message), __dom_unwrap(messagePorts)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WorkerContextWrappingImplementation__addEventListener(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__WorkerContextWrappingImplementation__addEventListener_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__WorkerLocationWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__XMLHttpRequestWrappingImplementation__addEventListener_XMLHttpRequest(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__XMLHttpRequestWrappingImplementation__addEventListener_XMLHttpRequest_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -4146,9 +9034,37 @@ function native__XMLHttpRequestWrappingImplementation__send_6(_this, data) {
     throw __dom_wrap_exception(e);
   }
 }
+function native__XMLHttpRequestExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
 function native__XMLHttpRequestExceptionWrappingImplementation__toString(_this) {
   try {
     return __dom_wrap(_this.$dom.toString());
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__XMLHttpRequestUploadWrappingImplementation__addEventListener_XMLHttpRequestUpload(_this, type, listener) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__XMLHttpRequestUploadWrappingImplementation__addEventListener_XMLHttpRequestUpload_2(_this, type, listener, useCapture) {
+  try {
+    return __dom_wrap(_this.$dom.addEventListener(__dom_unwrap(type), __dom_unwrap(listener), __dom_unwrap(useCapture)));
+  } catch (e) {
+    throw __dom_wrap_exception(e);
+  }
+}
+function native__XPathExceptionWrappingImplementation__get_message(_this) {
+  try {
+    return __dom_wrap(_this.$dom.message);
   } catch (e) {
     throw __dom_wrap_exception(e);
   }
@@ -13844,6 +18760,37 @@ _AbstractWorkerWrappingImplementation$Dart.create__AbstractWorkerWrappingImpleme
 function native__AbstractWorkerWrappingImplementation_create__AbstractWorkerWrappingImplementation(){
   return _AbstractWorkerWrappingImplementation$Dart.create__AbstractWorkerWrappingImplementation$member();
 }
+_AbstractWorkerWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _AbstractWorkerWrappingImplementation$Dart._addEventListener_AbstractWorker$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _AbstractWorkerWrappingImplementation$Dart._addEventListener_AbstractWorker_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_AbstractWorkerWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _AbstractWorkerWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_AbstractWorkerWrappingImplementation$Dart._addEventListener_AbstractWorker$$member_ = function(receiver, type, listener){
+  return native__AbstractWorkerWrappingImplementation__addEventListener_AbstractWorker(receiver, type, listener);
+}
+;
+_AbstractWorkerWrappingImplementation$Dart._addEventListener_AbstractWorker_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__AbstractWorkerWrappingImplementation__addEventListener_AbstractWorker_2(receiver, type, listener, useCapture);
+}
+;
 _AbstractWorkerWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'AbstractWorker';
 }
@@ -14393,6 +19340,22 @@ _AudioParamWrappingImplementation$Dart.create__AudioParamWrappingImplementation$
 function native__AudioParamWrappingImplementation_create__AudioParamWrappingImplementation(){
   return _AudioParamWrappingImplementation$Dart.create__AudioParamWrappingImplementation$member();
 }
+_AudioParamWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _AudioParamWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_AudioParamWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _AudioParamWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_AudioParamWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__AudioParamWrappingImplementation__get_value(_this);
+}
+;
+_AudioParamWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__AudioParamWrappingImplementation__set_value(_this, value);
+}
+;
 _AudioParamWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'AudioParam';
 }
@@ -14528,6 +19491,14 @@ _AudioBufferSourceNodeWrappingImplementation$Dart.create__AudioBufferSourceNodeW
 function native__AudioBufferSourceNodeWrappingImplementation_create__AudioBufferSourceNodeWrappingImplementation(){
   return _AudioBufferSourceNodeWrappingImplementation$Dart.create__AudioBufferSourceNodeWrappingImplementation$member();
 }
+_AudioBufferSourceNodeWrappingImplementation$Dart.prototype.loop$getter = function(){
+  return _AudioBufferSourceNodeWrappingImplementation$Dart._get_loop$$member_(this);
+}
+;
+_AudioBufferSourceNodeWrappingImplementation$Dart._get_loop$$member_ = function(_this){
+  return native__AudioBufferSourceNodeWrappingImplementation__get_loop(_this);
+}
+;
 _AudioBufferSourceNodeWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'AudioBufferSourceNode';
 }
@@ -15425,6 +20396,18 @@ _CanvasPixelArrayWrappingImplementation$Dart._index$$member_ = function(_this, i
   return native__CanvasPixelArrayWrappingImplementation__index(_this, index);
 }
 ;
+_CanvasPixelArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _CanvasPixelArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_CanvasPixelArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _CanvasPixelArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _CanvasPixelArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _CanvasPixelArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _CanvasPixelArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -15441,6 +20424,16 @@ _CanvasPixelArrayWrappingImplementation$Dart.prototype.add$named = function($n, 
   if ($o.count || $n != 1)
     $nsme();
   return _CanvasPixelArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_CanvasPixelArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_CanvasPixelArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _CanvasPixelArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _CanvasPixelArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -15469,6 +20462,16 @@ _CanvasPixelArrayWrappingImplementation$Dart.prototype.forEach$named = function(
   if ($o.count || $n != 1)
     $nsme();
   return _CanvasPixelArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_CanvasPixelArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_CanvasPixelArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _CanvasPixelArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _CanvasPixelArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -15536,6 +20539,14 @@ _CanvasRenderingContextWrappingImplementation$Dart.create__CanvasRenderingContex
 function native__CanvasRenderingContextWrappingImplementation_create__CanvasRenderingContextWrappingImplementation(){
   return _CanvasRenderingContextWrappingImplementation$Dart.create__CanvasRenderingContextWrappingImplementation$member();
 }
+_CanvasRenderingContextWrappingImplementation$Dart.prototype.canvas$getter = function(){
+  return _CanvasRenderingContextWrappingImplementation$Dart._get_canvas$$member_(this);
+}
+;
+_CanvasRenderingContextWrappingImplementation$Dart._get_canvas$$member_ = function(_this){
+  return native__CanvasRenderingContextWrappingImplementation__get_canvas(_this);
+}
+;
 _CanvasRenderingContextWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'CanvasRenderingContext';
 }
@@ -15581,6 +20592,343 @@ _CanvasRenderingContext2DWrappingImplementation$Dart.create__CanvasRenderingCont
 function native__CanvasRenderingContext2DWrappingImplementation_create__CanvasRenderingContext2DWrappingImplementation(){
   return _CanvasRenderingContext2DWrappingImplementation$Dart.create__CanvasRenderingContext2DWrappingImplementation$member();
 }
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.strokeStyle$setter = function(value){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._set_strokeStyle$$member_(this, value);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._set_strokeStyle$$member_ = function(_this, value){
+  return native__CanvasRenderingContext2DWrappingImplementation__set_strokeStyle(_this, value);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$member = function(x, y, radius, startAngle, endAngle, anticlockwise){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._arc$$member_(this, x, y, radius, startAngle, endAngle, anticlockwise);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$named = function($n, $o, x, y, radius, startAngle, endAngle, anticlockwise){
+  if ($o.count || $n != 6)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$member.call(this, x, y, radius, startAngle, endAngle, anticlockwise);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._arc$$member_ = function(receiver, x, y, radius, startAngle, endAngle, anticlockwise){
+  return native__CanvasRenderingContext2DWrappingImplementation__arc(receiver, x, y, radius, startAngle, endAngle, anticlockwise);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$member = function(){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._beginPath$$member_(this);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$member.call(this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._beginPath$$member_ = function(receiver){
+  return native__CanvasRenderingContext2DWrappingImplementation__beginPath(receiver);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$member = function(x, y, width, height){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._clearRect$$member_(this, x, y, width, height);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$named = function($n, $o, x, y, width, height){
+  if ($o.count || $n != 4)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$member.call(this, x, y, width, height);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._clearRect$$member_ = function(receiver, x, y, width, height){
+  return native__CanvasRenderingContext2DWrappingImplementation__clearRect(receiver, x, y, width, height);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$member = function(){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._closePath$$member_(this);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$member.call(this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._closePath$$member_ = function(receiver){
+  return native__CanvasRenderingContext2DWrappingImplementation__closePath(receiver);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$member = function(canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  var tmp$1, tmp$2, tmp$0;
+  if (!!(tmp$0 = canvas_OR_image_OR_video , tmp$0 != null && tmp$0.$implements$HTMLImageElement$Dart)) {
+    if (sw_OR_width == null) {
+      if (height_OR_sh == null) {
+        if (dx == null) {
+          if (dy == null) {
+            if (dw == null) {
+              if (dh == null) {
+                _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+     else {
+      if (dx == null) {
+        if (dy == null) {
+          if (dw == null) {
+            if (dh == null) {
+              _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_2$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+              return;
+            }
+          }
+        }
+      }
+       else {
+        _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_3$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+        return;
+      }
+    }
+  }
+   else {
+    if (!!(tmp$1 = canvas_OR_image_OR_video , tmp$1 != null && tmp$1.$implements$HTMLCanvasElement$Dart)) {
+      if (sw_OR_width == null) {
+        if (height_OR_sh == null) {
+          if (dx == null) {
+            if (dy == null) {
+              if (dw == null) {
+                if (dh == null) {
+                  _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_4$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+       else {
+        if (dx == null) {
+          if (dy == null) {
+            if (dw == null) {
+              if (dh == null) {
+                _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_5$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+                return;
+              }
+            }
+          }
+        }
+         else {
+          _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_6$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+          return;
+        }
+      }
+    }
+     else {
+      if (!!(tmp$2 = canvas_OR_image_OR_video , tmp$2 != null && tmp$2.$implements$HTMLVideoElement$Dart)) {
+        if (sw_OR_width == null) {
+          if (height_OR_sh == null) {
+            if (dx == null) {
+              if (dy == null) {
+                if (dw == null) {
+                  if (dh == null) {
+                    _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_7$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+                    return;
+                  }
+                }
+              }
+            }
+          }
+        }
+         else {
+          if (dx == null) {
+            if (dy == null) {
+              if (dw == null) {
+                if (dh == null) {
+                  _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_8$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+                  return;
+                }
+              }
+            }
+          }
+           else {
+            _CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_9$$member_(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+            return;
+          }
+        }
+      }
+    }
+  }
+  $Dart$ThrowException('Incorrect number or type of arguments');
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$named = function($n, $o, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 3:
+      sw_OR_width = '$p_sw_OR_width' in $o?(++seen , $o.$p_sw_OR_width):(++def , $Dart$Null);
+    case 4:
+      height_OR_sh = '$p_height_OR_sh' in $o?(++seen , $o.$p_height_OR_sh):(++def , $Dart$Null);
+    case 5:
+      dx = '$p_dx' in $o?(++seen , $o.$p_dx):(++def , $Dart$Null);
+    case 6:
+      dy = '$p_dy' in $o?(++seen , $o.$p_dy):(++def , $Dart$Null);
+    case 7:
+      dw = '$p_dw' in $o?(++seen , $o.$p_dw):(++def , $Dart$Null);
+    case 8:
+      dh = '$p_dh' in $o?(++seen , $o.$p_dh):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 9)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$member.call(this, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_2$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_2(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_3$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_3(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_4$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_4(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_5$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_5(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_6$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_6(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_7$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_7(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_8$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_8(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._drawImage_9$$member_ = function(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  return native__CanvasRenderingContext2DWrappingImplementation__drawImage_9(receiver, canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member = function(x, y, width, height){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._rect$$member_(this, x, y, width, height);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named = function($n, $o, x, y, width, height){
+  if ($o.count || $n != 4)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member.call(this, x, y, width, height);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT(), num$Dart.$lookupRTT(), num$Dart.$lookupRTT(), num$Dart.$lookupRTT()], null);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$getter = function(){
+  return $bind(_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named, _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named_$lookupRTT, this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._rect$$member_ = function(receiver, x, y, width, height){
+  return native__CanvasRenderingContext2DWrappingImplementation__rect(receiver, x, y, width, height);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$member = function(){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._restore$$member_(this);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$member.call(this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._restore$$member_ = function(receiver){
+  return native__CanvasRenderingContext2DWrappingImplementation__restore(receiver);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$member = function(angle){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._rotate$$member_(this, angle);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named = function($n, $o, angle){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$member.call(this, angle);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT()], null);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return $bind(_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named, _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT, this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._rotate$$member_ = function(receiver, angle){
+  return native__CanvasRenderingContext2DWrappingImplementation__rotate(receiver, angle);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$member = function(){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._save$$member_(this);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$member.call(this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._save$$member_ = function(receiver){
+  return native__CanvasRenderingContext2DWrappingImplementation__save(receiver);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$member = function(){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._stroke$$member_(this);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$member.call(this);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._stroke$$member_ = function(receiver){
+  return native__CanvasRenderingContext2DWrappingImplementation__stroke(receiver);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$member = function(tx, ty){
+  _CanvasRenderingContext2DWrappingImplementation$Dart._translate$$member_(this, tx, ty);
+  return;
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$named = function($n, $o, tx, ty){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$member.call(this, tx, ty);
+}
+;
+_CanvasRenderingContext2DWrappingImplementation$Dart._translate$$member_ = function(receiver, tx, ty){
+  return native__CanvasRenderingContext2DWrappingImplementation__translate(receiver, tx, ty);
+}
+;
 _CanvasRenderingContext2DWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'CanvasRenderingContext2D';
 }
@@ -15679,6 +21027,38 @@ _ClientRectWrappingImplementation$Dart.create__ClientRectWrappingImplementation$
 function native__ClientRectWrappingImplementation_create__ClientRectWrappingImplementation(){
   return _ClientRectWrappingImplementation$Dart.create__ClientRectWrappingImplementation$member();
 }
+_ClientRectWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _ClientRectWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_ClientRectWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__ClientRectWrappingImplementation__get_height(_this);
+}
+;
+_ClientRectWrappingImplementation$Dart.prototype.left$getter = function(){
+  return _ClientRectWrappingImplementation$Dart._get_left$$member_(this);
+}
+;
+_ClientRectWrappingImplementation$Dart._get_left$$member_ = function(_this){
+  return native__ClientRectWrappingImplementation__get_left(_this);
+}
+;
+_ClientRectWrappingImplementation$Dart.prototype.top$getter = function(){
+  return _ClientRectWrappingImplementation$Dart._get_top$$member_(this);
+}
+;
+_ClientRectWrappingImplementation$Dart._get_top$$member_ = function(_this){
+  return native__ClientRectWrappingImplementation__get_top(_this);
+}
+;
+_ClientRectWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _ClientRectWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_ClientRectWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__ClientRectWrappingImplementation__get_width(_this);
+}
+;
 _ClientRectWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'ClientRect';
 }
@@ -15769,6 +21149,29 @@ _ConsoleWrappingImplementation$Dart.create__ConsoleWrappingImplementation$member
 function native__ConsoleWrappingImplementation_create__ConsoleWrappingImplementation(){
   return _ConsoleWrappingImplementation$Dart.create__ConsoleWrappingImplementation$member();
 }
+_ConsoleWrappingImplementation$Dart.prototype.error$member = function(arg){
+  _ConsoleWrappingImplementation$Dart._error$$member_(this, arg);
+  return;
+}
+;
+_ConsoleWrappingImplementation$Dart.prototype.error$named = function($n, $o, arg){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _ConsoleWrappingImplementation$Dart.prototype.error$member.call(this, arg);
+}
+;
+_ConsoleWrappingImplementation$Dart.prototype.error$named_$lookupRTT = function(){
+  return RTT.createFunction([Object.$lookupRTT()], null);
+}
+;
+_ConsoleWrappingImplementation$Dart.prototype.error$getter = function(){
+  return $bind(_ConsoleWrappingImplementation$Dart.prototype.error$named, _ConsoleWrappingImplementation$Dart.prototype.error$named_$lookupRTT, this);
+}
+;
+_ConsoleWrappingImplementation$Dart._error$$member_ = function(receiver, arg){
+  return native__ConsoleWrappingImplementation__error(receiver, arg);
+}
+;
 _ConsoleWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Console';
 }
@@ -15859,6 +21262,14 @@ _CoordinatesWrappingImplementation$Dart.create__CoordinatesWrappingImplementatio
 function native__CoordinatesWrappingImplementation_create__CoordinatesWrappingImplementation(){
   return _CoordinatesWrappingImplementation$Dart.create__CoordinatesWrappingImplementation$member();
 }
+_CoordinatesWrappingImplementation$Dart.prototype.speed$getter = function(){
+  return _CoordinatesWrappingImplementation$Dart._get_speed$$member_(this);
+}
+;
+_CoordinatesWrappingImplementation$Dart._get_speed$$member_ = function(_this){
+  return native__CoordinatesWrappingImplementation__get_speed(_this);
+}
+;
 _CoordinatesWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Coordinates';
 }
@@ -15994,6 +21405,52 @@ _DOMApplicationCacheWrappingImplementation$Dart.create__DOMApplicationCacheWrapp
 function native__DOMApplicationCacheWrappingImplementation_create__DOMApplicationCacheWrappingImplementation(){
   return _DOMApplicationCacheWrappingImplementation$Dart.create__DOMApplicationCacheWrappingImplementation$member();
 }
+_DOMApplicationCacheWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _DOMApplicationCacheWrappingImplementation$Dart._addEventListener_DOMApplicationCache$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _DOMApplicationCacheWrappingImplementation$Dart._addEventListener_DOMApplicationCache_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _DOMApplicationCacheWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart._addEventListener_DOMApplicationCache$$member_ = function(receiver, type, listener){
+  return native__DOMApplicationCacheWrappingImplementation__addEventListener_DOMApplicationCache(receiver, type, listener);
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart._addEventListener_DOMApplicationCache_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__DOMApplicationCacheWrappingImplementation__addEventListener_DOMApplicationCache_2(receiver, type, listener, useCapture);
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart.prototype.update$member = function(){
+  _DOMApplicationCacheWrappingImplementation$Dart._update$$member_(this);
+  return;
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _DOMApplicationCacheWrappingImplementation$Dart.prototype.update$member.call(this);
+}
+;
+_DOMApplicationCacheWrappingImplementation$Dart._update$$member_ = function(receiver){
+  return native__DOMApplicationCacheWrappingImplementation__update(receiver);
+}
+;
 _DOMApplicationCacheWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'DOMApplicationCache';
 }
@@ -16039,6 +21496,14 @@ _DOMExceptionWrappingImplementation$Dart.create__DOMExceptionWrappingImplementat
 function native__DOMExceptionWrappingImplementation_create__DOMExceptionWrappingImplementation(){
   return _DOMExceptionWrappingImplementation$Dart.create__DOMExceptionWrappingImplementation$member();
 }
+_DOMExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _DOMExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_DOMExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__DOMExceptionWrappingImplementation__get_message(_this);
+}
+;
 _DOMExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _DOMExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -16669,6 +22134,22 @@ _DOMSettableTokenListWrappingImplementation$Dart.create__DOMSettableTokenListWra
 function native__DOMSettableTokenListWrappingImplementation_create__DOMSettableTokenListWrappingImplementation(){
   return _DOMSettableTokenListWrappingImplementation$Dart.create__DOMSettableTokenListWrappingImplementation$member();
 }
+_DOMSettableTokenListWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _DOMSettableTokenListWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_DOMSettableTokenListWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _DOMSettableTokenListWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_DOMSettableTokenListWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__DOMSettableTokenListWrappingImplementation__get_value(_this);
+}
+;
+_DOMSettableTokenListWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__DOMSettableTokenListWrappingImplementation__set_value(_this, value);
+}
+;
 _DOMSettableTokenListWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'DOMSettableTokenList';
 }
@@ -16783,12 +22264,88 @@ _DOMWindowWrappingImplementation$Dart._set_length$$member_ = function(_this, val
   return native__DOMWindowWrappingImplementation__set_length(_this, value);
 }
 ;
+_DOMWindowWrappingImplementation$Dart.prototype.top$getter = function(){
+  return _DOMWindowWrappingImplementation$Dart._get_top$$member_(this);
+}
+;
+_DOMWindowWrappingImplementation$Dart._get_top$$member_ = function(_this){
+  return native__DOMWindowWrappingImplementation__get_top(_this);
+}
+;
 _DOMWindowWrappingImplementation$Dart.prototype.window$getter = function(){
   return _DOMWindowWrappingImplementation$Dart._get_window$$member_(this);
 }
 ;
 _DOMWindowWrappingImplementation$Dart._get_window$$member_ = function(_this){
   return native__DOMWindowWrappingImplementation__get_window(_this);
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _DOMWindowWrappingImplementation$Dart._addEventListener_DOMWindow$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _DOMWindowWrappingImplementation$Dart._addEventListener_DOMWindow_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _DOMWindowWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_DOMWindowWrappingImplementation$Dart._addEventListener_DOMWindow$$member_ = function(receiver, type, listener){
+  return native__DOMWindowWrappingImplementation__addEventListener_DOMWindow(receiver, type, listener);
+}
+;
+_DOMWindowWrappingImplementation$Dart._addEventListener_DOMWindow_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__DOMWindowWrappingImplementation__addEventListener_DOMWindow_2(receiver, type, listener, useCapture);
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.postMessage$member = function(message, messagePorts_OR_targetOrigin, targetOrigin){
+  var tmp$0;
+  if ($isString(messagePorts_OR_targetOrigin)) {
+    if (targetOrigin == null) {
+      _DOMWindowWrappingImplementation$Dart._postMessage$$member_(this, message, messagePorts_OR_targetOrigin);
+      return;
+    }
+  }
+   else {
+    if (!!(tmp$0 = messagePorts_OR_targetOrigin , tmp$0 != null && tmp$0.$implements$List$Dart)) {
+      _DOMWindowWrappingImplementation$Dart._postMessage_2$$member_(this, message, messagePorts_OR_targetOrigin, targetOrigin);
+      return;
+    }
+  }
+  $Dart$ThrowException('Incorrect number or type of arguments');
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.postMessage$named = function($n, $o, message, messagePorts_OR_targetOrigin, targetOrigin){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      targetOrigin = '$p_targetOrigin' in $o?(++seen , $o.$p_targetOrigin):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _DOMWindowWrappingImplementation$Dart.prototype.postMessage$member.call(this, message, messagePorts_OR_targetOrigin, targetOrigin);
+}
+;
+_DOMWindowWrappingImplementation$Dart._postMessage$$member_ = function(receiver, message, messagePorts_OR_targetOrigin){
+  return native__DOMWindowWrappingImplementation__postMessage(receiver, message, messagePorts_OR_targetOrigin);
+}
+;
+_DOMWindowWrappingImplementation$Dart._postMessage_2$$member_ = function(receiver, message, messagePorts_OR_targetOrigin, targetOrigin){
+  return native__DOMWindowWrappingImplementation__postMessage_2(receiver, message, messagePorts_OR_targetOrigin, targetOrigin);
 }
 ;
 _DOMWindowWrappingImplementation$Dart.prototype.print$member = function(){
@@ -16812,6 +22369,20 @@ _DOMWindowWrappingImplementation$Dart.prototype.print$getter = function(){
 ;
 _DOMWindowWrappingImplementation$Dart._print$$member_ = function(receiver){
   return native__DOMWindowWrappingImplementation__print(receiver);
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$member = function(callback, element){
+  return _DOMWindowWrappingImplementation$Dart._webkitRequestAnimationFrame$$member_(this, callback, element);
+}
+;
+_DOMWindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$named = function($n, $o, callback, element){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _DOMWindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$member.call(this, callback, element);
+}
+;
+_DOMWindowWrappingImplementation$Dart._webkitRequestAnimationFrame$$member_ = function(receiver, callback, element){
+  return native__DOMWindowWrappingImplementation__webkitRequestAnimationFrame(receiver, callback, element);
 }
 ;
 _DOMWindowWrappingImplementation$Dart.prototype.typeName$getter = function(){
@@ -17686,6 +23257,14 @@ _EventExceptionWrappingImplementation$Dart.create__EventExceptionWrappingImpleme
 function native__EventExceptionWrappingImplementation_create__EventExceptionWrappingImplementation(){
   return _EventExceptionWrappingImplementation$Dart.create__EventExceptionWrappingImplementation$member();
 }
+_EventExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _EventExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_EventExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__EventExceptionWrappingImplementation__get_message(_this);
+}
+;
 _EventExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _EventExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -17745,6 +23324,37 @@ _EventSourceWrappingImplementation$Dart.create__EventSourceWrappingImplementatio
 function native__EventSourceWrappingImplementation_create__EventSourceWrappingImplementation(){
   return _EventSourceWrappingImplementation$Dart.create__EventSourceWrappingImplementation$member();
 }
+_EventSourceWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _EventSourceWrappingImplementation$Dart._addEventListener_EventSource$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _EventSourceWrappingImplementation$Dart._addEventListener_EventSource_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_EventSourceWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _EventSourceWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_EventSourceWrappingImplementation$Dart._addEventListener_EventSource$$member_ = function(receiver, type, listener){
+  return native__EventSourceWrappingImplementation__addEventListener_EventSource(receiver, type, listener);
+}
+;
+_EventSourceWrappingImplementation$Dart._addEventListener_EventSource_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__EventSourceWrappingImplementation__addEventListener_EventSource_2(receiver, type, listener, useCapture);
+}
+;
 _EventSourceWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'EventSource';
 }
@@ -17790,6 +23400,37 @@ _EventTargetWrappingImplementation$Dart.create__EventTargetWrappingImplementatio
 function native__EventTargetWrappingImplementation_create__EventTargetWrappingImplementation(){
   return _EventTargetWrappingImplementation$Dart.create__EventTargetWrappingImplementation$member();
 }
+_EventTargetWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _EventTargetWrappingImplementation$Dart._addEventListener$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _EventTargetWrappingImplementation$Dart._addEventListener_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_EventTargetWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _EventTargetWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_EventTargetWrappingImplementation$Dart._addEventListener$$member_ = function(receiver, type, listener){
+  return native__EventTargetWrappingImplementation__addEventListener(receiver, type, listener);
+}
+;
+_EventTargetWrappingImplementation$Dart._addEventListener_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__EventTargetWrappingImplementation__addEventListener_2(receiver, type, listener, useCapture);
+}
+;
 _EventTargetWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'EventTarget';
 }
@@ -18150,6 +23791,14 @@ _ErrorEventWrappingImplementation$Dart.create__ErrorEventWrappingImplementation$
 function native__ErrorEventWrappingImplementation_create__ErrorEventWrappingImplementation(){
   return _ErrorEventWrappingImplementation$Dart.create__ErrorEventWrappingImplementation$member();
 }
+_ErrorEventWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _ErrorEventWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_ErrorEventWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__ErrorEventWrappingImplementation__get_message(_this);
+}
+;
 _ErrorEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'ErrorEvent';
 }
@@ -18330,6 +23979,14 @@ _FileExceptionWrappingImplementation$Dart.create__FileExceptionWrappingImplement
 function native__FileExceptionWrappingImplementation_create__FileExceptionWrappingImplementation(){
   return _FileExceptionWrappingImplementation$Dart.create__FileExceptionWrappingImplementation$member();
 }
+_FileExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _FileExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_FileExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__FileExceptionWrappingImplementation__get_message(_this);
+}
+;
 _FileExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _FileExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -18487,6 +24144,14 @@ _FileReaderWrappingImplementation$Dart.create__FileReaderWrappingImplementation$
 function native__FileReaderWrappingImplementation_create__FileReaderWrappingImplementation(){
   return _FileReaderWrappingImplementation$Dart.create__FileReaderWrappingImplementation$member();
 }
+_FileReaderWrappingImplementation$Dart.prototype.error$getter = function(){
+  return _FileReaderWrappingImplementation$Dart._get_error$$member_(this);
+}
+;
+_FileReaderWrappingImplementation$Dart._get_error$$member_ = function(_this){
+  return native__FileReaderWrappingImplementation__get_error(_this);
+}
+;
 _FileReaderWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'FileReader';
 }
@@ -18586,15 +24251,6 @@ _FileWriterSyncWrappingImplementation$Dart._get_length$$member_ = function(_this
   return native__FileWriterSyncWrappingImplementation__get_length(_this);
 }
 ;
-_FileWriterSyncWrappingImplementation$Dart.prototype.write$member = function(data){
-  _FileWriterSyncWrappingImplementation$Dart._write$$member_(this, data);
-  return;
-}
-;
-_FileWriterSyncWrappingImplementation$Dart._write$$member_ = function(receiver, data){
-  return native__FileWriterSyncWrappingImplementation__write(receiver, data);
-}
-;
 _FileWriterSyncWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'FileWriterSync';
 }
@@ -18640,21 +24296,20 @@ _FileWriterWrappingImplementation$Dart.create__FileWriterWrappingImplementation$
 function native__FileWriterWrappingImplementation_create__FileWriterWrappingImplementation(){
   return _FileWriterWrappingImplementation$Dart.create__FileWriterWrappingImplementation$member();
 }
+_FileWriterWrappingImplementation$Dart.prototype.error$getter = function(){
+  return _FileWriterWrappingImplementation$Dart._get_error$$member_(this);
+}
+;
+_FileWriterWrappingImplementation$Dart._get_error$$member_ = function(_this){
+  return native__FileWriterWrappingImplementation__get_error(_this);
+}
+;
 _FileWriterWrappingImplementation$Dart.prototype.length$getter = function(){
   return _FileWriterWrappingImplementation$Dart._get_length$$member_(this);
 }
 ;
 _FileWriterWrappingImplementation$Dart._get_length$$member_ = function(_this){
   return native__FileWriterWrappingImplementation__get_length(_this);
-}
-;
-_FileWriterWrappingImplementation$Dart.prototype.write$member = function(data){
-  _FileWriterWrappingImplementation$Dart._write$$member_(this, data);
-  return;
-}
-;
-_FileWriterWrappingImplementation$Dart._write$$member_ = function(receiver, data){
-  return native__FileWriterWrappingImplementation__write(receiver, data);
 }
 ;
 _FileWriterWrappingImplementation$Dart.prototype.typeName$getter = function(){
@@ -18719,6 +24374,18 @@ _Float32ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index
   return native__Float32ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Float32ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Float32ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Float32ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Float32ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Float32ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Float32ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Float32ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -18735,6 +24402,16 @@ _Float32ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, 
   if ($o.count || $n != 1)
     $nsme();
   return _Float32ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Float32ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Float32ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Float32ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Float32ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -18763,6 +24440,16 @@ _Float32ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, 
   if ($o.count || $n != 1)
     $nsme();
   return _Float32ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Float32ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Float32ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Float32ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Float32ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -18847,6 +24534,18 @@ _Float64ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index
   return native__Float64ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Float64ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Float64ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Float64ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Float64ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Float64ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Float64ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Float64ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -18863,6 +24562,16 @@ _Float64ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, 
   if ($o.count || $n != 1)
     $nsme();
   return _Float64ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Float64ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Float64ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Float64ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Float64ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -18891,6 +24600,16 @@ _Float64ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, 
   if ($o.count || $n != 1)
     $nsme();
   return _Float64ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Float64ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Float64ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Float64ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Float64ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -19118,6 +24837,18 @@ _HTMLCollectionWrappingImplementation$Dart._index$$member_ = function(_this, ind
   return native__HTMLCollectionWrappingImplementation__index(_this, index);
 }
 ;
+_HTMLCollectionWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _HTMLCollectionWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_HTMLCollectionWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _HTMLCollectionWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _HTMLCollectionWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _HTMLCollectionWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -19130,6 +24861,16 @@ _HTMLCollectionWrappingImplementation$Dart.prototype.add$named = function($n, $o
   if ($o.count || $n != 1)
     $nsme();
   return _HTMLCollectionWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_HTMLCollectionWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_HTMLCollectionWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _HTMLCollectionWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _HTMLCollectionWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -19158,6 +24899,16 @@ _HTMLCollectionWrappingImplementation$Dart.prototype.forEach$named = function($n
   if ($o.count || $n != 1)
     $nsme();
   return _HTMLCollectionWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_HTMLCollectionWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_HTMLCollectionWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _HTMLCollectionWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _HTMLCollectionWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -19475,6 +25226,28 @@ _IDBCursorWrappingImplementation$Dart.create__IDBCursorWrappingImplementation$me
 function native__IDBCursorWrappingImplementation_create__IDBCursorWrappingImplementation(){
   return _IDBCursorWrappingImplementation$Dart.create__IDBCursorWrappingImplementation$member();
 }
+_IDBCursorWrappingImplementation$Dart.prototype.key$getter = function(){
+  return _IDBCursorWrappingImplementation$Dart._get_key$$member_(this);
+}
+;
+_IDBCursorWrappingImplementation$Dart._get_key$$member_ = function(_this){
+  return native__IDBCursorWrappingImplementation__get_key(_this);
+}
+;
+_IDBCursorWrappingImplementation$Dart.prototype.update$member = function(value){
+  return _IDBCursorWrappingImplementation$Dart._update$$member_(this, value);
+}
+;
+_IDBCursorWrappingImplementation$Dart.prototype.update$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _IDBCursorWrappingImplementation$Dart.prototype.update$member.call(this, value);
+}
+;
+_IDBCursorWrappingImplementation$Dart._update$$member_ = function(receiver, value){
+  return native__IDBCursorWrappingImplementation__update(receiver, value);
+}
+;
 _IDBCursorWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBCursor';
 }
@@ -19520,6 +25293,14 @@ _IDBCursorWithValueWrappingImplementation$Dart.create__IDBCursorWithValueWrappin
 function native__IDBCursorWithValueWrappingImplementation_create__IDBCursorWithValueWrappingImplementation(){
   return _IDBCursorWithValueWrappingImplementation$Dart.create__IDBCursorWithValueWrappingImplementation$member();
 }
+_IDBCursorWithValueWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _IDBCursorWithValueWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_IDBCursorWithValueWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__IDBCursorWithValueWrappingImplementation__get_value(_this);
+}
+;
 _IDBCursorWithValueWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBCursorWithValue';
 }
@@ -19565,6 +25346,14 @@ _IDBDatabaseErrorWrappingImplementation$Dart.create__IDBDatabaseErrorWrappingImp
 function native__IDBDatabaseErrorWrappingImplementation_create__IDBDatabaseErrorWrappingImplementation(){
   return _IDBDatabaseErrorWrappingImplementation$Dart.create__IDBDatabaseErrorWrappingImplementation$member();
 }
+_IDBDatabaseErrorWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _IDBDatabaseErrorWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_IDBDatabaseErrorWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__IDBDatabaseErrorWrappingImplementation__get_message(_this);
+}
+;
 _IDBDatabaseErrorWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBDatabaseError';
 }
@@ -19610,6 +25399,14 @@ _IDBDatabaseExceptionWrappingImplementation$Dart.create__IDBDatabaseExceptionWra
 function native__IDBDatabaseExceptionWrappingImplementation_create__IDBDatabaseExceptionWrappingImplementation(){
   return _IDBDatabaseExceptionWrappingImplementation$Dart.create__IDBDatabaseExceptionWrappingImplementation$member();
 }
+_IDBDatabaseExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _IDBDatabaseExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_IDBDatabaseExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__IDBDatabaseExceptionWrappingImplementation__get_message(_this);
+}
+;
 _IDBDatabaseExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _IDBDatabaseExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -19669,6 +25466,37 @@ _IDBDatabaseWrappingImplementation$Dart.create__IDBDatabaseWrappingImplementatio
 function native__IDBDatabaseWrappingImplementation_create__IDBDatabaseWrappingImplementation(){
   return _IDBDatabaseWrappingImplementation$Dart.create__IDBDatabaseWrappingImplementation$member();
 }
+_IDBDatabaseWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _IDBDatabaseWrappingImplementation$Dart._addEventListener$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _IDBDatabaseWrappingImplementation$Dart._addEventListener_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_IDBDatabaseWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _IDBDatabaseWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_IDBDatabaseWrappingImplementation$Dart._addEventListener$$member_ = function(receiver, type, listener){
+  return native__IDBDatabaseWrappingImplementation__addEventListener(receiver, type, listener);
+}
+;
+_IDBDatabaseWrappingImplementation$Dart._addEventListener_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__IDBDatabaseWrappingImplementation__addEventListener_2(receiver, type, listener, useCapture);
+}
+;
 _IDBDatabaseWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBDatabase';
 }
@@ -19945,6 +25773,22 @@ _IDBObjectStoreWrappingImplementation$Dart._clear$$member_ = function(receiver){
   return native__IDBObjectStoreWrappingImplementation__clear(receiver);
 }
 ;
+_IDBObjectStoreWrappingImplementation$Dart._index$$member_ = function(receiver, name_0){
+  return native__IDBObjectStoreWrappingImplementation__index(receiver, name_0);
+}
+;
+_IDBObjectStoreWrappingImplementation$Dart._index$$named_ = function($n, $o, receiver, name_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _IDBObjectStoreWrappingImplementation$Dart._index$$member_(receiver, name_0);
+}
+;
+_IDBObjectStoreWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _IDBObjectStoreWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _IDBObjectStoreWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _IDBObjectStoreWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBObjectStore';
 }
@@ -19990,6 +25834,37 @@ _IDBRequestWrappingImplementation$Dart.create__IDBRequestWrappingImplementation$
 function native__IDBRequestWrappingImplementation_create__IDBRequestWrappingImplementation(){
   return _IDBRequestWrappingImplementation$Dart.create__IDBRequestWrappingImplementation$member();
 }
+_IDBRequestWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _IDBRequestWrappingImplementation$Dart._addEventListener$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _IDBRequestWrappingImplementation$Dart._addEventListener_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_IDBRequestWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _IDBRequestWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_IDBRequestWrappingImplementation$Dart._addEventListener$$member_ = function(receiver, type, listener){
+  return native__IDBRequestWrappingImplementation__addEventListener(receiver, type, listener);
+}
+;
+_IDBRequestWrappingImplementation$Dart._addEventListener_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__IDBRequestWrappingImplementation__addEventListener_2(receiver, type, listener, useCapture);
+}
+;
 _IDBRequestWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBRequest';
 }
@@ -20035,6 +25910,37 @@ _IDBTransactionWrappingImplementation$Dart.create__IDBTransactionWrappingImpleme
 function native__IDBTransactionWrappingImplementation_create__IDBTransactionWrappingImplementation(){
   return _IDBTransactionWrappingImplementation$Dart.create__IDBTransactionWrappingImplementation$member();
 }
+_IDBTransactionWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _IDBTransactionWrappingImplementation$Dart._addEventListener$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _IDBTransactionWrappingImplementation$Dart._addEventListener_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_IDBTransactionWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _IDBTransactionWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_IDBTransactionWrappingImplementation$Dart._addEventListener$$member_ = function(receiver, type, listener){
+  return native__IDBTransactionWrappingImplementation__addEventListener(receiver, type, listener);
+}
+;
+_IDBTransactionWrappingImplementation$Dart._addEventListener_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__IDBTransactionWrappingImplementation__addEventListener_2(receiver, type, listener, useCapture);
+}
+;
 _IDBTransactionWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'IDBTransaction';
 }
@@ -20170,6 +26076,22 @@ _ImageDataWrappingImplementation$Dart.create__ImageDataWrappingImplementation$me
 function native__ImageDataWrappingImplementation_create__ImageDataWrappingImplementation(){
   return _ImageDataWrappingImplementation$Dart.create__ImageDataWrappingImplementation$member();
 }
+_ImageDataWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _ImageDataWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_ImageDataWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__ImageDataWrappingImplementation__get_height(_this);
+}
+;
+_ImageDataWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _ImageDataWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_ImageDataWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__ImageDataWrappingImplementation__get_width(_this);
+}
+;
 _ImageDataWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'ImageData';
 }
@@ -20322,6 +26244,18 @@ _Int16ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int16ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Int16ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int16ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Int16ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Int16ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Int16ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Int16ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Int16ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -20338,6 +26272,16 @@ _Int16ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, va
   if ($o.count || $n != 1)
     $nsme();
   return _Int16ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Int16ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Int16ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Int16ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Int16ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -20366,6 +26310,16 @@ _Int16ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $o
   if ($o.count || $n != 1)
     $nsme();
   return _Int16ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Int16ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Int16ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int16ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Int16ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -20450,6 +26404,18 @@ _Int32ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int32ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Int32ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int32ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Int32ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Int32ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Int32ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Int32ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Int32ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -20466,6 +26432,16 @@ _Int32ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, va
   if ($o.count || $n != 1)
     $nsme();
   return _Int32ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Int32ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Int32ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Int32ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Int32ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -20494,6 +26470,16 @@ _Int32ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $o
   if ($o.count || $n != 1)
     $nsme();
   return _Int32ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Int32ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Int32ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int32ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Int32ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -20578,6 +26564,18 @@ _Int8ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Int8ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Int8ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int8ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Int8ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Int8ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Int8ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Int8ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Int8ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -20594,6 +26592,16 @@ _Int8ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, val
   if ($o.count || $n != 1)
     $nsme();
   return _Int8ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Int8ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Int8ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Int8ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Int8ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -20622,6 +26630,16 @@ _Int8ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $o,
   if ($o.count || $n != 1)
     $nsme();
   return _Int8ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Int8ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Int8ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Int8ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Int8ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -20990,6 +27008,18 @@ _MediaListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__MediaListWrappingImplementation__index(_this, index);
 }
 ;
+_MediaListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _MediaListWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_MediaListWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _MediaListWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _MediaListWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _MediaListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -21002,6 +27032,16 @@ _MediaListWrappingImplementation$Dart.prototype.add$named = function($n, $o, val
   if ($o.count || $n != 1)
     $nsme();
   return _MediaListWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_MediaListWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_MediaListWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _MediaListWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _MediaListWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -21030,6 +27070,16 @@ _MediaListWrappingImplementation$Dart.prototype.forEach$named = function($n, $o,
   if ($o.count || $n != 1)
     $nsme();
   return _MediaListWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_MediaListWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_MediaListWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _MediaListWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _MediaListWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -21322,6 +27372,91 @@ _MessagePortWrappingImplementation$Dart.create__MessagePortWrappingImplementatio
 function native__MessagePortWrappingImplementation_create__MessagePortWrappingImplementation(){
   return _MessagePortWrappingImplementation$Dart.create__MessagePortWrappingImplementation$member();
 }
+_MessagePortWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _MessagePortWrappingImplementation$Dart._addEventListener_MessagePort$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _MessagePortWrappingImplementation$Dart._addEventListener_MessagePort_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _MessagePortWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_MessagePortWrappingImplementation$Dart._addEventListener_MessagePort$$member_ = function(receiver, type, listener){
+  return native__MessagePortWrappingImplementation__addEventListener_MessagePort(receiver, type, listener);
+}
+;
+_MessagePortWrappingImplementation$Dart._addEventListener_MessagePort_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__MessagePortWrappingImplementation__addEventListener_MessagePort_2(receiver, type, listener, useCapture);
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.postMessage$member = function(message, messagePorts){
+  if (messagePorts == null) {
+    _MessagePortWrappingImplementation$Dart._postMessage$$member_(this, message);
+    return;
+  }
+   else {
+    _MessagePortWrappingImplementation$Dart._postMessage_2$$member_(this, message, messagePorts);
+    return;
+  }
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.postMessage$named = function($n, $o, message, messagePorts){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      messagePorts = '$p_messagePorts' in $o?(++seen , $o.$p_messagePorts):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 2)
+    $nsme();
+  return _MessagePortWrappingImplementation$Dart.prototype.postMessage$member.call(this, message, messagePorts);
+}
+;
+_MessagePortWrappingImplementation$Dart._postMessage$$member_ = function(receiver, message){
+  return native__MessagePortWrappingImplementation__postMessage(receiver, message);
+}
+;
+_MessagePortWrappingImplementation$Dart._postMessage_2$$member_ = function(receiver, message, messagePorts){
+  return native__MessagePortWrappingImplementation__postMessage_2(receiver, message, messagePorts);
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.start$member = function(){
+  _MessagePortWrappingImplementation$Dart._start$$member_(this);
+  return;
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.start$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _MessagePortWrappingImplementation$Dart.prototype.start$member.call(this);
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+_MessagePortWrappingImplementation$Dart.prototype.start$getter = function(){
+  return $bind(_MessagePortWrappingImplementation$Dart.prototype.start$named, _MessagePortWrappingImplementation$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
+_MessagePortWrappingImplementation$Dart._start$$member_ = function(receiver){
+  return native__MessagePortWrappingImplementation__start(receiver);
+}
+;
 _MessagePortWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'MessagePort';
 }
@@ -21564,6 +27699,18 @@ _NamedNodeMapWrappingImplementation$Dart._index$$member_ = function(_this, index
   return native__NamedNodeMapWrappingImplementation__index(_this, index);
 }
 ;
+_NamedNodeMapWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _NamedNodeMapWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_NamedNodeMapWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _NamedNodeMapWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _NamedNodeMapWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _NamedNodeMapWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -21576,6 +27723,16 @@ _NamedNodeMapWrappingImplementation$Dart.prototype.add$named = function($n, $o, 
   if ($o.count || $n != 1)
     $nsme();
   return _NamedNodeMapWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_NamedNodeMapWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_NamedNodeMapWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _NamedNodeMapWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _NamedNodeMapWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -21604,6 +27761,16 @@ _NamedNodeMapWrappingImplementation$Dart.prototype.forEach$named = function($n, 
   if ($o.count || $n != 1)
     $nsme();
   return _NamedNodeMapWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_NamedNodeMapWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_NamedNodeMapWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _NamedNodeMapWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _NamedNodeMapWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -21913,6 +28080,18 @@ _NodeListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__NodeListWrappingImplementation__index(_this, index);
 }
 ;
+_NodeListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _NodeListWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_NodeListWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _NodeListWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _NodeListWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _NodeListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -21925,6 +28104,16 @@ _NodeListWrappingImplementation$Dart.prototype.add$named = function($n, $o, valu
   if ($o.count || $n != 1)
     $nsme();
   return _NodeListWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_NodeListWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_NodeListWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _NodeListWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _NodeListWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -21953,6 +28142,16 @@ _NodeListWrappingImplementation$Dart.prototype.forEach$named = function($n, $o, 
   if ($o.count || $n != 1)
     $nsme();
   return _NodeListWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_NodeListWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_NodeListWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _NodeListWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _NodeListWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -22095,6 +28294,37 @@ _NodeWrappingImplementation$Dart._get_parentNode$$member_ = function(_this){
   return native__NodeWrappingImplementation__get_parentNode(_this);
 }
 ;
+_NodeWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _NodeWrappingImplementation$Dart._addEventListener_Node$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _NodeWrappingImplementation$Dart._addEventListener_Node_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_NodeWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _NodeWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_NodeWrappingImplementation$Dart._addEventListener_Node$$member_ = function(receiver, type, listener){
+  return native__NodeWrappingImplementation__addEventListener_Node(receiver, type, listener);
+}
+;
+_NodeWrappingImplementation$Dart._addEventListener_Node_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__NodeWrappingImplementation__addEventListener_Node_2(receiver, type, listener, useCapture);
+}
+;
 _NodeWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Node';
 }
@@ -22140,6 +28370,22 @@ _AttrWrappingImplementation$Dart.create__AttrWrappingImplementation$member = fun
 function native__AttrWrappingImplementation_create__AttrWrappingImplementation(){
   return _AttrWrappingImplementation$Dart.create__AttrWrappingImplementation$member();
 }
+_AttrWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _AttrWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_AttrWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _AttrWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_AttrWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__AttrWrappingImplementation__get_value(_this);
+}
+;
+_AttrWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__AttrWrappingImplementation__set_value(_this, value);
+}
+;
 _AttrWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Attr';
 }
@@ -22342,6 +28588,14 @@ _DocumentTypeWrappingImplementation$Dart.create__DocumentTypeWrappingImplementat
 function native__DocumentTypeWrappingImplementation_create__DocumentTypeWrappingImplementation(){
   return _DocumentTypeWrappingImplementation$Dart.create__DocumentTypeWrappingImplementation$member();
 }
+_DocumentTypeWrappingImplementation$Dart.prototype.entities$getter = function(){
+  return _DocumentTypeWrappingImplementation$Dart._get_entities$$member_(this);
+}
+;
+_DocumentTypeWrappingImplementation$Dart._get_entities$$member_ = function(_this){
+  return native__DocumentTypeWrappingImplementation__get_entities(_this);
+}
+;
 _DocumentTypeWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'DocumentType';
 }
@@ -22404,6 +28658,20 @@ _DocumentWrappingImplementation$Dart._get_documentElement$$member_ = function(_t
   return native__DocumentWrappingImplementation__get_documentElement(_this);
 }
 ;
+_DocumentWrappingImplementation$Dart.prototype.createElement$member = function(tagName){
+  return _DocumentWrappingImplementation$Dart._createElement$$member_(this, tagName);
+}
+;
+_DocumentWrappingImplementation$Dart.prototype.createElement$named = function($n, $o, tagName){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _DocumentWrappingImplementation$Dart.prototype.createElement$member.call(this, tagName);
+}
+;
+_DocumentWrappingImplementation$Dart._createElement$$member_ = function(receiver, tagName){
+  return native__DocumentWrappingImplementation__createElement(receiver, tagName);
+}
+;
 _DocumentWrappingImplementation$Dart.prototype.querySelector$member = function(selectors){
   return _DocumentWrappingImplementation$Dart._querySelector$$member_(this, selectors);
 }
@@ -22463,6 +28731,130 @@ _ElementWrappingImplementation$Dart.create__ElementWrappingImplementation$member
 function native__ElementWrappingImplementation_create__ElementWrappingImplementation(){
   return _ElementWrappingImplementation$Dart.create__ElementWrappingImplementation$member();
 }
+_ElementWrappingImplementation$Dart.prototype.clientHeight$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_clientHeight$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_clientHeight$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_clientHeight(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.clientLeft$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_clientLeft$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_clientLeft$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_clientLeft(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.clientTop$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_clientTop$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_clientTop$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_clientTop(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.clientWidth$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_clientWidth$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_clientWidth$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_clientWidth(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.offsetHeight$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_offsetHeight$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_offsetHeight$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_offsetHeight(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.offsetLeft$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_offsetLeft$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_offsetLeft$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_offsetLeft(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.offsetTop$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_offsetTop$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_offsetTop$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_offsetTop(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.offsetWidth$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_offsetWidth$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_offsetWidth$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_offsetWidth(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.scrollHeight$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_scrollHeight$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_scrollHeight$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_scrollHeight(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.scrollLeft$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_scrollLeft$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_scrollLeft$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_scrollLeft(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.scrollTop$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_scrollTop$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_scrollTop$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_scrollTop(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.scrollWidth$getter = function(){
+  return _ElementWrappingImplementation$Dart._get_scrollWidth$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart._get_scrollWidth$$member_ = function(_this){
+  return native__ElementWrappingImplementation__get_scrollWidth(_this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.getBoundingClientRect$member = function(){
+  return _ElementWrappingImplementation$Dart._getBoundingClientRect$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.getBoundingClientRect$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _ElementWrappingImplementation$Dart.prototype.getBoundingClientRect$member.call(this);
+}
+;
+_ElementWrappingImplementation$Dart._getBoundingClientRect$$member_ = function(receiver){
+  return native__ElementWrappingImplementation__getBoundingClientRect(receiver);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.getClientRects$member = function(){
+  return _ElementWrappingImplementation$Dart._getClientRects$$member_(this);
+}
+;
+_ElementWrappingImplementation$Dart.prototype.getClientRects$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _ElementWrappingImplementation$Dart.prototype.getClientRects$member.call(this);
+}
+;
+_ElementWrappingImplementation$Dart._getClientRects$$member_ = function(receiver){
+  return native__ElementWrappingImplementation__getClientRects(receiver);
+}
+;
 _ElementWrappingImplementation$Dart.prototype.querySelector$member = function(selectors){
   return _ElementWrappingImplementation$Dart._querySelector$$member_(this, selectors);
 }
@@ -22613,6 +29005,22 @@ _HTMLDocumentWrappingImplementation$Dart.create__HTMLDocumentWrappingImplementat
 function native__HTMLDocumentWrappingImplementation_create__HTMLDocumentWrappingImplementation(){
   return _HTMLDocumentWrappingImplementation$Dart.create__HTMLDocumentWrappingImplementation$member();
 }
+_HTMLDocumentWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLDocumentWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLDocumentWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLDocumentWrappingImplementation__get_height(_this);
+}
+;
+_HTMLDocumentWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLDocumentWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLDocumentWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLDocumentWrappingImplementation__get_width(_this);
+}
+;
 _HTMLDocumentWrappingImplementation$Dart.prototype.clear$member = function(){
   _HTMLDocumentWrappingImplementation$Dart._clear$$member_(this);
   return;
@@ -22634,15 +29042,6 @@ _HTMLDocumentWrappingImplementation$Dart.prototype.clear$getter = function(){
 ;
 _HTMLDocumentWrappingImplementation$Dart._clear$$member_ = function(receiver){
   return native__HTMLDocumentWrappingImplementation__clear(receiver);
-}
-;
-_HTMLDocumentWrappingImplementation$Dart.prototype.write$member = function(text){
-  _HTMLDocumentWrappingImplementation$Dart._write$$member_(this, text);
-  return;
-}
-;
-_HTMLDocumentWrappingImplementation$Dart._write$$member_ = function(receiver, text){
-  return native__HTMLDocumentWrappingImplementation__write(receiver, text);
 }
 ;
 _HTMLDocumentWrappingImplementation$Dart.prototype.typeName$getter = function(){
@@ -22690,14 +29089,6 @@ _HTMLElementWrappingImplementation$Dart.create__HTMLElementWrappingImplementatio
 function native__HTMLElementWrappingImplementation_create__HTMLElementWrappingImplementation(){
   return _HTMLElementWrappingImplementation$Dart.create__HTMLElementWrappingImplementation$member();
 }
-_HTMLElementWrappingImplementation$Dart.prototype.innerHTML$setter = function(value){
-  _HTMLElementWrappingImplementation$Dart._set_innerHTML$$member_(this, value);
-}
-;
-_HTMLElementWrappingImplementation$Dart._set_innerHTML$$member_ = function(_this, value){
-  return native__HTMLElementWrappingImplementation__set_innerHTML(_this, value);
-}
-;
 _HTMLElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLElement';
 }
@@ -22802,6 +29193,38 @@ _HTMLAppletElementWrappingImplementation$Dart.create__HTMLAppletElementWrappingI
 function native__HTMLAppletElementWrappingImplementation_create__HTMLAppletElementWrappingImplementation(){
   return _HTMLAppletElementWrappingImplementation$Dart.create__HTMLAppletElementWrappingImplementation$member();
 }
+_HTMLAppletElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLAppletElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLAppletElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLAppletElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLAppletElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLAppletElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLAppletElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLAppletElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLAppletElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLAppletElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLAppletElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLAppletElement';
 }
@@ -23084,6 +29507,45 @@ _HTMLButtonElementWrappingImplementation$Dart.create__HTMLButtonElementWrappingI
 function native__HTMLButtonElementWrappingImplementation_create__HTMLButtonElementWrappingImplementation(){
   return _HTMLButtonElementWrappingImplementation$Dart.create__HTMLButtonElementWrappingImplementation$member();
 }
+_HTMLButtonElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLButtonElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLButtonElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLButtonElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLButtonElementWrappingImplementation__set_value(_this, value);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart.prototype.click$member = function(){
+  _HTMLButtonElementWrappingImplementation$Dart._click$$member_(this);
+  return;
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart.prototype.click$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _HTMLButtonElementWrappingImplementation$Dart.prototype.click$member.call(this);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart.prototype.click$getter = function(){
+  return $bind(_HTMLButtonElementWrappingImplementation$Dart.prototype.click$named, _HTMLButtonElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT, this);
+}
+;
+_HTMLButtonElementWrappingImplementation$Dart._click$$member_ = function(receiver){
+  return native__HTMLButtonElementWrappingImplementation__click(receiver);
+}
+;
 _HTMLButtonElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLButtonElement';
 }
@@ -23106,6 +29568,7 @@ _HTMLCanvasElementWrappingImplementation$Dart.$addTo = function(target){
   HTMLCanvasElement$Dart.$addTo(target);
 }
 ;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.$implements$HTMLCanvasElement$Dart = 1;
 _HTMLCanvasElementWrappingImplementation$Dart.$Constructor = function(){
   _HTMLElementWrappingImplementation$Dart.$Constructor.call(this);
 }
@@ -23129,6 +29592,52 @@ _HTMLCanvasElementWrappingImplementation$Dart.create__HTMLCanvasElementWrappingI
 function native__HTMLCanvasElementWrappingImplementation_create__HTMLCanvasElementWrappingImplementation(){
   return _HTMLCanvasElementWrappingImplementation$Dart.create__HTMLCanvasElementWrappingImplementation$member();
 }
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLCanvasElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLCanvasElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLCanvasElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLCanvasElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLCanvasElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLCanvasElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLCanvasElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLCanvasElementWrappingImplementation__set_width(_this, value);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.getContext$member = function(contextId){
+  return _HTMLCanvasElementWrappingImplementation$Dart._getContext$$member_(this, contextId);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart.prototype.getContext$named = function($n, $o, contextId){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _HTMLCanvasElementWrappingImplementation$Dart.prototype.getContext$member.call(this, contextId);
+}
+;
+_HTMLCanvasElementWrappingImplementation$Dart._getContext$$member_ = function(receiver, contextId){
+  return native__HTMLCanvasElementWrappingImplementation__getContext(receiver, contextId);
+}
+;
 _HTMLCanvasElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLCanvasElement';
 }
@@ -23399,6 +29908,54 @@ _HTMLEmbedElementWrappingImplementation$Dart.create__HTMLEmbedElementWrappingImp
 function native__HTMLEmbedElementWrappingImplementation_create__HTMLEmbedElementWrappingImplementation(){
   return _HTMLEmbedElementWrappingImplementation$Dart.create__HTMLEmbedElementWrappingImplementation$member();
 }
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLEmbedElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLEmbedElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLEmbedElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLEmbedElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLEmbedElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLEmbedElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLEmbedElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLEmbedElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLEmbedElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLEmbedElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLEmbedElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLEmbedElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLEmbedElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLEmbedElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLEmbedElement';
 }
@@ -23587,6 +30144,38 @@ _HTMLFrameElementWrappingImplementation$Dart.create__HTMLFrameElementWrappingImp
 function native__HTMLFrameElementWrappingImplementation_create__HTMLFrameElementWrappingImplementation(){
   return _HTMLFrameElementWrappingImplementation$Dart.create__HTMLFrameElementWrappingImplementation$member();
 }
+_HTMLFrameElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLFrameElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLFrameElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLFrameElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLFrameElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLFrameElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLFrameElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLFrameElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLFrameElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLFrameElementWrappingImplementation__get_width(_this);
+}
+;
 _HTMLFrameElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLFrameElement';
 }
@@ -23677,6 +30266,22 @@ _HTMLHRElementWrappingImplementation$Dart.create__HTMLHRElementWrappingImplement
 function native__HTMLHRElementWrappingImplementation_create__HTMLHRElementWrappingImplementation(){
   return _HTMLHRElementWrappingImplementation$Dart.create__HTMLHRElementWrappingImplementation$member();
 }
+_HTMLHRElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLHRElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLHRElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLHRElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLHRElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLHRElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLHRElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLHRElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLHRElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLHRElement';
 }
@@ -23857,6 +30462,54 @@ _HTMLIFrameElementWrappingImplementation$Dart.create__HTMLIFrameElementWrappingI
 function native__HTMLIFrameElementWrappingImplementation_create__HTMLIFrameElementWrappingImplementation(){
   return _HTMLIFrameElementWrappingImplementation$Dart.create__HTMLIFrameElementWrappingImplementation$member();
 }
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLIFrameElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLIFrameElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLIFrameElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLIFrameElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLIFrameElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLIFrameElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLIFrameElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLIFrameElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLIFrameElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLIFrameElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLIFrameElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLIFrameElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLIFrameElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLIFrameElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLIFrameElement';
 }
@@ -23879,6 +30532,7 @@ _HTMLImageElementWrappingImplementation$Dart.$addTo = function(target){
   HTMLImageElement$Dart.$addTo(target);
 }
 ;
+_HTMLImageElementWrappingImplementation$Dart.prototype.$implements$HTMLImageElement$Dart = 1;
 _HTMLImageElementWrappingImplementation$Dart.$Constructor = function(){
   _HTMLElementWrappingImplementation$Dart.$Constructor.call(this);
 }
@@ -23902,6 +30556,82 @@ _HTMLImageElementWrappingImplementation$Dart.create__HTMLImageElementWrappingImp
 function native__HTMLImageElementWrappingImplementation_create__HTMLImageElementWrappingImplementation(){
   return _HTMLImageElementWrappingImplementation$Dart.create__HTMLImageElementWrappingImplementation$member();
 }
+_HTMLImageElementWrappingImplementation$Dart.prototype.complete$named = function(){
+  return this.complete$getter().apply(this, arguments);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.complete$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_complete$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_complete$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_complete(_this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLImageElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLImageElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLImageElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLImageElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLImageElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLImageElementWrappingImplementation__set_width(_this, value);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_x(_this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _HTMLImageElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_HTMLImageElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__HTMLImageElementWrappingImplementation__get_y(_this);
+}
+;
 _HTMLImageElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLImageElement';
 }
@@ -23947,6 +30677,61 @@ _HTMLInputElementWrappingImplementation$Dart.create__HTMLInputElementWrappingImp
 function native__HTMLInputElementWrappingImplementation_create__HTMLInputElementWrappingImplementation(){
   return _HTMLInputElementWrappingImplementation$Dart.create__HTMLInputElementWrappingImplementation$member();
 }
+_HTMLInputElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLInputElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLInputElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLInputElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLInputElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLInputElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLInputElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLInputElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLInputElementWrappingImplementation__set_value(_this, value);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.click$member = function(){
+  _HTMLInputElementWrappingImplementation$Dart._click$$member_(this);
+  return;
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.click$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _HTMLInputElementWrappingImplementation$Dart.prototype.click$member.call(this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart.prototype.click$getter = function(){
+  return $bind(_HTMLInputElementWrappingImplementation$Dart.prototype.click$named, _HTMLInputElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT, this);
+}
+;
+_HTMLInputElementWrappingImplementation$Dart._click$$member_ = function(receiver){
+  return native__HTMLInputElementWrappingImplementation__click(receiver);
+}
+;
 _HTMLInputElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLInputElement';
 }
@@ -24082,6 +30867,22 @@ _HTMLLIElementWrappingImplementation$Dart.create__HTMLLIElementWrappingImplement
 function native__HTMLLIElementWrappingImplementation_create__HTMLLIElementWrappingImplementation(){
   return _HTMLLIElementWrappingImplementation$Dart.create__HTMLLIElementWrappingImplementation$member();
 }
+_HTMLLIElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLLIElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLLIElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLLIElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLLIElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLLIElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLLIElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLLIElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLLIElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLLIElement';
 }
@@ -24307,6 +31108,69 @@ _HTMLMarqueeElementWrappingImplementation$Dart.create__HTMLMarqueeElementWrappin
 function native__HTMLMarqueeElementWrappingImplementation_create__HTMLMarqueeElementWrappingImplementation(){
   return _HTMLMarqueeElementWrappingImplementation$Dart.create__HTMLMarqueeElementWrappingImplementation$member();
 }
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLMarqueeElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLMarqueeElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLMarqueeElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLMarqueeElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.loop$getter = function(){
+  return _HTMLMarqueeElementWrappingImplementation$Dart._get_loop$$member_(this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._get_loop$$member_ = function(_this){
+  return native__HTMLMarqueeElementWrappingImplementation__get_loop(_this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLMarqueeElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLMarqueeElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLMarqueeElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLMarqueeElementWrappingImplementation__set_width(_this, value);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$member = function(){
+  _HTMLMarqueeElementWrappingImplementation$Dart._start$$member_(this);
+  return;
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$member.call(this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$getter = function(){
+  return $bind(_HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$named, _HTMLMarqueeElementWrappingImplementation$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
+_HTMLMarqueeElementWrappingImplementation$Dart._start$$member_ = function(receiver){
+  return native__HTMLMarqueeElementWrappingImplementation__start(receiver);
+}
+;
 _HTMLMarqueeElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLMarqueeElement';
 }
@@ -24352,6 +31216,61 @@ _HTMLMediaElementWrappingImplementation$Dart.create__HTMLMediaElementWrappingImp
 function native__HTMLMediaElementWrappingImplementation_create__HTMLMediaElementWrappingImplementation(){
   return _HTMLMediaElementWrappingImplementation$Dart.create__HTMLMediaElementWrappingImplementation$member();
 }
+_HTMLMediaElementWrappingImplementation$Dart.prototype.error$getter = function(){
+  return _HTMLMediaElementWrappingImplementation$Dart._get_error$$member_(this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart._get_error$$member_ = function(_this){
+  return native__HTMLMediaElementWrappingImplementation__get_error(_this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.loop$getter = function(){
+  return _HTMLMediaElementWrappingImplementation$Dart._get_loop$$member_(this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart._get_loop$$member_ = function(_this){
+  return native__HTMLMediaElementWrappingImplementation__get_loop(_this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLMediaElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLMediaElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLMediaElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLMediaElementWrappingImplementation__set_src(_this, value);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.load$member = function(){
+  _HTMLMediaElementWrappingImplementation$Dart._load$$member_(this);
+  return;
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.load$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _HTMLMediaElementWrappingImplementation$Dart.prototype.load$member.call(this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.load$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart.prototype.load$getter = function(){
+  return $bind(_HTMLMediaElementWrappingImplementation$Dart.prototype.load$named, _HTMLMediaElementWrappingImplementation$Dart.prototype.load$named_$lookupRTT, this);
+}
+;
+_HTMLMediaElementWrappingImplementation$Dart._load$$member_ = function(receiver){
+  return native__HTMLMediaElementWrappingImplementation__load(receiver);
+}
+;
 _HTMLMediaElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLMediaElement';
 }
@@ -24532,6 +31451,22 @@ _HTMLMeterElementWrappingImplementation$Dart.create__HTMLMeterElementWrappingImp
 function native__HTMLMeterElementWrappingImplementation_create__HTMLMeterElementWrappingImplementation(){
   return _HTMLMeterElementWrappingImplementation$Dart.create__HTMLMeterElementWrappingImplementation$member();
 }
+_HTMLMeterElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLMeterElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLMeterElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLMeterElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLMeterElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLMeterElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLMeterElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLMeterElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLMeterElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLMeterElement';
 }
@@ -24622,6 +31557,18 @@ _HTMLOListElementWrappingImplementation$Dart.create__HTMLOListElementWrappingImp
 function native__HTMLOListElementWrappingImplementation_create__HTMLOListElementWrappingImplementation(){
   return _HTMLOListElementWrappingImplementation$Dart.create__HTMLOListElementWrappingImplementation$member();
 }
+_HTMLOListElementWrappingImplementation$Dart.prototype.start$named = function(){
+  return this.start$getter().apply(this, arguments);
+}
+;
+_HTMLOListElementWrappingImplementation$Dart.prototype.start$getter = function(){
+  return _HTMLOListElementWrappingImplementation$Dart._get_start$$member_(this);
+}
+;
+_HTMLOListElementWrappingImplementation$Dart._get_start$$member_ = function(_this){
+  return native__HTMLOListElementWrappingImplementation__get_start(_this);
+}
+;
 _HTMLOListElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLOListElement';
 }
@@ -24667,6 +31614,38 @@ _HTMLObjectElementWrappingImplementation$Dart.create__HTMLObjectElementWrappingI
 function native__HTMLObjectElementWrappingImplementation_create__HTMLObjectElementWrappingImplementation(){
   return _HTMLObjectElementWrappingImplementation$Dart.create__HTMLObjectElementWrappingImplementation$member();
 }
+_HTMLObjectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLObjectElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLObjectElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLObjectElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLObjectElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLObjectElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLObjectElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLObjectElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLObjectElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLObjectElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLObjectElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLObjectElement';
 }
@@ -24757,6 +31736,22 @@ _HTMLOptionElementWrappingImplementation$Dart.create__HTMLOptionElementWrappingI
 function native__HTMLOptionElementWrappingImplementation_create__HTMLOptionElementWrappingImplementation(){
   return _HTMLOptionElementWrappingImplementation$Dart.create__HTMLOptionElementWrappingImplementation$member();
 }
+_HTMLOptionElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLOptionElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLOptionElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLOptionElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLOptionElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLOptionElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLOptionElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLOptionElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLOptionElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLOptionElement';
 }
@@ -24802,6 +31797,22 @@ _HTMLOutputElementWrappingImplementation$Dart.create__HTMLOutputElementWrappingI
 function native__HTMLOutputElementWrappingImplementation_create__HTMLOutputElementWrappingImplementation(){
   return _HTMLOutputElementWrappingImplementation$Dart.create__HTMLOutputElementWrappingImplementation$member();
 }
+_HTMLOutputElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLOutputElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLOutputElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLOutputElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLOutputElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLOutputElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLOutputElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLOutputElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLOutputElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLOutputElement';
 }
@@ -24892,6 +31903,22 @@ _HTMLParamElementWrappingImplementation$Dart.create__HTMLParamElementWrappingImp
 function native__HTMLParamElementWrappingImplementation_create__HTMLParamElementWrappingImplementation(){
   return _HTMLParamElementWrappingImplementation$Dart.create__HTMLParamElementWrappingImplementation$member();
 }
+_HTMLParamElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLParamElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLParamElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLParamElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLParamElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLParamElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLParamElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLParamElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLParamElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLParamElement';
 }
@@ -24937,6 +31964,22 @@ _HTMLPreElementWrappingImplementation$Dart.create__HTMLPreElementWrappingImpleme
 function native__HTMLPreElementWrappingImplementation_create__HTMLPreElementWrappingImplementation(){
   return _HTMLPreElementWrappingImplementation$Dart.create__HTMLPreElementWrappingImplementation$member();
 }
+_HTMLPreElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLPreElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLPreElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLPreElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLPreElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLPreElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLPreElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLPreElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLPreElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLPreElement';
 }
@@ -24982,6 +32025,22 @@ _HTMLProgressElementWrappingImplementation$Dart.create__HTMLProgressElementWrapp
 function native__HTMLProgressElementWrappingImplementation_create__HTMLProgressElementWrappingImplementation(){
   return _HTMLProgressElementWrappingImplementation$Dart.create__HTMLProgressElementWrappingImplementation$member();
 }
+_HTMLProgressElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLProgressElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLProgressElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLProgressElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLProgressElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLProgressElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLProgressElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLProgressElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLProgressElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLProgressElement';
 }
@@ -25072,6 +32131,22 @@ _HTMLScriptElementWrappingImplementation$Dart.create__HTMLScriptElementWrappingI
 function native__HTMLScriptElementWrappingImplementation_create__HTMLScriptElementWrappingImplementation(){
   return _HTMLScriptElementWrappingImplementation$Dart.create__HTMLScriptElementWrappingImplementation$member();
 }
+_HTMLScriptElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLScriptElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLScriptElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLScriptElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLScriptElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLScriptElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLScriptElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLScriptElementWrappingImplementation__set_src(_this, value);
+}
+;
 _HTMLScriptElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLScriptElement';
 }
@@ -25131,6 +32206,22 @@ _HTMLSelectElementWrappingImplementation$Dart._get_length$$member_ = function(_t
 ;
 _HTMLSelectElementWrappingImplementation$Dart._set_length$$member_ = function(_this, value){
   return native__HTMLSelectElementWrappingImplementation__set_length(_this, value);
+}
+;
+_HTMLSelectElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLSelectElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLSelectElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLSelectElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLSelectElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLSelectElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLSelectElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLSelectElementWrappingImplementation__set_value(_this, value);
 }
 ;
 _HTMLSelectElementWrappingImplementation$Dart.prototype.add$member = function(element, before){
@@ -25193,6 +32284,22 @@ _HTMLSourceElementWrappingImplementation$Dart.create__HTMLSourceElementWrappingI
 function native__HTMLSourceElementWrappingImplementation_create__HTMLSourceElementWrappingImplementation(){
   return _HTMLSourceElementWrappingImplementation$Dart.create__HTMLSourceElementWrappingImplementation$member();
 }
+_HTMLSourceElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLSourceElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLSourceElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLSourceElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLSourceElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLSourceElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLSourceElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLSourceElementWrappingImplementation__set_src(_this, value);
+}
+;
 _HTMLSourceElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLSourceElement';
 }
@@ -25373,6 +32480,38 @@ _HTMLTableCellElementWrappingImplementation$Dart.create__HTMLTableCellElementWra
 function native__HTMLTableCellElementWrappingImplementation_create__HTMLTableCellElementWrappingImplementation(){
   return _HTMLTableCellElementWrappingImplementation$Dart.create__HTMLTableCellElementWrappingImplementation$member();
 }
+_HTMLTableCellElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLTableCellElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLTableCellElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLTableCellElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLTableCellElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLTableCellElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLTableCellElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLTableCellElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLTableCellElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLTableCellElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLTableCellElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLTableCellElement';
 }
@@ -25418,6 +32557,22 @@ _HTMLTableColElementWrappingImplementation$Dart.create__HTMLTableColElementWrapp
 function native__HTMLTableColElementWrappingImplementation_create__HTMLTableColElementWrappingImplementation(){
   return _HTMLTableColElementWrappingImplementation$Dart.create__HTMLTableColElementWrappingImplementation$member();
 }
+_HTMLTableColElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLTableColElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLTableColElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLTableColElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLTableColElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLTableColElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLTableColElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLTableColElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLTableColElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLTableColElement';
 }
@@ -25463,6 +32618,22 @@ _HTMLTableElementWrappingImplementation$Dart.create__HTMLTableElementWrappingImp
 function native__HTMLTableElementWrappingImplementation_create__HTMLTableElementWrappingImplementation(){
   return _HTMLTableElementWrappingImplementation$Dart.create__HTMLTableElementWrappingImplementation$member();
 }
+_HTMLTableElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLTableElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLTableElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLTableElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLTableElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLTableElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLTableElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLTableElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLTableElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLTableElement';
 }
@@ -25598,6 +32769,22 @@ _HTMLTextAreaElementWrappingImplementation$Dart.create__HTMLTextAreaElementWrapp
 function native__HTMLTextAreaElementWrappingImplementation_create__HTMLTextAreaElementWrappingImplementation(){
   return _HTMLTextAreaElementWrappingImplementation$Dart.create__HTMLTextAreaElementWrappingImplementation$member();
 }
+_HTMLTextAreaElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _HTMLTextAreaElementWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_HTMLTextAreaElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _HTMLTextAreaElementWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_HTMLTextAreaElementWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__HTMLTextAreaElementWrappingImplementation__get_value(_this);
+}
+;
+_HTMLTextAreaElementWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__HTMLTextAreaElementWrappingImplementation__set_value(_this, value);
+}
+;
 _HTMLTextAreaElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLTextAreaElement';
 }
@@ -25688,6 +32875,22 @@ _HTMLTrackElementWrappingImplementation$Dart.create__HTMLTrackElementWrappingImp
 function native__HTMLTrackElementWrappingImplementation_create__HTMLTrackElementWrappingImplementation(){
   return _HTMLTrackElementWrappingImplementation$Dart.create__HTMLTrackElementWrappingImplementation$member();
 }
+_HTMLTrackElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return _HTMLTrackElementWrappingImplementation$Dart._get_src$$member_(this);
+}
+;
+_HTMLTrackElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  _HTMLTrackElementWrappingImplementation$Dart._set_src$$member_(this, value);
+}
+;
+_HTMLTrackElementWrappingImplementation$Dart._get_src$$member_ = function(_this){
+  return native__HTMLTrackElementWrappingImplementation__get_src(_this);
+}
+;
+_HTMLTrackElementWrappingImplementation$Dart._set_src$$member_ = function(_this, value){
+  return native__HTMLTrackElementWrappingImplementation__set_src(_this, value);
+}
+;
 _HTMLTrackElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLTrackElement';
 }
@@ -25800,6 +33003,7 @@ _HTMLVideoElementWrappingImplementation$Dart.$addTo = function(target){
   HTMLVideoElement$Dart.$addTo(target);
 }
 ;
+_HTMLVideoElementWrappingImplementation$Dart.prototype.$implements$HTMLVideoElement$Dart = 1;
 _HTMLVideoElementWrappingImplementation$Dart.$Constructor = function(){
   _HTMLMediaElementWrappingImplementation$Dart.$Constructor.call(this);
 }
@@ -25823,6 +33027,38 @@ _HTMLVideoElementWrappingImplementation$Dart.create__HTMLVideoElementWrappingImp
 function native__HTMLVideoElementWrappingImplementation_create__HTMLVideoElementWrappingImplementation(){
   return _HTMLVideoElementWrappingImplementation$Dart.create__HTMLVideoElementWrappingImplementation$member();
 }
+_HTMLVideoElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _HTMLVideoElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _HTMLVideoElementWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__HTMLVideoElementWrappingImplementation__get_height(_this);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__HTMLVideoElementWrappingImplementation__set_height(_this, value);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _HTMLVideoElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _HTMLVideoElementWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__HTMLVideoElementWrappingImplementation__get_width(_this);
+}
+;
+_HTMLVideoElementWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__HTMLVideoElementWrappingImplementation__set_width(_this, value);
+}
+;
 _HTMLVideoElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'HTMLVideoElement';
 }
@@ -25958,6 +33194,37 @@ _NotificationWrappingImplementation$Dart.create__NotificationWrappingImplementat
 function native__NotificationWrappingImplementation_create__NotificationWrappingImplementation(){
   return _NotificationWrappingImplementation$Dart.create__NotificationWrappingImplementation$member();
 }
+_NotificationWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _NotificationWrappingImplementation$Dart._addEventListener_Notification$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _NotificationWrappingImplementation$Dart._addEventListener_Notification_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_NotificationWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _NotificationWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_NotificationWrappingImplementation$Dart._addEventListener_Notification$$member_ = function(receiver, type, listener){
+  return native__NotificationWrappingImplementation__addEventListener_Notification(receiver, type, listener);
+}
+;
+_NotificationWrappingImplementation$Dart._addEventListener_Notification_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__NotificationWrappingImplementation__addEventListener_Notification_2(receiver, type, listener, useCapture);
+}
+;
 _NotificationWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Notification';
 }
@@ -26183,6 +33450,14 @@ _OperationNotAllowedExceptionWrappingImplementation$Dart.create__OperationNotAll
 function native__OperationNotAllowedExceptionWrappingImplementation_create__OperationNotAllowedExceptionWrappingImplementation(){
   return _OperationNotAllowedExceptionWrappingImplementation$Dart.create__OperationNotAllowedExceptionWrappingImplementation$member();
 }
+_OperationNotAllowedExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _OperationNotAllowedExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_OperationNotAllowedExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__OperationNotAllowedExceptionWrappingImplementation__get_message(_this);
+}
+;
 _OperationNotAllowedExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _OperationNotAllowedExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -26512,6 +33787,14 @@ _PositionErrorWrappingImplementation$Dart.create__PositionErrorWrappingImplement
 function native__PositionErrorWrappingImplementation_create__PositionErrorWrappingImplementation(){
   return _PositionErrorWrappingImplementation$Dart.create__PositionErrorWrappingImplementation$member();
 }
+_PositionErrorWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _PositionErrorWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_PositionErrorWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__PositionErrorWrappingImplementation__get_message(_this);
+}
+;
 _PositionErrorWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'PositionError';
 }
@@ -26692,6 +33975,14 @@ _RangeExceptionWrappingImplementation$Dart.create__RangeExceptionWrappingImpleme
 function native__RangeExceptionWrappingImplementation_create__RangeExceptionWrappingImplementation(){
   return _RangeExceptionWrappingImplementation$Dart.create__RangeExceptionWrappingImplementation$member();
 }
+_RangeExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _RangeExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_RangeExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__RangeExceptionWrappingImplementation__get_message(_this);
+}
+;
 _RangeExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _RangeExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -26751,6 +34042,34 @@ _RangeWrappingImplementation$Dart.create__RangeWrappingImplementation$member = f
 function native__RangeWrappingImplementation_create__RangeWrappingImplementation(){
   return _RangeWrappingImplementation$Dart.create__RangeWrappingImplementation$member();
 }
+_RangeWrappingImplementation$Dart.prototype.getBoundingClientRect$member = function(){
+  return _RangeWrappingImplementation$Dart._getBoundingClientRect$$member_(this);
+}
+;
+_RangeWrappingImplementation$Dart.prototype.getBoundingClientRect$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _RangeWrappingImplementation$Dart.prototype.getBoundingClientRect$member.call(this);
+}
+;
+_RangeWrappingImplementation$Dart._getBoundingClientRect$$member_ = function(receiver){
+  return native__RangeWrappingImplementation__getBoundingClientRect(receiver);
+}
+;
+_RangeWrappingImplementation$Dart.prototype.getClientRects$member = function(){
+  return _RangeWrappingImplementation$Dart._getClientRects$$member_(this);
+}
+;
+_RangeWrappingImplementation$Dart.prototype.getClientRects$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return _RangeWrappingImplementation$Dart.prototype.getClientRects$member.call(this);
+}
+;
+_RangeWrappingImplementation$Dart._getClientRects$$member_ = function(receiver){
+  return native__RangeWrappingImplementation__getClientRects(receiver);
+}
+;
 _RangeWrappingImplementation$Dart.prototype.toString$member = function(){
   return _RangeWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -26855,6 +34174,22 @@ _RectWrappingImplementation$Dart.create__RectWrappingImplementation$member = fun
 function native__RectWrappingImplementation_create__RectWrappingImplementation(){
   return _RectWrappingImplementation$Dart.create__RectWrappingImplementation$member();
 }
+_RectWrappingImplementation$Dart.prototype.left$getter = function(){
+  return _RectWrappingImplementation$Dart._get_left$$member_(this);
+}
+;
+_RectWrappingImplementation$Dart._get_left$$member_ = function(_this){
+  return native__RectWrappingImplementation__get_left(_this);
+}
+;
+_RectWrappingImplementation$Dart.prototype.top$getter = function(){
+  return _RectWrappingImplementation$Dart._get_top$$member_(this);
+}
+;
+_RectWrappingImplementation$Dart._get_top$$member_ = function(_this){
+  return native__RectWrappingImplementation__get_top(_this);
+}
+;
 _RectWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Rect';
 }
@@ -26900,6 +34235,14 @@ _SQLErrorWrappingImplementation$Dart.create__SQLErrorWrappingImplementation$memb
 function native__SQLErrorWrappingImplementation_create__SQLErrorWrappingImplementation(){
   return _SQLErrorWrappingImplementation$Dart.create__SQLErrorWrappingImplementation$member();
 }
+_SQLErrorWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _SQLErrorWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_SQLErrorWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__SQLErrorWrappingImplementation__get_message(_this);
+}
+;
 _SQLErrorWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SQLError';
 }
@@ -26945,6 +34288,14 @@ _SQLExceptionWrappingImplementation$Dart.create__SQLExceptionWrappingImplementat
 function native__SQLExceptionWrappingImplementation_create__SQLExceptionWrappingImplementation(){
   return _SQLExceptionWrappingImplementation$Dart.create__SQLExceptionWrappingImplementation$member();
 }
+_SQLExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _SQLExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_SQLExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__SQLExceptionWrappingImplementation__get_message(_this);
+}
+;
 _SQLExceptionWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SQLException';
 }
@@ -27178,6 +34529,22 @@ _SVGAngleWrappingImplementation$Dart.create__SVGAngleWrappingImplementation$memb
 function native__SVGAngleWrappingImplementation_create__SVGAngleWrappingImplementation(){
   return _SVGAngleWrappingImplementation$Dart.create__SVGAngleWrappingImplementation$member();
 }
+_SVGAngleWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _SVGAngleWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_SVGAngleWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _SVGAngleWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_SVGAngleWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__SVGAngleWrappingImplementation__get_value(_this);
+}
+;
+_SVGAngleWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__SVGAngleWrappingImplementation__set_value(_this, value);
+}
+;
 _SVGAngleWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGAngle';
 }
@@ -27923,6 +35290,37 @@ _SVGElementInstanceWrappingImplementation$Dart._get_parentNode$$member_ = functi
   return native__SVGElementInstanceWrappingImplementation__get_parentNode(_this);
 }
 ;
+_SVGElementInstanceWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _SVGElementInstanceWrappingImplementation$Dart._addEventListener_SVGElementInstance$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _SVGElementInstanceWrappingImplementation$Dart._addEventListener_SVGElementInstance_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_SVGElementInstanceWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _SVGElementInstanceWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_SVGElementInstanceWrappingImplementation$Dart._addEventListener_SVGElementInstance$$member_ = function(receiver, type, listener){
+  return native__SVGElementInstanceWrappingImplementation__addEventListener_SVGElementInstance(receiver, type, listener);
+}
+;
+_SVGElementInstanceWrappingImplementation$Dart._addEventListener_SVGElementInstance_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__SVGElementInstanceWrappingImplementation__addEventListener_SVGElementInstance_2(receiver, type, listener, useCapture);
+}
+;
 _SVGElementInstanceWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGElementInstance';
 }
@@ -28508,6 +35906,22 @@ _SVGCursorElementWrappingImplementation$Dart.create__SVGCursorElementWrappingImp
 function native__SVGCursorElementWrappingImplementation_create__SVGCursorElementWrappingImplementation(){
   return _SVGCursorElementWrappingImplementation$Dart.create__SVGCursorElementWrappingImplementation$member();
 }
+_SVGCursorElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGCursorElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGCursorElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGCursorElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGCursorElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGCursorElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGCursorElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGCursorElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGCursorElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGCursorElement';
 }
@@ -28688,6 +36102,14 @@ _SVGExceptionWrappingImplementation$Dart.create__SVGExceptionWrappingImplementat
 function native__SVGExceptionWrappingImplementation_create__SVGExceptionWrappingImplementation(){
   return _SVGExceptionWrappingImplementation$Dart.create__SVGExceptionWrappingImplementation$member();
 }
+_SVGExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _SVGExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_SVGExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__SVGExceptionWrappingImplementation__get_message(_this);
+}
+;
 _SVGExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _SVGExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -28792,6 +36214,38 @@ _SVGFEBlendElementWrappingImplementation$Dart.create__SVGFEBlendElementWrappingI
 function native__SVGFEBlendElementWrappingImplementation_create__SVGFEBlendElementWrappingImplementation(){
   return _SVGFEBlendElementWrappingImplementation$Dart.create__SVGFEBlendElementWrappingImplementation$member();
 }
+_SVGFEBlendElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEBlendElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEBlendElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEBlendElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEBlendElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEBlendElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEBlendElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEBlendElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEBlendElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEBlendElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEBlendElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEBlendElement';
 }
@@ -28837,6 +36291,38 @@ _SVGFEColorMatrixElementWrappingImplementation$Dart.create__SVGFEColorMatrixElem
 function native__SVGFEColorMatrixElementWrappingImplementation_create__SVGFEColorMatrixElementWrappingImplementation(){
   return _SVGFEColorMatrixElementWrappingImplementation$Dart.create__SVGFEColorMatrixElementWrappingImplementation$member();
 }
+_SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEColorMatrixElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEColorMatrixElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEColorMatrixElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEColorMatrixElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEColorMatrixElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEColorMatrixElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEColorMatrixElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEColorMatrixElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEColorMatrixElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEColorMatrixElement';
 }
@@ -28882,6 +36368,38 @@ _SVGFEComponentTransferElementWrappingImplementation$Dart.create__SVGFEComponent
 function native__SVGFEComponentTransferElementWrappingImplementation_create__SVGFEComponentTransferElementWrappingImplementation(){
   return _SVGFEComponentTransferElementWrappingImplementation$Dart.create__SVGFEComponentTransferElementWrappingImplementation$member();
 }
+_SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEComponentTransferElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEComponentTransferElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEComponentTransferElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEComponentTransferElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEComponentTransferElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEComponentTransferElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEComponentTransferElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEComponentTransferElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEComponentTransferElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEComponentTransferElement';
 }
@@ -28927,6 +36445,38 @@ _SVGFECompositeElementWrappingImplementation$Dart.create__SVGFECompositeElementW
 function native__SVGFECompositeElementWrappingImplementation_create__SVGFECompositeElementWrappingImplementation(){
   return _SVGFECompositeElementWrappingImplementation$Dart.create__SVGFECompositeElementWrappingImplementation$member();
 }
+_SVGFECompositeElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFECompositeElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFECompositeElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFECompositeElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFECompositeElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFECompositeElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFECompositeElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFECompositeElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFECompositeElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFECompositeElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFECompositeElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFECompositeElement';
 }
@@ -28972,6 +36522,38 @@ _SVGFEConvolveMatrixElementWrappingImplementation$Dart.create__SVGFEConvolveMatr
 function native__SVGFEConvolveMatrixElementWrappingImplementation_create__SVGFEConvolveMatrixElementWrappingImplementation(){
   return _SVGFEConvolveMatrixElementWrappingImplementation$Dart.create__SVGFEConvolveMatrixElementWrappingImplementation$member();
 }
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEConvolveMatrixElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEConvolveMatrixElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEConvolveMatrixElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEConvolveMatrixElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEConvolveMatrixElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEConvolveMatrixElement';
 }
@@ -29017,6 +36599,38 @@ _SVGFEDiffuseLightingElementWrappingImplementation$Dart.create__SVGFEDiffuseLigh
 function native__SVGFEDiffuseLightingElementWrappingImplementation_create__SVGFEDiffuseLightingElementWrappingImplementation(){
   return _SVGFEDiffuseLightingElementWrappingImplementation$Dart.create__SVGFEDiffuseLightingElementWrappingImplementation$member();
 }
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEDiffuseLightingElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEDiffuseLightingElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEDiffuseLightingElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEDiffuseLightingElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEDiffuseLightingElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEDiffuseLightingElement';
 }
@@ -29062,6 +36676,38 @@ _SVGFEDisplacementMapElementWrappingImplementation$Dart.create__SVGFEDisplacemen
 function native__SVGFEDisplacementMapElementWrappingImplementation_create__SVGFEDisplacementMapElementWrappingImplementation(){
   return _SVGFEDisplacementMapElementWrappingImplementation$Dart.create__SVGFEDisplacementMapElementWrappingImplementation$member();
 }
+_SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEDisplacementMapElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEDisplacementMapElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEDisplacementMapElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEDisplacementMapElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEDisplacementMapElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEDisplacementMapElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEDisplacementMapElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEDisplacementMapElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEDisplacementMapElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEDisplacementMapElement';
 }
@@ -29152,6 +36798,38 @@ _SVGFEDropShadowElementWrappingImplementation$Dart.create__SVGFEDropShadowElemen
 function native__SVGFEDropShadowElementWrappingImplementation_create__SVGFEDropShadowElementWrappingImplementation(){
   return _SVGFEDropShadowElementWrappingImplementation$Dart.create__SVGFEDropShadowElementWrappingImplementation$member();
 }
+_SVGFEDropShadowElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEDropShadowElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEDropShadowElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEDropShadowElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEDropShadowElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEDropShadowElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEDropShadowElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEDropShadowElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEDropShadowElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEDropShadowElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEDropShadowElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEDropShadowElement';
 }
@@ -29197,6 +36875,38 @@ _SVGFEFloodElementWrappingImplementation$Dart.create__SVGFEFloodElementWrappingI
 function native__SVGFEFloodElementWrappingImplementation_create__SVGFEFloodElementWrappingImplementation(){
   return _SVGFEFloodElementWrappingImplementation$Dart.create__SVGFEFloodElementWrappingImplementation$member();
 }
+_SVGFEFloodElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEFloodElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEFloodElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEFloodElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEFloodElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEFloodElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEFloodElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEFloodElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEFloodElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEFloodElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEFloodElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEFloodElement';
 }
@@ -29422,6 +37132,38 @@ _SVGFEGaussianBlurElementWrappingImplementation$Dart.create__SVGFEGaussianBlurEl
 function native__SVGFEGaussianBlurElementWrappingImplementation_create__SVGFEGaussianBlurElementWrappingImplementation(){
   return _SVGFEGaussianBlurElementWrappingImplementation$Dart.create__SVGFEGaussianBlurElementWrappingImplementation$member();
 }
+_SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEGaussianBlurElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEGaussianBlurElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEGaussianBlurElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEGaussianBlurElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEGaussianBlurElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEGaussianBlurElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEGaussianBlurElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEGaussianBlurElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEGaussianBlurElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEGaussianBlurElement';
 }
@@ -29467,6 +37209,38 @@ _SVGFEImageElementWrappingImplementation$Dart.create__SVGFEImageElementWrappingI
 function native__SVGFEImageElementWrappingImplementation_create__SVGFEImageElementWrappingImplementation(){
   return _SVGFEImageElementWrappingImplementation$Dart.create__SVGFEImageElementWrappingImplementation$member();
 }
+_SVGFEImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEImageElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEImageElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEImageElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEImageElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEImageElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEImageElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEImageElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEImageElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEImageElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEImageElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEImageElement';
 }
@@ -29512,6 +37286,38 @@ _SVGFEMergeElementWrappingImplementation$Dart.create__SVGFEMergeElementWrappingI
 function native__SVGFEMergeElementWrappingImplementation_create__SVGFEMergeElementWrappingImplementation(){
   return _SVGFEMergeElementWrappingImplementation$Dart.create__SVGFEMergeElementWrappingImplementation$member();
 }
+_SVGFEMergeElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEMergeElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEMergeElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEMergeElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEMergeElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEMergeElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEMergeElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEMergeElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEMergeElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEMergeElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEMergeElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEMergeElement';
 }
@@ -29602,6 +37408,38 @@ _SVGFEMorphologyElementWrappingImplementation$Dart.create__SVGFEMorphologyElemen
 function native__SVGFEMorphologyElementWrappingImplementation_create__SVGFEMorphologyElementWrappingImplementation(){
   return _SVGFEMorphologyElementWrappingImplementation$Dart.create__SVGFEMorphologyElementWrappingImplementation$member();
 }
+_SVGFEMorphologyElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEMorphologyElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEMorphologyElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEMorphologyElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEMorphologyElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEMorphologyElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEMorphologyElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEMorphologyElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEMorphologyElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEMorphologyElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEMorphologyElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEMorphologyElement';
 }
@@ -29647,6 +37485,38 @@ _SVGFEOffsetElementWrappingImplementation$Dart.create__SVGFEOffsetElementWrappin
 function native__SVGFEOffsetElementWrappingImplementation_create__SVGFEOffsetElementWrappingImplementation(){
   return _SVGFEOffsetElementWrappingImplementation$Dart.create__SVGFEOffsetElementWrappingImplementation$member();
 }
+_SVGFEOffsetElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFEOffsetElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFEOffsetElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFEOffsetElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFEOffsetElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEOffsetElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEOffsetElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEOffsetElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEOffsetElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEOffsetElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEOffsetElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEOffsetElement';
 }
@@ -29692,6 +37562,22 @@ _SVGFEPointLightElementWrappingImplementation$Dart.create__SVGFEPointLightElemen
 function native__SVGFEPointLightElementWrappingImplementation_create__SVGFEPointLightElementWrappingImplementation(){
   return _SVGFEPointLightElementWrappingImplementation$Dart.create__SVGFEPointLightElementWrappingImplementation$member();
 }
+_SVGFEPointLightElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFEPointLightElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFEPointLightElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFEPointLightElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFEPointLightElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFEPointLightElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFEPointLightElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFEPointLightElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFEPointLightElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFEPointLightElement';
 }
@@ -29737,6 +37623,38 @@ _SVGFESpecularLightingElementWrappingImplementation$Dart.create__SVGFESpecularLi
 function native__SVGFESpecularLightingElementWrappingImplementation_create__SVGFESpecularLightingElementWrappingImplementation(){
   return _SVGFESpecularLightingElementWrappingImplementation$Dart.create__SVGFESpecularLightingElementWrappingImplementation$member();
 }
+_SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFESpecularLightingElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFESpecularLightingElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFESpecularLightingElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFESpecularLightingElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFESpecularLightingElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFESpecularLightingElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFESpecularLightingElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFESpecularLightingElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFESpecularLightingElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFESpecularLightingElement';
 }
@@ -29782,6 +37700,22 @@ _SVGFESpotLightElementWrappingImplementation$Dart.create__SVGFESpotLightElementW
 function native__SVGFESpotLightElementWrappingImplementation_create__SVGFESpotLightElementWrappingImplementation(){
   return _SVGFESpotLightElementWrappingImplementation$Dart.create__SVGFESpotLightElementWrappingImplementation$member();
 }
+_SVGFESpotLightElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFESpotLightElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFESpotLightElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFESpotLightElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFESpotLightElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFESpotLightElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFESpotLightElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFESpotLightElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFESpotLightElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFESpotLightElement';
 }
@@ -29827,6 +37761,38 @@ _SVGFETileElementWrappingImplementation$Dart.create__SVGFETileElementWrappingImp
 function native__SVGFETileElementWrappingImplementation_create__SVGFETileElementWrappingImplementation(){
   return _SVGFETileElementWrappingImplementation$Dart.create__SVGFETileElementWrappingImplementation$member();
 }
+_SVGFETileElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFETileElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFETileElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFETileElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFETileElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFETileElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFETileElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFETileElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFETileElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFETileElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFETileElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFETileElement';
 }
@@ -29872,6 +37838,38 @@ _SVGFETurbulenceElementWrappingImplementation$Dart.create__SVGFETurbulenceElemen
 function native__SVGFETurbulenceElementWrappingImplementation_create__SVGFETurbulenceElementWrappingImplementation(){
   return _SVGFETurbulenceElementWrappingImplementation$Dart.create__SVGFETurbulenceElementWrappingImplementation$member();
 }
+_SVGFETurbulenceElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFETurbulenceElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFETurbulenceElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFETurbulenceElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFETurbulenceElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFETurbulenceElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFETurbulenceElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFETurbulenceElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFETurbulenceElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFETurbulenceElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFETurbulenceElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFETurbulenceElement';
 }
@@ -29917,6 +37915,38 @@ _SVGFilterElementWrappingImplementation$Dart.create__SVGFilterElementWrappingImp
 function native__SVGFilterElementWrappingImplementation_create__SVGFilterElementWrappingImplementation(){
   return _SVGFilterElementWrappingImplementation$Dart.create__SVGFilterElementWrappingImplementation$member();
 }
+_SVGFilterElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFilterElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFilterElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFilterElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFilterElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFilterElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFilterElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFilterElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFilterElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFilterElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGFilterElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFilterElement';
 }
@@ -30277,6 +38307,38 @@ _SVGForeignObjectElementWrappingImplementation$Dart.create__SVGForeignObjectElem
 function native__SVGForeignObjectElementWrappingImplementation_create__SVGForeignObjectElementWrappingImplementation(){
   return _SVGForeignObjectElementWrappingImplementation$Dart.create__SVGForeignObjectElementWrappingImplementation$member();
 }
+_SVGForeignObjectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGForeignObjectElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGForeignObjectElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGForeignObjectElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGForeignObjectElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGForeignObjectElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGForeignObjectElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGForeignObjectElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGForeignObjectElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGForeignObjectElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGForeignObjectElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGForeignObjectElement';
 }
@@ -30412,6 +38474,38 @@ _SVGGlyphRefElementWrappingImplementation$Dart.create__SVGGlyphRefElementWrappin
 function native__SVGGlyphRefElementWrappingImplementation_create__SVGGlyphRefElementWrappingImplementation(){
   return _SVGGlyphRefElementWrappingImplementation$Dart.create__SVGGlyphRefElementWrappingImplementation$member();
 }
+_SVGGlyphRefElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGGlyphRefElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGGlyphRefElementWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGGlyphRefElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGGlyphRefElementWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGGlyphRefElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGGlyphRefElementWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGGlyphRefElementWrappingImplementation__get_y(_this);
+}
+;
+_SVGGlyphRefElementWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGGlyphRefElementWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGGlyphRefElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGGlyphRefElement';
 }
@@ -30547,6 +38641,38 @@ _SVGImageElementWrappingImplementation$Dart.create__SVGImageElementWrappingImple
 function native__SVGImageElementWrappingImplementation_create__SVGImageElementWrappingImplementation(){
   return _SVGImageElementWrappingImplementation$Dart.create__SVGImageElementWrappingImplementation$member();
 }
+_SVGImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGImageElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGImageElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGImageElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGImageElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGImageElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGImageElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGImageElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGImageElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGImageElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGImageElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGImageElement';
 }
@@ -30705,6 +38831,22 @@ _SVGLengthWrappingImplementation$Dart.create__SVGLengthWrappingImplementation$me
 function native__SVGLengthWrappingImplementation_create__SVGLengthWrappingImplementation(){
   return _SVGLengthWrappingImplementation$Dart.create__SVGLengthWrappingImplementation$member();
 }
+_SVGLengthWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _SVGLengthWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_SVGLengthWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _SVGLengthWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_SVGLengthWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__SVGLengthWrappingImplementation__get_value(_this);
+}
+;
+_SVGLengthWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__SVGLengthWrappingImplementation__set_value(_this, value);
+}
+;
 _SVGLengthWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGLength';
 }
@@ -30975,6 +39117,38 @@ _SVGMaskElementWrappingImplementation$Dart.create__SVGMaskElementWrappingImpleme
 function native__SVGMaskElementWrappingImplementation_create__SVGMaskElementWrappingImplementation(){
   return _SVGMaskElementWrappingImplementation$Dart.create__SVGMaskElementWrappingImplementation$member();
 }
+_SVGMaskElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGMaskElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGMaskElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGMaskElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGMaskElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGMaskElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGMaskElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGMaskElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGMaskElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGMaskElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGMaskElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGMaskElement';
 }
@@ -31020,6 +39194,42 @@ _SVGMatrixWrappingImplementation$Dart.create__SVGMatrixWrappingImplementation$me
 function native__SVGMatrixWrappingImplementation_create__SVGMatrixWrappingImplementation(){
   return _SVGMatrixWrappingImplementation$Dart.create__SVGMatrixWrappingImplementation$member();
 }
+_SVGMatrixWrappingImplementation$Dart.prototype.rotate$member = function(angle){
+  return _SVGMatrixWrappingImplementation$Dart._rotate$$member_(this, angle);
+}
+;
+_SVGMatrixWrappingImplementation$Dart.prototype.rotate$named = function($n, $o, angle){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _SVGMatrixWrappingImplementation$Dart.prototype.rotate$member.call(this, angle);
+}
+;
+_SVGMatrixWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT()], SVGMatrix$Dart.$lookupRTT());
+}
+;
+_SVGMatrixWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return $bind(_SVGMatrixWrappingImplementation$Dart.prototype.rotate$named, _SVGMatrixWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT, this);
+}
+;
+_SVGMatrixWrappingImplementation$Dart._rotate$$member_ = function(receiver, angle){
+  return native__SVGMatrixWrappingImplementation__rotate(receiver, angle);
+}
+;
+_SVGMatrixWrappingImplementation$Dart.prototype.translate$member = function(x, y){
+  return _SVGMatrixWrappingImplementation$Dart._translate$$member_(this, x, y);
+}
+;
+_SVGMatrixWrappingImplementation$Dart.prototype.translate$named = function($n, $o, x, y){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _SVGMatrixWrappingImplementation$Dart.prototype.translate$member.call(this, x, y);
+}
+;
+_SVGMatrixWrappingImplementation$Dart._translate$$member_ = function(receiver, x, y){
+  return native__SVGMatrixWrappingImplementation__translate(receiver, x, y);
+}
+;
 _SVGMatrixWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGMatrix';
 }
@@ -31223,6 +39433,22 @@ _SVGNumberWrappingImplementation$Dart.create__SVGNumberWrappingImplementation$me
 function native__SVGNumberWrappingImplementation_create__SVGNumberWrappingImplementation(){
   return _SVGNumberWrappingImplementation$Dart.create__SVGNumberWrappingImplementation$member();
 }
+_SVGNumberWrappingImplementation$Dart.prototype.value$getter = function(){
+  return _SVGNumberWrappingImplementation$Dart._get_value$$member_(this);
+}
+;
+_SVGNumberWrappingImplementation$Dart.prototype.value$setter = function(value){
+  _SVGNumberWrappingImplementation$Dart._set_value$$member_(this, value);
+}
+;
+_SVGNumberWrappingImplementation$Dart._get_value$$member_ = function(_this){
+  return native__SVGNumberWrappingImplementation__get_value(_this);
+}
+;
+_SVGNumberWrappingImplementation$Dart._set_value$$member_ = function(_this, value){
+  return native__SVGNumberWrappingImplementation__set_value(_this, value);
+}
+;
 _SVGNumberWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGNumber';
 }
@@ -31471,6 +39697,54 @@ _SVGPathSegArcAbsWrappingImplementation$Dart.create__SVGPathSegArcAbsWrappingImp
 function native__SVGPathSegArcAbsWrappingImplementation_create__SVGPathSegArcAbsWrappingImplementation(){
   return _SVGPathSegArcAbsWrappingImplementation$Dart.create__SVGPathSegArcAbsWrappingImplementation$member();
 }
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.angle$getter = function(){
+  return _SVGPathSegArcAbsWrappingImplementation$Dart._get_angle$$member_(this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.angle$setter = function(value){
+  _SVGPathSegArcAbsWrappingImplementation$Dart._set_angle$$member_(this, value);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._get_angle$$member_ = function(_this){
+  return native__SVGPathSegArcAbsWrappingImplementation__get_angle(_this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._set_angle$$member_ = function(_this, value){
+  return native__SVGPathSegArcAbsWrappingImplementation__set_angle(_this, value);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegArcAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegArcAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegArcAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegArcAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegArcAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegArcAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegArcAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegArcAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegArcAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegArcAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegArcAbs';
 }
@@ -31516,6 +39790,54 @@ _SVGPathSegArcRelWrappingImplementation$Dart.create__SVGPathSegArcRelWrappingImp
 function native__SVGPathSegArcRelWrappingImplementation_create__SVGPathSegArcRelWrappingImplementation(){
   return _SVGPathSegArcRelWrappingImplementation$Dart.create__SVGPathSegArcRelWrappingImplementation$member();
 }
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.angle$getter = function(){
+  return _SVGPathSegArcRelWrappingImplementation$Dart._get_angle$$member_(this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.angle$setter = function(value){
+  _SVGPathSegArcRelWrappingImplementation$Dart._set_angle$$member_(this, value);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._get_angle$$member_ = function(_this){
+  return native__SVGPathSegArcRelWrappingImplementation__get_angle(_this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._set_angle$$member_ = function(_this, value){
+  return native__SVGPathSegArcRelWrappingImplementation__set_angle(_this, value);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegArcRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegArcRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegArcRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegArcRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegArcRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegArcRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegArcRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegArcRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegArcRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegArcRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegArcRel';
 }
@@ -31606,6 +39928,38 @@ _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.create__SVGPathSegCurvetoC
 function native__SVGPathSegCurvetoCubicAbsWrappingImplementation_create__SVGPathSegCurvetoCubicAbsWrappingImplementation(){
   return _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.create__SVGPathSegCurvetoCubicAbsWrappingImplementation$member();
 }
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoCubicAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoCubicAbs';
 }
@@ -31651,6 +40005,38 @@ _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.create__SVGPathSegCurvetoC
 function native__SVGPathSegCurvetoCubicRelWrappingImplementation_create__SVGPathSegCurvetoCubicRelWrappingImplementation(){
   return _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.create__SVGPathSegCurvetoCubicRelWrappingImplementation$member();
 }
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoCubicRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoCubicRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoCubicRel';
 }
@@ -31696,6 +40082,38 @@ _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.create__SVGPathSegCu
 function native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation_create__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation(){
   return _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.create__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$member();
 }
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoCubicSmoothAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoCubicSmoothAbs';
 }
@@ -31741,6 +40159,38 @@ _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.create__SVGPathSegCu
 function native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation_create__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation(){
   return _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.create__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$member();
 }
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoCubicSmoothRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoCubicSmoothRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoCubicSmoothRel';
 }
@@ -31786,6 +40236,38 @@ _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.create__SVGPathSegCurv
 function native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation_create__SVGPathSegCurvetoQuadraticAbsWrappingImplementation(){
   return _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.create__SVGPathSegCurvetoQuadraticAbsWrappingImplementation$member();
 }
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoQuadraticAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoQuadraticAbs';
 }
@@ -31831,6 +40313,38 @@ _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.create__SVGPathSegCurv
 function native__SVGPathSegCurvetoQuadraticRelWrappingImplementation_create__SVGPathSegCurvetoQuadraticRelWrappingImplementation(){
   return _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.create__SVGPathSegCurvetoQuadraticRelWrappingImplementation$member();
 }
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoQuadraticRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoQuadraticRel';
 }
@@ -31876,6 +40390,38 @@ _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.create__SVGPathS
 function native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation_create__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation(){
   return _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.create__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$member();
 }
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoQuadraticSmoothAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoQuadraticSmoothAbs';
 }
@@ -31921,6 +40467,38 @@ _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.create__SVGPathS
 function native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation_create__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation(){
   return _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.create__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$member();
 }
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegCurvetoQuadraticSmoothRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegCurvetoQuadraticSmoothRel';
 }
@@ -31966,6 +40544,38 @@ _SVGPathSegLinetoAbsWrappingImplementation$Dart.create__SVGPathSegLinetoAbsWrapp
 function native__SVGPathSegLinetoAbsWrappingImplementation_create__SVGPathSegLinetoAbsWrappingImplementation(){
   return _SVGPathSegLinetoAbsWrappingImplementation$Dart.create__SVGPathSegLinetoAbsWrappingImplementation$member();
 }
+_SVGPathSegLinetoAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegLinetoAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegLinetoAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegLinetoAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegLinetoAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegLinetoAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegLinetoAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegLinetoAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegLinetoAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoAbs';
 }
@@ -32011,6 +40621,22 @@ _SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart.create__SVGPathSegLine
 function native__SVGPathSegLinetoHorizontalAbsWrappingImplementation_create__SVGPathSegLinetoHorizontalAbsWrappingImplementation(){
   return _SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart.create__SVGPathSegLinetoHorizontalAbsWrappingImplementation$member();
 }
+_SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegLinetoHorizontalAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoHorizontalAbsWrappingImplementation__set_x(_this, value);
+}
+;
 _SVGPathSegLinetoHorizontalAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoHorizontalAbs';
 }
@@ -32056,6 +40682,22 @@ _SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart.create__SVGPathSegLine
 function native__SVGPathSegLinetoHorizontalRelWrappingImplementation_create__SVGPathSegLinetoHorizontalRelWrappingImplementation(){
   return _SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart.create__SVGPathSegLinetoHorizontalRelWrappingImplementation$member();
 }
+_SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegLinetoHorizontalRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoHorizontalRelWrappingImplementation__set_x(_this, value);
+}
+;
 _SVGPathSegLinetoHorizontalRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoHorizontalRel';
 }
@@ -32101,6 +40743,38 @@ _SVGPathSegLinetoRelWrappingImplementation$Dart.create__SVGPathSegLinetoRelWrapp
 function native__SVGPathSegLinetoRelWrappingImplementation_create__SVGPathSegLinetoRelWrappingImplementation(){
   return _SVGPathSegLinetoRelWrappingImplementation$Dart.create__SVGPathSegLinetoRelWrappingImplementation$member();
 }
+_SVGPathSegLinetoRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegLinetoRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegLinetoRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegLinetoRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegLinetoRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegLinetoRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegLinetoRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegLinetoRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegLinetoRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoRel';
 }
@@ -32146,6 +40820,22 @@ _SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart.create__SVGPathSegLineto
 function native__SVGPathSegLinetoVerticalAbsWrappingImplementation_create__SVGPathSegLinetoVerticalAbsWrappingImplementation(){
   return _SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart.create__SVGPathSegLinetoVerticalAbsWrappingImplementation$member();
 }
+_SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegLinetoVerticalAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoVerticalAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegLinetoVerticalAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoVerticalAbs';
 }
@@ -32191,6 +40881,22 @@ _SVGPathSegLinetoVerticalRelWrappingImplementation$Dart.create__SVGPathSegLineto
 function native__SVGPathSegLinetoVerticalRelWrappingImplementation_create__SVGPathSegLinetoVerticalRelWrappingImplementation(){
   return _SVGPathSegLinetoVerticalRelWrappingImplementation$Dart.create__SVGPathSegLinetoVerticalRelWrappingImplementation$member();
 }
+_SVGPathSegLinetoVerticalRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegLinetoVerticalRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegLinetoVerticalRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegLinetoVerticalRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegLinetoVerticalRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegLinetoVerticalRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegLinetoVerticalRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegLinetoVerticalRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegLinetoVerticalRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegLinetoVerticalRel';
 }
@@ -32236,6 +40942,38 @@ _SVGPathSegMovetoAbsWrappingImplementation$Dart.create__SVGPathSegMovetoAbsWrapp
 function native__SVGPathSegMovetoAbsWrappingImplementation_create__SVGPathSegMovetoAbsWrappingImplementation(){
   return _SVGPathSegMovetoAbsWrappingImplementation$Dart.create__SVGPathSegMovetoAbsWrappingImplementation$member();
 }
+_SVGPathSegMovetoAbsWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegMovetoAbsWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegMovetoAbsWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegMovetoAbsWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegMovetoAbsWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegMovetoAbsWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegMovetoAbsWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegMovetoAbsWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegMovetoAbsWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegMovetoAbsWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegMovetoAbsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegMovetoAbs';
 }
@@ -32281,6 +41019,38 @@ _SVGPathSegMovetoRelWrappingImplementation$Dart.create__SVGPathSegMovetoRelWrapp
 function native__SVGPathSegMovetoRelWrappingImplementation_create__SVGPathSegMovetoRelWrappingImplementation(){
   return _SVGPathSegMovetoRelWrappingImplementation$Dart.create__SVGPathSegMovetoRelWrappingImplementation$member();
 }
+_SVGPathSegMovetoRelWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPathSegMovetoRelWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPathSegMovetoRelWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPathSegMovetoRelWrappingImplementation__get_x(_this);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPathSegMovetoRelWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPathSegMovetoRelWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPathSegMovetoRelWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPathSegMovetoRelWrappingImplementation__get_y(_this);
+}
+;
+_SVGPathSegMovetoRelWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPathSegMovetoRelWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPathSegMovetoRelWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPathSegMovetoRel';
 }
@@ -32326,6 +41096,38 @@ _SVGPatternElementWrappingImplementation$Dart.create__SVGPatternElementWrappingI
 function native__SVGPatternElementWrappingImplementation_create__SVGPatternElementWrappingImplementation(){
   return _SVGPatternElementWrappingImplementation$Dart.create__SVGPatternElementWrappingImplementation$member();
 }
+_SVGPatternElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGPatternElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGPatternElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGPatternElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGPatternElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPatternElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPatternElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPatternElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPatternElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPatternElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGPatternElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPatternElement';
 }
@@ -32439,6 +41241,38 @@ _SVGPointWrappingImplementation$Dart.create__SVGPointWrappingImplementation$memb
 function native__SVGPointWrappingImplementation_create__SVGPointWrappingImplementation(){
   return _SVGPointWrappingImplementation$Dart.create__SVGPointWrappingImplementation$member();
 }
+_SVGPointWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGPointWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGPointWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGPointWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGPointWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGPointWrappingImplementation__get_x(_this);
+}
+;
+_SVGPointWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGPointWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGPointWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGPointWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGPointWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGPointWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGPointWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGPointWrappingImplementation__get_y(_this);
+}
+;
+_SVGPointWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGPointWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGPointWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGPoint';
 }
@@ -32664,6 +41498,38 @@ _SVGRectElementWrappingImplementation$Dart.create__SVGRectElementWrappingImpleme
 function native__SVGRectElementWrappingImplementation_create__SVGRectElementWrappingImplementation(){
   return _SVGRectElementWrappingImplementation$Dart.create__SVGRectElementWrappingImplementation$member();
 }
+_SVGRectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGRectElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGRectElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGRectElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGRectElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGRectElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGRectElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGRectElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGRectElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGRectElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGRectElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGRectElement';
 }
@@ -32709,6 +41575,70 @@ _SVGRectWrappingImplementation$Dart.create__SVGRectWrappingImplementation$member
 function native__SVGRectWrappingImplementation_create__SVGRectWrappingImplementation(){
   return _SVGRectWrappingImplementation$Dart.create__SVGRectWrappingImplementation$member();
 }
+_SVGRectWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGRectWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.height$setter = function(value){
+  _SVGRectWrappingImplementation$Dart._set_height$$member_(this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGRectWrappingImplementation__get_height(_this);
+}
+;
+_SVGRectWrappingImplementation$Dart._set_height$$member_ = function(_this, value){
+  return native__SVGRectWrappingImplementation__set_height(_this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGRectWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.width$setter = function(value){
+  _SVGRectWrappingImplementation$Dart._set_width$$member_(this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGRectWrappingImplementation__get_width(_this);
+}
+;
+_SVGRectWrappingImplementation$Dart._set_width$$member_ = function(_this, value){
+  return native__SVGRectWrappingImplementation__set_width(_this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGRectWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _SVGRectWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGRectWrappingImplementation__get_x(_this);
+}
+;
+_SVGRectWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__SVGRectWrappingImplementation__set_x(_this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGRectWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGRectWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _SVGRectWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_SVGRectWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGRectWrappingImplementation__get_y(_this);
+}
+;
+_SVGRectWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__SVGRectWrappingImplementation__set_y(_this, value);
+}
+;
 _SVGRectWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGRect';
 }
@@ -32799,6 +41729,38 @@ _SVGSVGElementWrappingImplementation$Dart.create__SVGSVGElementWrappingImplement
 function native__SVGSVGElementWrappingImplementation_create__SVGSVGElementWrappingImplementation(){
   return _SVGSVGElementWrappingImplementation$Dart.create__SVGSVGElementWrappingImplementation$member();
 }
+_SVGSVGElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGSVGElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGSVGElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGSVGElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGSVGElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGSVGElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGSVGElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGSVGElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGSVGElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGSVGElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGSVGElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGSVGElement';
 }
@@ -33092,6 +42054,38 @@ _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.create__SVGFilt
 function native__SVGFilterPrimitiveStandardAttributesWrappingImplementation_create__SVGFilterPrimitiveStandardAttributesWrappingImplementation(){
   return _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.create__SVGFilterPrimitiveStandardAttributesWrappingImplementation$member();
 }
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_height(_this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_width(_this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_x(_this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGFilterPrimitiveStandardAttributesWrappingImplementation__get_y(_this);
+}
+;
 _SVGFilterPrimitiveStandardAttributesWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGFilterPrimitiveStandardAttributes';
 }
@@ -33407,6 +42401,34 @@ _SVGTextPositioningElementWrappingImplementation$Dart.create__SVGTextPositioning
 function native__SVGTextPositioningElementWrappingImplementation_create__SVGTextPositioningElementWrappingImplementation(){
   return _SVGTextPositioningElementWrappingImplementation$Dart.create__SVGTextPositioningElementWrappingImplementation$member();
 }
+_SVGTextPositioningElementWrappingImplementation$Dart.prototype.rotate$named = function(){
+  return this.rotate$getter().apply(this, arguments);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return _SVGTextPositioningElementWrappingImplementation$Dart._get_rotate$$member_(this);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart._get_rotate$$member_ = function(_this){
+  return native__SVGTextPositioningElementWrappingImplementation__get_rotate(_this);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGTextPositioningElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGTextPositioningElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGTextPositioningElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGTextPositioningElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGTextPositioningElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGTextPositioningElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGTextPositioningElement';
 }
@@ -33745,6 +42767,14 @@ _SVGTransformWrappingImplementation$Dart.create__SVGTransformWrappingImplementat
 function native__SVGTransformWrappingImplementation_create__SVGTransformWrappingImplementation(){
   return _SVGTransformWrappingImplementation$Dart.create__SVGTransformWrappingImplementation$member();
 }
+_SVGTransformWrappingImplementation$Dart.prototype.angle$getter = function(){
+  return _SVGTransformWrappingImplementation$Dart._get_angle$$member_(this);
+}
+;
+_SVGTransformWrappingImplementation$Dart._get_angle$$member_ = function(_this){
+  return native__SVGTransformWrappingImplementation__get_angle(_this);
+}
+;
 _SVGTransformWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGTransform';
 }
@@ -33925,6 +42955,38 @@ _SVGUseElementWrappingImplementation$Dart.create__SVGUseElementWrappingImplement
 function native__SVGUseElementWrappingImplementation_create__SVGUseElementWrappingImplementation(){
   return _SVGUseElementWrappingImplementation$Dart.create__SVGUseElementWrappingImplementation$member();
 }
+_SVGUseElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _SVGUseElementWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__SVGUseElementWrappingImplementation__get_height(_this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _SVGUseElementWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__SVGUseElementWrappingImplementation__get_width(_this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _SVGUseElementWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__SVGUseElementWrappingImplementation__get_x(_this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _SVGUseElementWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_SVGUseElementWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__SVGUseElementWrappingImplementation__get_y(_this);
+}
+;
 _SVGUseElementWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'SVGUseElement';
 }
@@ -34150,6 +43212,22 @@ _ScreenWrappingImplementation$Dart.create__ScreenWrappingImplementation$member =
 function native__ScreenWrappingImplementation_create__ScreenWrappingImplementation(){
   return _ScreenWrappingImplementation$Dart.create__ScreenWrappingImplementation$member();
 }
+_ScreenWrappingImplementation$Dart.prototype.height$getter = function(){
+  return _ScreenWrappingImplementation$Dart._get_height$$member_(this);
+}
+;
+_ScreenWrappingImplementation$Dart._get_height$$member_ = function(_this){
+  return native__ScreenWrappingImplementation__get_height(_this);
+}
+;
+_ScreenWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _ScreenWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_ScreenWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__ScreenWrappingImplementation__get_width(_this);
+}
+;
 _ScreenWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Screen';
 }
@@ -34195,6 +43273,14 @@ _ScriptProfileNodeWrappingImplementation$Dart.create__ScriptProfileNodeWrappingI
 function native__ScriptProfileNodeWrappingImplementation_create__ScriptProfileNodeWrappingImplementation(){
   return _ScriptProfileNodeWrappingImplementation$Dart.create__ScriptProfileNodeWrappingImplementation$member();
 }
+_ScriptProfileNodeWrappingImplementation$Dart.prototype.totalTime$getter = function(){
+  return _ScriptProfileNodeWrappingImplementation$Dart._get_totalTime$$member_(this);
+}
+;
+_ScriptProfileNodeWrappingImplementation$Dart._get_totalTime$$member_ = function(_this){
+  return native__ScriptProfileNodeWrappingImplementation__get_totalTime(_this);
+}
+;
 _ScriptProfileNodeWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'ScriptProfileNode';
 }
@@ -34473,6 +43559,14 @@ _StorageEventWrappingImplementation$Dart.create__StorageEventWrappingImplementat
 function native__StorageEventWrappingImplementation_create__StorageEventWrappingImplementation(){
   return _StorageEventWrappingImplementation$Dart.create__StorageEventWrappingImplementation$member();
 }
+_StorageEventWrappingImplementation$Dart.prototype.key$getter = function(){
+  return _StorageEventWrappingImplementation$Dart._get_key$$member_(this);
+}
+;
+_StorageEventWrappingImplementation$Dart._get_key$$member_ = function(_this){
+  return native__StorageEventWrappingImplementation__get_key(_this);
+}
+;
 _StorageEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'StorageEvent';
 }
@@ -34594,6 +43688,28 @@ _StorageWrappingImplementation$Dart._clear$$member_ = function(receiver){
   return native__StorageWrappingImplementation__clear(receiver);
 }
 ;
+_StorageWrappingImplementation$Dart.prototype.key$member = function(index){
+  return _StorageWrappingImplementation$Dart._key$$member_(this, index);
+}
+;
+_StorageWrappingImplementation$Dart.prototype.key$named = function($n, $o, index){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _StorageWrappingImplementation$Dart.prototype.key$member.call(this, index);
+}
+;
+_StorageWrappingImplementation$Dart.prototype.key$named_$lookupRTT = function(){
+  return RTT.createFunction([int$Dart.$lookupRTT()], String$Dart.$lookupRTT());
+}
+;
+_StorageWrappingImplementation$Dart.prototype.key$getter = function(){
+  return $bind(_StorageWrappingImplementation$Dart.prototype.key$named, _StorageWrappingImplementation$Dart.prototype.key$named_$lookupRTT, this);
+}
+;
+_StorageWrappingImplementation$Dart._key$$member_ = function(receiver, index){
+  return native__StorageWrappingImplementation__key(receiver, index);
+}
+;
 _StorageWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Storage';
 }
@@ -34701,6 +43817,18 @@ _StyleSheetListWrappingImplementation$Dart._index$$member_ = function(_this, ind
   return native__StyleSheetListWrappingImplementation__index(_this, index);
 }
 ;
+_StyleSheetListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _StyleSheetListWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_StyleSheetListWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _StyleSheetListWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _StyleSheetListWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _StyleSheetListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -34713,6 +43841,16 @@ _StyleSheetListWrappingImplementation$Dart.prototype.add$named = function($n, $o
   if ($o.count || $n != 1)
     $nsme();
   return _StyleSheetListWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_StyleSheetListWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_StyleSheetListWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _StyleSheetListWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _StyleSheetListWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -34741,6 +43879,16 @@ _StyleSheetListWrappingImplementation$Dart.prototype.forEach$named = function($n
   if ($o.count || $n != 1)
     $nsme();
   return _StyleSheetListWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_StyleSheetListWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_StyleSheetListWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _StyleSheetListWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _StyleSheetListWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -34898,6 +44046,14 @@ _TextMetricsWrappingImplementation$Dart.create__TextMetricsWrappingImplementatio
 function native__TextMetricsWrappingImplementation_create__TextMetricsWrappingImplementation(){
   return _TextMetricsWrappingImplementation$Dart.create__TextMetricsWrappingImplementation$member();
 }
+_TextMetricsWrappingImplementation$Dart.prototype.width$getter = function(){
+  return _TextMetricsWrappingImplementation$Dart._get_width$$member_(this);
+}
+;
+_TextMetricsWrappingImplementation$Dart._get_width$$member_ = function(_this){
+  return native__TextMetricsWrappingImplementation__get_width(_this);
+}
+;
 _TextMetricsWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'TextMetrics';
 }
@@ -35184,6 +44340,28 @@ _TimeRangesWrappingImplementation$Dart._get_length$$member_ = function(_this){
   return native__TimeRangesWrappingImplementation__get_length(_this);
 }
 ;
+_TimeRangesWrappingImplementation$Dart.prototype.start$member = function(index){
+  return _TimeRangesWrappingImplementation$Dart._start$$member_(this, index);
+}
+;
+_TimeRangesWrappingImplementation$Dart.prototype.start$named = function($n, $o, index){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _TimeRangesWrappingImplementation$Dart.prototype.start$member.call(this, index);
+}
+;
+_TimeRangesWrappingImplementation$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction([int$Dart.$lookupRTT()], num$Dart.$lookupRTT());
+}
+;
+_TimeRangesWrappingImplementation$Dart.prototype.start$getter = function(){
+  return $bind(_TimeRangesWrappingImplementation$Dart.prototype.start$named, _TimeRangesWrappingImplementation$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
+_TimeRangesWrappingImplementation$Dart._start$$member_ = function(receiver, index){
+  return native__TimeRangesWrappingImplementation__start(receiver, index);
+}
+;
 _TimeRangesWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'TimeRanges';
 }
@@ -35246,6 +44424,18 @@ _TouchListWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__TouchListWrappingImplementation__index(_this, index);
 }
 ;
+_TouchListWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _TouchListWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_TouchListWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _TouchListWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _TouchListWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _TouchListWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot assign element of immutable List.'));
 }
@@ -35258,6 +44448,16 @@ _TouchListWrappingImplementation$Dart.prototype.add$named = function($n, $o, val
   if ($o.count || $n != 1)
     $nsme();
   return _TouchListWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_TouchListWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_TouchListWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _TouchListWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _TouchListWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -35286,6 +44486,16 @@ _TouchListWrappingImplementation$Dart.prototype.forEach$named = function($n, $o,
   if ($o.count || $n != 1)
     $nsme();
   return _TouchListWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_TouchListWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_TouchListWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _TouchListWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _TouchListWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -35353,6 +44563,22 @@ _TouchWrappingImplementation$Dart.create__TouchWrappingImplementation$member = f
 function native__TouchWrappingImplementation_create__TouchWrappingImplementation(){
   return _TouchWrappingImplementation$Dart.create__TouchWrappingImplementation$member();
 }
+_TouchWrappingImplementation$Dart.prototype.clientX$getter = function(){
+  return _TouchWrappingImplementation$Dart._get_clientX$$member_(this);
+}
+;
+_TouchWrappingImplementation$Dart._get_clientX$$member_ = function(_this){
+  return native__TouchWrappingImplementation__get_clientX(_this);
+}
+;
+_TouchWrappingImplementation$Dart.prototype.clientY$getter = function(){
+  return _TouchWrappingImplementation$Dart._get_clientY$$member_(this);
+}
+;
+_TouchWrappingImplementation$Dart._get_clientY$$member_ = function(_this){
+  return native__TouchWrappingImplementation__get_clientY(_this);
+}
+;
 _TouchWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Touch';
 }
@@ -35600,6 +44826,38 @@ _MouseEventWrappingImplementation$Dart.create__MouseEventWrappingImplementation$
 function native__MouseEventWrappingImplementation_create__MouseEventWrappingImplementation(){
   return _MouseEventWrappingImplementation$Dart.create__MouseEventWrappingImplementation$member();
 }
+_MouseEventWrappingImplementation$Dart.prototype.clientX$getter = function(){
+  return _MouseEventWrappingImplementation$Dart._get_clientX$$member_(this);
+}
+;
+_MouseEventWrappingImplementation$Dart._get_clientX$$member_ = function(_this){
+  return native__MouseEventWrappingImplementation__get_clientX(_this);
+}
+;
+_MouseEventWrappingImplementation$Dart.prototype.clientY$getter = function(){
+  return _MouseEventWrappingImplementation$Dart._get_clientY$$member_(this);
+}
+;
+_MouseEventWrappingImplementation$Dart._get_clientY$$member_ = function(_this){
+  return native__MouseEventWrappingImplementation__get_clientY(_this);
+}
+;
+_MouseEventWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _MouseEventWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_MouseEventWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__MouseEventWrappingImplementation__get_x(_this);
+}
+;
+_MouseEventWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _MouseEventWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_MouseEventWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__MouseEventWrappingImplementation__get_y(_this);
+}
+;
 _MouseEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'MouseEvent';
 }
@@ -35797,6 +45055,18 @@ _Uint16ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index)
   return native__Uint16ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Uint16ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint16ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Uint16ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Uint16ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Uint16ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Uint16ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Uint16ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -35813,6 +45083,16 @@ _Uint16ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, v
   if ($o.count || $n != 1)
     $nsme();
   return _Uint16ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Uint16ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Uint16ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Uint16ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Uint16ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -35841,6 +45121,16 @@ _Uint16ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $
   if ($o.count || $n != 1)
     $nsme();
   return _Uint16ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Uint16ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Uint16ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint16ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Uint16ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -35925,6 +45215,18 @@ _Uint32ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index)
   return native__Uint32ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Uint32ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint32ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Uint32ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Uint32ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Uint32ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Uint32ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Uint32ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -35941,6 +45243,16 @@ _Uint32ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, v
   if ($o.count || $n != 1)
     $nsme();
   return _Uint32ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Uint32ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Uint32ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Uint32ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Uint32ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -35969,6 +45281,16 @@ _Uint32ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $
   if ($o.count || $n != 1)
     $nsme();
   return _Uint32ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Uint32ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Uint32ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint32ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Uint32ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -36053,6 +45375,18 @@ _Uint8ArrayWrappingImplementation$Dart._index$$member_ = function(_this, index){
   return native__Uint8ArrayWrappingImplementation__index(_this, index);
 }
 ;
+_Uint8ArrayWrappingImplementation$Dart._index$$named_ = function($n, $o, _this, index){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint8ArrayWrappingImplementation$Dart._index$$member_(_this, index);
+}
+;
+_Uint8ArrayWrappingImplementation$Dart._index$$getter_ = function(){
+  var ret = _Uint8ArrayWrappingImplementation$Dart._index$$named_;
+  ret.$lookupRTT = _Uint8ArrayWrappingImplementation$Dart._index$$named__$lookupRTT;
+  return ret;
+}
+;
 _Uint8ArrayWrappingImplementation$Dart.prototype.ASSIGN_INDEX$operator = function(index, value){
   return _Uint8ArrayWrappingImplementation$Dart._set_index$$member_(this, index, value);
 }
@@ -36069,6 +45403,16 @@ _Uint8ArrayWrappingImplementation$Dart.prototype.add$named = function($n, $o, va
   if ($o.count || $n != 1)
     $nsme();
   return _Uint8ArrayWrappingImplementation$Dart.prototype.add$member.call(this, value);
+}
+;
+_Uint8ArrayWrappingImplementation$Dart.prototype.addLast$member = function(value){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot add to immutable List.'));
+}
+;
+_Uint8ArrayWrappingImplementation$Dart.prototype.addLast$named = function($n, $o, value){
+  if ($o.count || $n != 1)
+    $nsme();
+  return _Uint8ArrayWrappingImplementation$Dart.prototype.addLast$member.call(this, value);
 }
 ;
 _Uint8ArrayWrappingImplementation$Dart.prototype.clear$member = function(){
@@ -36097,6 +45441,16 @@ _Uint8ArrayWrappingImplementation$Dart.prototype.forEach$named = function($n, $o
   if ($o.count || $n != 1)
     $nsme();
   return _Uint8ArrayWrappingImplementation$Dart.prototype.forEach$member.call(this, f);
+}
+;
+_Uint8ArrayWrappingImplementation$Dart.prototype.removeRange$member = function(start, length_0){
+  $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory('Cannot removeRange on immutable List.'));
+}
+;
+_Uint8ArrayWrappingImplementation$Dart.prototype.removeRange$named = function($n, $o, start, length_0){
+  if ($o.count || $n != 2)
+    $nsme();
+  return _Uint8ArrayWrappingImplementation$Dart.prototype.removeRange$member.call(this, start, length_0);
 }
 ;
 _Uint8ArrayWrappingImplementation$Dart.prototype.isEmpty$member = function(){
@@ -36907,6 +46261,14 @@ _WebKitAnimationEventWrappingImplementation$Dart.create__WebKitAnimationEventWra
 function native__WebKitAnimationEventWrappingImplementation_create__WebKitAnimationEventWrappingImplementation(){
   return _WebKitAnimationEventWrappingImplementation$Dart.create__WebKitAnimationEventWrappingImplementation$member();
 }
+_WebKitAnimationEventWrappingImplementation$Dart.prototype.elapsedTime$getter = function(){
+  return _WebKitAnimationEventWrappingImplementation$Dart._get_elapsedTime$$member_(this);
+}
+;
+_WebKitAnimationEventWrappingImplementation$Dart._get_elapsedTime$$member_ = function(_this){
+  return native__WebKitAnimationEventWrappingImplementation__get_elapsedTime(_this);
+}
+;
 _WebKitAnimationEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WebKitAnimationEvent';
 }
@@ -37005,6 +46367,22 @@ _WebKitAnimationWrappingImplementation$Dart.create__WebKitAnimationWrappingImple
 function native__WebKitAnimationWrappingImplementation_create__WebKitAnimationWrappingImplementation(){
   return _WebKitAnimationWrappingImplementation$Dart.create__WebKitAnimationWrappingImplementation$member();
 }
+_WebKitAnimationWrappingImplementation$Dart.prototype.elapsedTime$getter = function(){
+  return _WebKitAnimationWrappingImplementation$Dart._get_elapsedTime$$member_(this);
+}
+;
+_WebKitAnimationWrappingImplementation$Dart.prototype.elapsedTime$setter = function(value){
+  _WebKitAnimationWrappingImplementation$Dart._set_elapsedTime$$member_(this, value);
+}
+;
+_WebKitAnimationWrappingImplementation$Dart._get_elapsedTime$$member_ = function(_this){
+  return native__WebKitAnimationWrappingImplementation__get_elapsedTime(_this);
+}
+;
+_WebKitAnimationWrappingImplementation$Dart._set_elapsedTime$$member_ = function(_this, value){
+  return native__WebKitAnimationWrappingImplementation__set_elapsedTime(_this, value);
+}
+;
 _WebKitAnimationWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WebKitAnimation';
 }
@@ -37230,6 +46608,28 @@ _WebKitCSSMatrixWrappingImplementation$Dart.create__WebKitCSSMatrixWrappingImple
 function native__WebKitCSSMatrixWrappingImplementation_create__WebKitCSSMatrixWrappingImplementation(){
   return _WebKitCSSMatrixWrappingImplementation$Dart.create__WebKitCSSMatrixWrappingImplementation$member();
 }
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$member = function(rotX, rotY, rotZ){
+  return _WebKitCSSMatrixWrappingImplementation$Dart._rotate$$member_(this, rotX, rotY, rotZ);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$named = function($n, $o, rotX, rotY, rotZ){
+  if ($o.count || $n != 3)
+    $nsme();
+  return _WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$member.call(this, rotX, rotY, rotZ);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT(), num$Dart.$lookupRTT(), num$Dart.$lookupRTT()], WebKitCSSMatrix$Dart.$lookupRTT());
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return $bind(_WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$named, _WebKitCSSMatrixWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT, this);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart._rotate$$member_ = function(receiver, rotX, rotY, rotZ){
+  return native__WebKitCSSMatrixWrappingImplementation__rotate(receiver, rotX, rotY, rotZ);
+}
+;
 _WebKitCSSMatrixWrappingImplementation$Dart.prototype.toString$member = function(){
   return _WebKitCSSMatrixWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -37242,6 +46642,20 @@ _WebKitCSSMatrixWrappingImplementation$Dart.prototype.toString$named = function(
 ;
 _WebKitCSSMatrixWrappingImplementation$Dart._toString$$member_ = function(receiver){
   return native__WebKitCSSMatrixWrappingImplementation__toString(receiver);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.translate$member = function(x, y, z){
+  return _WebKitCSSMatrixWrappingImplementation$Dart._translate$$member_(this, x, y, z);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart.prototype.translate$named = function($n, $o, x, y, z){
+  if ($o.count || $n != 3)
+    $nsme();
+  return _WebKitCSSMatrixWrappingImplementation$Dart.prototype.translate$member.call(this, x, y, z);
+}
+;
+_WebKitCSSMatrixWrappingImplementation$Dart._translate$$member_ = function(receiver, x, y, z){
+  return native__WebKitCSSMatrixWrappingImplementation__translate(receiver, x, y, z);
 }
 ;
 _WebKitCSSMatrixWrappingImplementation$Dart.prototype.typeName$getter = function(){
@@ -37469,6 +46883,38 @@ _WebKitPointWrappingImplementation$Dart.create__WebKitPointWrappingImplementatio
 function native__WebKitPointWrappingImplementation_create__WebKitPointWrappingImplementation(){
   return _WebKitPointWrappingImplementation$Dart.create__WebKitPointWrappingImplementation$member();
 }
+_WebKitPointWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _WebKitPointWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_WebKitPointWrappingImplementation$Dart.prototype.x$setter = function(value){
+  _WebKitPointWrappingImplementation$Dart._set_x$$member_(this, value);
+}
+;
+_WebKitPointWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__WebKitPointWrappingImplementation__get_x(_this);
+}
+;
+_WebKitPointWrappingImplementation$Dart._set_x$$member_ = function(_this, value){
+  return native__WebKitPointWrappingImplementation__set_x(_this, value);
+}
+;
+_WebKitPointWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _WebKitPointWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_WebKitPointWrappingImplementation$Dart.prototype.y$setter = function(value){
+  _WebKitPointWrappingImplementation$Dart._set_y$$member_(this, value);
+}
+;
+_WebKitPointWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__WebKitPointWrappingImplementation__get_y(_this);
+}
+;
+_WebKitPointWrappingImplementation$Dart._set_y$$member_ = function(_this, value){
+  return native__WebKitPointWrappingImplementation__set_y(_this, value);
+}
+;
 _WebKitPointWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WebKitPoint';
 }
@@ -37514,6 +46960,14 @@ _WebKitTransitionEventWrappingImplementation$Dart.create__WebKitTransitionEventW
 function native__WebKitTransitionEventWrappingImplementation_create__WebKitTransitionEventWrappingImplementation(){
   return _WebKitTransitionEventWrappingImplementation$Dart.create__WebKitTransitionEventWrappingImplementation$member();
 }
+_WebKitTransitionEventWrappingImplementation$Dart.prototype.elapsedTime$getter = function(){
+  return _WebKitTransitionEventWrappingImplementation$Dart._get_elapsedTime$$member_(this);
+}
+;
+_WebKitTransitionEventWrappingImplementation$Dart._get_elapsedTime$$member_ = function(_this){
+  return native__WebKitTransitionEventWrappingImplementation__get_elapsedTime(_this);
+}
+;
 _WebKitTransitionEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WebKitTransitionEvent';
 }
@@ -37559,6 +47013,37 @@ _WebSocketWrappingImplementation$Dart.create__WebSocketWrappingImplementation$me
 function native__WebSocketWrappingImplementation_create__WebSocketWrappingImplementation(){
   return _WebSocketWrappingImplementation$Dart.create__WebSocketWrappingImplementation$member();
 }
+_WebSocketWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _WebSocketWrappingImplementation$Dart._addEventListener_WebSocket$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _WebSocketWrappingImplementation$Dart._addEventListener_WebSocket_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_WebSocketWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _WebSocketWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_WebSocketWrappingImplementation$Dart._addEventListener_WebSocket$$member_ = function(receiver, type, listener){
+  return native__WebSocketWrappingImplementation__addEventListener_WebSocket(receiver, type, listener);
+}
+;
+_WebSocketWrappingImplementation$Dart._addEventListener_WebSocket_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__WebSocketWrappingImplementation__addEventListener_WebSocket_2(receiver, type, listener, useCapture);
+}
+;
 _WebSocketWrappingImplementation$Dart.prototype.send$member = function(data){
   return _WebSocketWrappingImplementation$Dart._send$$member_(this, data);
 }
@@ -37618,6 +47103,38 @@ _WheelEventWrappingImplementation$Dart.create__WheelEventWrappingImplementation$
 function native__WheelEventWrappingImplementation_create__WheelEventWrappingImplementation(){
   return _WheelEventWrappingImplementation$Dart.create__WheelEventWrappingImplementation$member();
 }
+_WheelEventWrappingImplementation$Dart.prototype.clientX$getter = function(){
+  return _WheelEventWrappingImplementation$Dart._get_clientX$$member_(this);
+}
+;
+_WheelEventWrappingImplementation$Dart._get_clientX$$member_ = function(_this){
+  return native__WheelEventWrappingImplementation__get_clientX(_this);
+}
+;
+_WheelEventWrappingImplementation$Dart.prototype.clientY$getter = function(){
+  return _WheelEventWrappingImplementation$Dart._get_clientY$$member_(this);
+}
+;
+_WheelEventWrappingImplementation$Dart._get_clientY$$member_ = function(_this){
+  return native__WheelEventWrappingImplementation__get_clientY(_this);
+}
+;
+_WheelEventWrappingImplementation$Dart.prototype.x$getter = function(){
+  return _WheelEventWrappingImplementation$Dart._get_x$$member_(this);
+}
+;
+_WheelEventWrappingImplementation$Dart._get_x$$member_ = function(_this){
+  return native__WheelEventWrappingImplementation__get_x(_this);
+}
+;
+_WheelEventWrappingImplementation$Dart.prototype.y$getter = function(){
+  return _WheelEventWrappingImplementation$Dart._get_y$$member_(this);
+}
+;
+_WheelEventWrappingImplementation$Dart._get_y$$member_ = function(_this){
+  return native__WheelEventWrappingImplementation__get_y(_this);
+}
+;
 _WheelEventWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WheelEvent';
 }
@@ -37663,6 +47180,37 @@ _WorkerContextWrappingImplementation$Dart.create__WorkerContextWrappingImplement
 function native__WorkerContextWrappingImplementation_create__WorkerContextWrappingImplementation(){
   return _WorkerContextWrappingImplementation$Dart.create__WorkerContextWrappingImplementation$member();
 }
+_WorkerContextWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _WorkerContextWrappingImplementation$Dart._addEventListener$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _WorkerContextWrappingImplementation$Dart._addEventListener_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_WorkerContextWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _WorkerContextWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_WorkerContextWrappingImplementation$Dart._addEventListener$$member_ = function(receiver, type, listener){
+  return native__WorkerContextWrappingImplementation__addEventListener(receiver, type, listener);
+}
+;
+_WorkerContextWrappingImplementation$Dart._addEventListener_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__WorkerContextWrappingImplementation__addEventListener_2(receiver, type, listener, useCapture);
+}
+;
 _WorkerContextWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'WorkerContext';
 }
@@ -37708,6 +47256,37 @@ _DedicatedWorkerContextWrappingImplementation$Dart.create__DedicatedWorkerContex
 function native__DedicatedWorkerContextWrappingImplementation_create__DedicatedWorkerContextWrappingImplementation(){
   return _DedicatedWorkerContextWrappingImplementation$Dart.create__DedicatedWorkerContextWrappingImplementation$member();
 }
+_DedicatedWorkerContextWrappingImplementation$Dart.prototype.postMessage$member = function(message, messagePorts){
+  if (messagePorts == null) {
+    _DedicatedWorkerContextWrappingImplementation$Dart._postMessage$$member_(this, message);
+    return;
+  }
+   else {
+    _DedicatedWorkerContextWrappingImplementation$Dart._postMessage_2$$member_(this, message, messagePorts);
+    return;
+  }
+}
+;
+_DedicatedWorkerContextWrappingImplementation$Dart.prototype.postMessage$named = function($n, $o, message, messagePorts){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      messagePorts = '$p_messagePorts' in $o?(++seen , $o.$p_messagePorts):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 2)
+    $nsme();
+  return _DedicatedWorkerContextWrappingImplementation$Dart.prototype.postMessage$member.call(this, message, messagePorts);
+}
+;
+_DedicatedWorkerContextWrappingImplementation$Dart._postMessage$$member_ = function(receiver, message){
+  return native__DedicatedWorkerContextWrappingImplementation__postMessage(receiver, message);
+}
+;
+_DedicatedWorkerContextWrappingImplementation$Dart._postMessage_2$$member_ = function(receiver, message, messagePorts){
+  return native__DedicatedWorkerContextWrappingImplementation__postMessage_2(receiver, message, messagePorts);
+}
+;
 _DedicatedWorkerContextWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'DedicatedWorkerContext';
 }
@@ -37902,6 +47481,37 @@ _WorkerWrappingImplementation$Dart.create__WorkerWrappingImplementation$member =
 function native__WorkerWrappingImplementation_create__WorkerWrappingImplementation(){
   return _WorkerWrappingImplementation$Dart.create__WorkerWrappingImplementation$member();
 }
+_WorkerWrappingImplementation$Dart.prototype.postMessage$member = function(message, messagePorts){
+  if (messagePorts == null) {
+    _WorkerWrappingImplementation$Dart._postMessage$$member_(this, message);
+    return;
+  }
+   else {
+    _WorkerWrappingImplementation$Dart._postMessage_2$$member_(this, message, messagePorts);
+    return;
+  }
+}
+;
+_WorkerWrappingImplementation$Dart.prototype.postMessage$named = function($n, $o, message, messagePorts){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      messagePorts = '$p_messagePorts' in $o?(++seen , $o.$p_messagePorts):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 2)
+    $nsme();
+  return _WorkerWrappingImplementation$Dart.prototype.postMessage$member.call(this, message, messagePorts);
+}
+;
+_WorkerWrappingImplementation$Dart._postMessage$$member_ = function(receiver, message){
+  return native__WorkerWrappingImplementation__postMessage(receiver, message);
+}
+;
+_WorkerWrappingImplementation$Dart._postMessage_2$$member_ = function(receiver, message, messagePorts){
+  return native__WorkerWrappingImplementation__postMessage_2(receiver, message, messagePorts);
+}
+;
 _WorkerWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'Worker';
 }
@@ -37947,6 +47557,14 @@ _XMLHttpRequestExceptionWrappingImplementation$Dart.create__XMLHttpRequestExcept
 function native__XMLHttpRequestExceptionWrappingImplementation_create__XMLHttpRequestExceptionWrappingImplementation(){
   return _XMLHttpRequestExceptionWrappingImplementation$Dart.create__XMLHttpRequestExceptionWrappingImplementation$member();
 }
+_XMLHttpRequestExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _XMLHttpRequestExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_XMLHttpRequestExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__XMLHttpRequestExceptionWrappingImplementation__get_message(_this);
+}
+;
 _XMLHttpRequestExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _XMLHttpRequestExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -38051,6 +47669,37 @@ _XMLHttpRequestUploadWrappingImplementation$Dart.create__XMLHttpRequestUploadWra
 function native__XMLHttpRequestUploadWrappingImplementation_create__XMLHttpRequestUploadWrappingImplementation(){
   return _XMLHttpRequestUploadWrappingImplementation$Dart.create__XMLHttpRequestUploadWrappingImplementation$member();
 }
+_XMLHttpRequestUploadWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _XMLHttpRequestUploadWrappingImplementation$Dart._addEventListener_XMLHttpRequestUpload$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _XMLHttpRequestUploadWrappingImplementation$Dart._addEventListener_XMLHttpRequestUpload_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_XMLHttpRequestUploadWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _XMLHttpRequestUploadWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_XMLHttpRequestUploadWrappingImplementation$Dart._addEventListener_XMLHttpRequestUpload$$member_ = function(receiver, type, listener){
+  return native__XMLHttpRequestUploadWrappingImplementation__addEventListener_XMLHttpRequestUpload(receiver, type, listener);
+}
+;
+_XMLHttpRequestUploadWrappingImplementation$Dart._addEventListener_XMLHttpRequestUpload_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__XMLHttpRequestUploadWrappingImplementation__addEventListener_XMLHttpRequestUpload_2(receiver, type, listener, useCapture);
+}
+;
 _XMLHttpRequestUploadWrappingImplementation$Dart.prototype.typeName$getter = function(){
   return 'XMLHttpRequestUpload';
 }
@@ -38096,6 +47745,37 @@ _XMLHttpRequestWrappingImplementation$Dart.create__XMLHttpRequestWrappingImpleme
 function native__XMLHttpRequestWrappingImplementation_create__XMLHttpRequestWrappingImplementation(){
   return _XMLHttpRequestWrappingImplementation$Dart.create__XMLHttpRequestWrappingImplementation$member();
 }
+_XMLHttpRequestWrappingImplementation$Dart.prototype.addEventListener$member = function(type, listener, useCapture){
+  if (useCapture == null) {
+    _XMLHttpRequestWrappingImplementation$Dart._addEventListener_XMLHttpRequest$$member_(this, type, listener);
+    return;
+  }
+   else {
+    _XMLHttpRequestWrappingImplementation$Dart._addEventListener_XMLHttpRequest_2$$member_(this, type, listener, useCapture);
+    return;
+  }
+}
+;
+_XMLHttpRequestWrappingImplementation$Dart.prototype.addEventListener$named = function($n, $o, type, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 2:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return _XMLHttpRequestWrappingImplementation$Dart.prototype.addEventListener$member.call(this, type, listener, useCapture);
+}
+;
+_XMLHttpRequestWrappingImplementation$Dart._addEventListener_XMLHttpRequest$$member_ = function(receiver, type, listener){
+  return native__XMLHttpRequestWrappingImplementation__addEventListener_XMLHttpRequest(receiver, type, listener);
+}
+;
+_XMLHttpRequestWrappingImplementation$Dart._addEventListener_XMLHttpRequest_2$$member_ = function(receiver, type, listener, useCapture){
+  return native__XMLHttpRequestWrappingImplementation__addEventListener_XMLHttpRequest_2(receiver, type, listener, useCapture);
+}
+;
 _XMLHttpRequestWrappingImplementation$Dart.prototype.send$member = function(data){
   var tmp$1, tmp$2, tmp$3, tmp$0;
   if (data == null) {
@@ -38306,6 +47986,14 @@ _XPathExceptionWrappingImplementation$Dart.create__XPathExceptionWrappingImpleme
 function native__XPathExceptionWrappingImplementation_create__XPathExceptionWrappingImplementation(){
   return _XPathExceptionWrappingImplementation$Dart.create__XPathExceptionWrappingImplementation$member();
 }
+_XPathExceptionWrappingImplementation$Dart.prototype.message$getter = function(){
+  return _XPathExceptionWrappingImplementation$Dart._get_message$$member_(this);
+}
+;
+_XPathExceptionWrappingImplementation$Dart._get_message$$member_ = function(_this){
+  return native__XPathExceptionWrappingImplementation__get_message(_this);
+}
+;
 _XPathExceptionWrappingImplementation$Dart.prototype.toString$member = function(){
   return _XPathExceptionWrappingImplementation$Dart._toString$$member_(this);
 }
@@ -38646,6 +48334,35 @@ _FixedSizeListIterator$Dart.prototype._length$$getter_ = function(){
 ;
 function htmlimpl0a8e4b$LevelDom$Dart(){
 }
+htmlimpl0a8e4b$LevelDom$Dart.wrapCanvasElement$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.CanvasElementWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapCanvasRenderingContext$member = function(raw){
+  if (raw == null) {
+    return $Dart$Null;
+  }
+  if (raw.dartObjectLocalStorage$getter() != null) {
+    return raw.dartObjectLocalStorage$getter();
+  }
+  switch (raw.typeName$getter()) {
+    case 'CanvasRenderingContext':
+      return htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.CanvasRenderingContextWrappingImplementation$_wrap$44$htmlimpl0a8e4b$$Factory_(raw);
+    case 'CanvasRenderingContext2D':
+      return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.CanvasRenderingContext2DWrappingImplementation$_wrap$46$htmlimpl0a8e4b$$Factory_(raw);
+    case 'WebGLRenderingContext':
+      return htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.WebGLRenderingContextWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_(raw);
+    default:{
+        $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory(ADD$operator('Unknown type:', raw.toString$named(0, $noargs))));
+      }
+
+  }
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapClientRect$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.ClientRectWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
 htmlimpl0a8e4b$LevelDom$Dart.wrapDocument$member = function(raw){
   if (raw == null) {
     return $Dart$Null;
@@ -38974,8 +48691,110 @@ htmlimpl0a8e4b$LevelDom$Dart.wrapElement$member = function(raw){
   }
 }
 ;
+htmlimpl0a8e4b$LevelDom$Dart.wrapEvent$member = function(raw){
+  if (raw == null) {
+    return $Dart$Null;
+  }
+  if (raw.dartObjectLocalStorage$getter() != null) {
+    return raw.dartObjectLocalStorage$getter();
+  }
+  switch (raw.typeName$getter()) {
+    case 'WebKitAnimationEvent':
+      return htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.AnimationEventWrappingImplementation$_wrap$36$htmlimpl0a8e4b$$Factory_(raw);
+    case 'AudioProcessingEvent':
+      return htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.AudioProcessingEventWrappingImplementation$_wrap$42$htmlimpl0a8e4b$$Factory_(raw);
+    case 'BeforeLoadEvent':
+      return htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.BeforeLoadEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_(raw);
+    case 'CloseEvent':
+      return htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.CloseEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+    case 'CompositionEvent':
+      return htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.CompositionEventWrappingImplementation$_wrap$38$htmlimpl0a8e4b$$Factory_(raw);
+    case 'CustomEvent':
+      return htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.CustomEventWrappingImplementation$_wrap$33$htmlimpl0a8e4b$$Factory_(raw);
+    case 'DeviceMotionEvent':
+      return htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.DeviceMotionEventWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_(raw);
+    case 'DeviceOrientationEvent':
+      return htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.DeviceOrientationEventWrappingImplementation$_wrap$44$htmlimpl0a8e4b$$Factory_(raw);
+    case 'ErrorEvent':
+      return htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.ErrorEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+    case 'Event':
+      return htmlimpl0a8e4b$EventWrappingImplementation$Dart.EventWrappingImplementation$_wrap$27$htmlimpl0a8e4b$$Factory_(raw);
+    case 'HashChangeEvent':
+      return htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.HashChangeEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_(raw);
+    case 'IDBVersionChangeEvent':
+      return htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.IDBVersionChangeEventWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_(raw);
+    case 'KeyboardEvent':
+      return htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.KeyboardEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+    case 'MessageEvent':
+      return htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.MessageEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_(raw);
+    case 'MouseEvent':
+      return htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.MouseEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+    case 'MutationEvent':
+      return htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.MutationEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+    case 'OfflineAudioCompletionEvent':
+      return htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.OfflineAudioCompletionEventWrappingImplementation$_wrap$49$htmlimpl0a8e4b$$Factory_(raw);
+    case 'OverflowEvent':
+      return htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.OverflowEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+    case 'PageTransitionEvent':
+      return htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.PageTransitionEventWrappingImplementation$_wrap$41$htmlimpl0a8e4b$$Factory_(raw);
+    case 'PopStateEvent':
+      return htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.PopStateEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+    case 'ProgressEvent':
+      return htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.ProgressEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_(raw);
+    case 'SVGZoomEvent':
+      return htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.SVGZoomEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_(raw);
+    case 'SpeechInputEvent':
+      return htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.SpeechInputEventWrappingImplementation$_wrap$38$htmlimpl0a8e4b$$Factory_(raw);
+    case 'StorageEvent':
+      return htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.StorageEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_(raw);
+    case 'TextEvent':
+      return htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.TextEventWrappingImplementation$_wrap$31$htmlimpl0a8e4b$$Factory_(raw);
+    case 'TouchEvent':
+      return htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.TouchEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+    case 'WebKitTransitionEvent':
+      return htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.TransitionEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_(raw);
+    case 'UIEvent':
+      return htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.UIEventWrappingImplementation$_wrap$29$htmlimpl0a8e4b$$Factory_(raw);
+    case 'WebGLContextEvent':
+      return htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.WebGLContextEventWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_(raw);
+    case 'WheelEvent':
+      return htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.WheelEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+    case 'XMLHttpRequestProgressEvent':
+      return htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.XMLHttpRequestProgressEventWrappingImplementation$_wrap$49$htmlimpl0a8e4b$$Factory_(raw);
+    default:{
+        $Dart$ThrowException(UnsupportedOperationException$Dart.UnsupportedOperationException$$Factory(ADD$operator('Unknown type:', raw.toString$named(0, $noargs))));
+      }
+
+  }
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapMediaError$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.MediaErrorWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.SVGAnimatedLengthWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLengthList$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.SVGAnimatedLengthListWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumber$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.SVGAnimatedNumberWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumberList$member = function(raw){
+  return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.SVGAnimatedNumberListWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
 htmlimpl0a8e4b$LevelDom$Dart.wrapWindow$member = function(raw){
   return raw == null?$Dart$Null:raw.dartObjectLocalStorage$getter() != null?raw.dartObjectLocalStorage$getter():htmlimpl0a8e4b$WindowWrappingImplementation$Dart.WindowWrappingImplementation$_wrap$28$htmlimpl0a8e4b$$Factory_(raw);
+}
+;
+htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member = function(raw){
+  var tmp$0;
+  return raw == null || $isString(raw) || !!(tmp$0 = raw , tmp$0 != null && tmp$0.$implements$num$Dart) || $isBool(raw)?raw:raw._ptr$htmlimpl0a8e4b$$getter_();
 }
 ;
 htmlimpl0a8e4b$LevelDom$Dart.unwrap$member = function(raw){
@@ -39013,6 +48832,1021 @@ htmlimpl0a8e4b$DOMWrapperBase$Dart.prototype._ptr$htmlimpl0a8e4b$$getter_ = func
   return this._ptr$htmlimpl0a8e4b$$field_;
 }
 ;
+function htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart'), htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$CanvasRenderingContext$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.CanvasRenderingContextWrappingImplementation$_wrap$44$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.prototype.canvas$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapCanvasElement$member(this._ptr$htmlimpl0a8e4b$$getter_().canvas$getter());
+}
+;
+function htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart, htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart);
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart'), htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$CanvasRenderingContext2D$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.CanvasRenderingContext2DWrappingImplementation$_wrap$46$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.strokeStyle$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().strokeStyle$setter(tmp$0 = htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(value)) , tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$member = function(x, y, radius, startAngle, endAngle, anticlockwise){
+  this._ptr$htmlimpl0a8e4b$$getter_().arc$named(6, $noargs, x, y, radius, startAngle, endAngle, anticlockwise);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$named = function($n, $o, x, y, radius, startAngle, endAngle, anticlockwise){
+  if ($o.count || $n != 6)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.arc$member.call(this, x, y, radius, startAngle, endAngle, anticlockwise);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().beginPath$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.beginPath$member.call(this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$member = function(x, y, width, height){
+  this._ptr$htmlimpl0a8e4b$$getter_().clearRect$named(4, $noargs, x, y, width, height);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$named = function($n, $o, x, y, width, height){
+  if ($o.count || $n != 4)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.clearRect$member.call(this, x, y, width, height);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().closePath$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.closePath$member.call(this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$member = function(canvas_OR_image, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  var tmp$1, tmp$0;
+  if (!!(tmp$0 = canvas_OR_image , tmp$0 != null && tmp$0.$implements$htmld071c1$ImageElement$Dart)) {
+    if (sw_OR_width == null) {
+      if (height_OR_sh == null) {
+        if (dx == null) {
+          if (dy == null) {
+            if (dw == null) {
+              if (dh == null) {
+                this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(3, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y);
+                return;
+              }
+            }
+          }
+        }
+      }
+    }
+     else {
+      if (dx == null) {
+        if (dy == null) {
+          if (dw == null) {
+            if (dh == null) {
+              this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(5, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+              return;
+            }
+          }
+        }
+      }
+       else {
+        this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(9, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+        return;
+      }
+    }
+  }
+   else {
+    if (!!(tmp$1 = canvas_OR_image , tmp$1 != null && tmp$1.$implements$htmld071c1$CanvasElement$Dart)) {
+      if (sw_OR_width == null) {
+        if (height_OR_sh == null) {
+          if (dx == null) {
+            if (dy == null) {
+              if (dw == null) {
+                if (dh == null) {
+                  this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(3, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y);
+                  return;
+                }
+              }
+            }
+          }
+        }
+      }
+       else {
+        if (dx == null) {
+          if (dy == null) {
+            if (dw == null) {
+              if (dh == null) {
+                this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(5, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
+                return;
+              }
+            }
+          }
+        }
+         else {
+          this._ptr$htmlimpl0a8e4b$$getter_().drawImage$named(9, $noargs, htmlimpl0a8e4b$LevelDom$Dart.unwrapMaybePrimitive$member(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+          return;
+        }
+      }
+    }
+  }
+  $Dart$ThrowException('Incorrect number or type of arguments');
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$named = function($n, $o, canvas_OR_image, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 3:
+      sw_OR_width = '$p_sw_OR_width' in $o?(++seen , $o.$p_sw_OR_width):(++def , $Dart$Null);
+    case 4:
+      height_OR_sh = '$p_height_OR_sh' in $o?(++seen , $o.$p_height_OR_sh):(++def , $Dart$Null);
+    case 5:
+      dx = '$p_dx' in $o?(++seen , $o.$p_dx):(++def , $Dart$Null);
+    case 6:
+      dy = '$p_dy' in $o?(++seen , $o.$p_dy):(++def , $Dart$Null);
+    case 7:
+      dw = '$p_dw' in $o?(++seen , $o.$p_dw):(++def , $Dart$Null);
+    case 8:
+      dh = '$p_dh' in $o?(++seen , $o.$p_dh):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 9)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.drawImage$member.call(this, canvas_OR_image, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member = function(x, y, width, height){
+  this._ptr$htmlimpl0a8e4b$$getter_().rect$named(4, $noargs, x, y, width, height);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named = function($n, $o, x, y, width, height){
+  if ($o.count || $n != 4)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$member.call(this, x, y, width, height);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT(), num$Dart.$lookupRTT(), num$Dart.$lookupRTT(), num$Dart.$lookupRTT()], null);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$getter = function(){
+  return $bind(htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named, htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rect$named_$lookupRTT, this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().restore$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.restore$member.call(this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$member = function(angle){
+  this._ptr$htmlimpl0a8e4b$$getter_().rotate$named(1, $noargs, angle);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named = function($n, $o, angle){
+  if ($o.count || $n != 1)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$member.call(this, angle);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT = function(){
+  return RTT.createFunction([num$Dart.$lookupRTT()], null);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return $bind(htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named, htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.rotate$named_$lookupRTT, this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().save$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.save$member.call(this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().stroke$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.stroke$member.call(this);
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$member = function(tx, ty){
+  this._ptr$htmlimpl0a8e4b$$getter_().translate$named(2, $noargs, tx, ty);
+  return;
+}
+;
+htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$named = function($n, $o, tx, ty){
+  if ($o.count || $n != 2)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasRenderingContext2DWrappingImplementation$Dart.prototype.translate$member.call(this, tx, ty);
+}
+;
+function htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart'), htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$ClientRect$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.ClientRectWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.prototype.left$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().left$getter();
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.prototype.top$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().top$getter();
+}
+;
+htmlimpl0a8e4b$ClientRectWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+function htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart'), htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$MediaError$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.MediaErrorWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$MediaErrorWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart'), htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$SVGAnimatedLengthList$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.SVGAnimatedLengthListWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SVGAnimatedLengthListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart'), htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$SVGAnimatedLength$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.SVGAnimatedLengthWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SVGAnimatedLengthWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart'), htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$SVGAnimatedNumberList$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.SVGAnimatedNumberListWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SVGAnimatedNumberListWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart'), htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$SVGAnimatedNumber$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.SVGAnimatedNumberWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SVGAnimatedNumberWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart, htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart);
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart'), htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$WebGLRenderingContext$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$CanvasRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.WebGLRenderingContextWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$member = function(mask){
+  this._ptr$htmlimpl0a8e4b$$getter_().clear$named(1, $noargs, mask);
+  return;
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$named = function($n, $o, mask){
+  if ($o.count || $n != 1)
+    $nsme();
+  return htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$member.call(this, mask);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$named_$lookupRTT = function(){
+  return RTT.createFunction([int$Dart.$lookupRTT()], null);
+}
+;
+htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$getter = function(){
+  return $bind(htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$named, htmlimpl0a8e4b$WebGLRenderingContextWrappingImplementation$Dart.prototype.clear$named_$lookupRTT, this);
+}
+;
+function htmlimpl0a8e4b$SimpleClientRect$Dart(){
+}
+htmlimpl0a8e4b$SimpleClientRect$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SimpleClientRect$Dart'), htmlimpl0a8e4b$SimpleClientRect$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SimpleClientRect$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SimpleClientRect$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$ClientRect$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.$Constructor = function(left, top_0, width, height){
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.$Initializer = function(left, top_0, width, height){
+  this.left$field = left;
+  this.top$field = top_0;
+  this.width$field = width;
+  this.height$field = height;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.SimpleClientRect$$Factory = function(left, top_0, width, height){
+  var tmp$0 = new htmlimpl0a8e4b$SimpleClientRect$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SimpleClientRect$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SimpleClientRect$Dart.$Initializer.call(tmp$0, left, top_0, width, height);
+  htmlimpl0a8e4b$SimpleClientRect$Dart.$Constructor.call(tmp$0, left, top_0, width, height);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.left$getter = function(){
+  return this.left$field;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.top$getter = function(){
+  return this.top$field;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.width$getter = function(){
+  return this.width$field;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.height$getter = function(){
+  return this.height$field;
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.EQ$operator = function(other){
+  return other != null && EQ$operator(this.left$getter(), other.left$getter()) && EQ$operator(this.top$getter(), other.top$getter()) && EQ$operator(this.width$getter(), other.width$getter()) && EQ$operator(this.height$getter(), other.height$getter());
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.toString$member = function(){
+  return '(' + $toString(this.left$getter()) + ', ' + $toString(this.top$getter()) + ', ' + $toString(this.width$getter()) + ', ' + $toString(this.height$getter()) + ')';
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.toString$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.toString$member.call(this);
+}
+;
+htmlimpl0a8e4b$SimpleClientRect$Dart.prototype.$const_id = function(){
+  return $cls('htmlimpl0a8e4b$SimpleClientRect$Dart') + (':' + $dart_const_id(this.left$field)) + (':' + $dart_const_id(this.top$field)) + (':' + $dart_const_id(this.width$field)) + (':' + $dart_const_id(this.height$field)) + (':' + $dart_const_id(this.right$field)) + (':' + $dart_const_id(this.bottom$field));
+}
+;
+function htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart(){
+}
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart'), htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$ElementRect$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$Constructor = function(element){
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$Initializer = function(element){
+  this.client$field = htmlimpl0a8e4b$SimpleClientRect$Dart.SimpleClientRect$$Factory(element.clientLeft$getter(), element.clientTop$getter(), element.clientWidth$getter(), element.clientHeight$getter());
+  this.offset$field = htmlimpl0a8e4b$SimpleClientRect$Dart.SimpleClientRect$$Factory(element.offsetLeft$getter(), element.offsetTop$getter(), element.offsetWidth$getter(), element.offsetHeight$getter());
+  this.scroll$field = htmlimpl0a8e4b$SimpleClientRect$Dart.SimpleClientRect$$Factory(element.scrollLeft$getter(), element.scrollTop$getter(), element.scrollWidth$getter(), element.scrollHeight$getter());
+  this._boundingClientRect$htmlimpl0a8e4b$$field_ = element.getBoundingClientRect$named(0, $noargs);
+  this._clientRects$htmlimpl0a8e4b$$field_ = element.getClientRects$named(0, $noargs);
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.ElementRectWrappingImplementation$$Factory = function(element){
+  var tmp$0 = new htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$Initializer.call(tmp$0, element);
+  htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.$Constructor.call(tmp$0, element);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.prototype._boundingClientRect$htmlimpl0a8e4b$$getter_ = function(){
+  return this._boundingClientRect$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.prototype.bounding$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapClientRect$member(this._boundingClientRect$htmlimpl0a8e4b$$getter_());
+}
+;
+function htmlimpl0a8e4b$EventsImplementation$Dart(){
+}
+htmlimpl0a8e4b$EventsImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$EventsImplementation$Dart'), htmlimpl0a8e4b$EventsImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$EventsImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$EventsImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Events$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(_ptr){
+  var tmp$1, tmp$0;
+  this._listenerMap$htmlimpl0a8e4b$$setter_(tmp$1 = (tmp$0 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT([String$Dart.$lookupRTT(), htmld071c1$EventListenerList$Dart.$lookupRTT()])) , tmp$0)) , tmp$1;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(_ptr){
+  this._ptr$htmlimpl0a8e4b$$field_ = _ptr;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.EventsImplementation$_wrap$20$htmlimpl0a8e4b$$Factory_ = function(_ptr){
+  var tmp$0 = new htmlimpl0a8e4b$EventsImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$EventsImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, _ptr);
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, _ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.prototype._ptr$htmlimpl0a8e4b$$getter_ = function(){
+  return this._ptr$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.prototype._listenerMap$htmlimpl0a8e4b$$getter_ = function(){
+  return this._listenerMap$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.prototype._listenerMap$htmlimpl0a8e4b$$setter_ = function(tmp$0){
+  this._listenerMap$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+;
+htmlimpl0a8e4b$EventsImplementation$Dart.prototype.INDEX$operator = function(type){
+  return this._get$htmlimpl0a8e4b$$member_(type.toLowerCase$named(0, $noargs));
+}
+;
+function htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted(dartc_scp$0){
+  return htmlimpl0a8e4b$EventListenerListImplementation$Dart.EventListenerListImplementation$$Factory(this._ptr$htmlimpl0a8e4b$$getter_(), dartc_scp$0.type);
+}
+function htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted$named($s0, $n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted.call(this, $s0);
+}
+function htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction(null, RTT.dynamicType);
+}
+htmlimpl0a8e4b$EventsImplementation$Dart.prototype._get$htmlimpl0a8e4b$$member_ = function(type){
+  var dartc_scp$0 = {type:type};
+  return this._listenerMap$htmlimpl0a8e4b$$getter_().putIfAbsent$named(2, $noargs, dartc_scp$0.type, $bind(htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted$named, htmlimpl0a8e4b$EventsImplementation$Dart$_get$c0$40_40$Hoisted$named$named_$lookupRTT, this, dartc_scp$0));
+}
+;
+function htmlimpl0a8e4b$ElementEventsImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$ElementEventsImplementation$Dart, htmlimpl0a8e4b$EventsImplementation$Dart);
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$ElementEventsImplementation$Dart'), htmlimpl0a8e4b$ElementEventsImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$ElementEventsImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventsImplementation$Dart.$addTo(target);
+  htmld071c1$ElementEvents$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(_ptr){
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(_ptr){
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.ElementEventsImplementation$_wrap$27$htmlimpl0a8e4b$$Factory_ = function(_ptr){
+  var tmp$0 = new htmlimpl0a8e4b$ElementEventsImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$ElementEventsImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, _ptr);
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, _ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.click$named = function(){
+  return this.click$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.click$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('click');
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.error$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('error');
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.load$named = function(){
+  return this.load$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.load$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('load');
+}
+;
+htmlimpl0a8e4b$ElementEventsImplementation$Dart.prototype.mouseMove$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('mousemove');
+}
+;
+function htmlimpl0a8e4b$BodyElementEventsImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$BodyElementEventsImplementation$Dart, htmlimpl0a8e4b$ElementEventsImplementation$Dart);
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$BodyElementEventsImplementation$Dart'), htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart.$addTo(target);
+  htmld071c1$BodyElementEvents$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(_ptr){
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(_ptr){
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.BodyElementEventsImplementation$_wrap$31$htmlimpl0a8e4b$$Factory_ = function(_ptr){
+  var tmp$0 = new htmlimpl0a8e4b$BodyElementEventsImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$BodyElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, _ptr);
+  htmlimpl0a8e4b$BodyElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, _ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.prototype.message$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('message');
+}
+;
+function htmlimpl0a8e4b$DocumentEventsImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$DocumentEventsImplementation$Dart, htmlimpl0a8e4b$ElementEventsImplementation$Dart);
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$DocumentEventsImplementation$Dart'), htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart.$addTo(target);
+  htmld071c1$DocumentEvents$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(_ptr){
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(_ptr){
+  htmlimpl0a8e4b$ElementEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$DocumentEventsImplementation$Dart.DocumentEventsImplementation$_wrap$28$htmlimpl0a8e4b$$Factory_ = function(_ptr){
+  var tmp$0 = new htmlimpl0a8e4b$DocumentEventsImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$DocumentEventsImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$DocumentEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, _ptr);
+  htmlimpl0a8e4b$DocumentEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, _ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$_EventListenerWrapper$Dart(){
+}
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$_EventListenerWrapper$Dart'));
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.$Constructor = function(raw, wrapped, useCapture){
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.$Initializer = function(raw, wrapped, useCapture){
+  this.raw$field = raw;
+  this.wrapped$field = wrapped;
+  this.useCapture$field = useCapture;
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart._EventListenerWrapper$$Factory = function(raw, wrapped, useCapture){
+  var tmp$0 = new htmlimpl0a8e4b$_EventListenerWrapper$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$_EventListenerWrapper$Dart.$lookupRTT();
+  htmlimpl0a8e4b$_EventListenerWrapper$Dart.$Initializer.call(tmp$0, raw, wrapped, useCapture);
+  htmlimpl0a8e4b$_EventListenerWrapper$Dart.$Constructor.call(tmp$0, raw, wrapped, useCapture);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.prototype.raw$getter = function(){
+  return this.raw$field;
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.prototype.wrapped$getter = function(){
+  return this.wrapped$field;
+}
+;
+htmlimpl0a8e4b$_EventListenerWrapper$Dart.prototype.useCapture$getter = function(){
+  return this.useCapture$field;
+}
+;
+function htmlimpl0a8e4b$EventListenerListImplementation$Dart(){
+}
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$EventListenerListImplementation$Dart'), htmlimpl0a8e4b$EventListenerListImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$EventListenerListImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$EventListenerListImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$EventListenerList$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.$Constructor = function(_ptr, _type){
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.$Initializer = function(_ptr, _type){
+  this._wrappers$htmlimpl0a8e4b$$field_ = ListFactory$Dart.List$$Factory([htmlimpl0a8e4b$_EventListenerWrapper$Dart.$lookupRTT()], $Dart$Null);
+  this._ptr$htmlimpl0a8e4b$$field_ = _ptr;
+  this._type$htmlimpl0a8e4b$$field_ = _type;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.EventListenerListImplementation$$Factory = function(_ptr, _type){
+  var tmp$0 = new htmlimpl0a8e4b$EventListenerListImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$EventListenerListImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$EventListenerListImplementation$Dart.$Initializer.call(tmp$0, _ptr, _type);
+  htmlimpl0a8e4b$EventListenerListImplementation$Dart.$Constructor.call(tmp$0, _ptr, _type);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._ptr$htmlimpl0a8e4b$$getter_ = function(){
+  return this._ptr$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._type$htmlimpl0a8e4b$$getter_ = function(){
+  return this._type$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._wrappers$htmlimpl0a8e4b$$getter_ = function(){
+  return this._wrappers$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._wrappers$htmlimpl0a8e4b$$setter_ = function(tmp$0){
+  this._wrappers$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype.add$member = function(listener, useCapture){
+  this._add$htmlimpl0a8e4b$$member_(listener, useCapture);
+  return this;
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype.add$named = function($n, $o, listener, useCapture){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      useCapture = '$p_useCapture' in $o?(++seen , $o.$p_useCapture):(++def , false);
+  }
+  if (seen != $o.count || seen + def + $n != 2)
+    $nsme();
+  return htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype.add$member.call(this, listener, useCapture);
+}
+;
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._add$htmlimpl0a8e4b$$member_ = function(listener, useCapture){
+  this._ptr$htmlimpl0a8e4b$$getter_().addEventListener$named(3, $noargs, this._type$htmlimpl0a8e4b$$getter_(), this._findOrAddWrapper$htmlimpl0a8e4b$$member_(listener, useCapture), useCapture);
+}
+;
+function htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted(dartc_scp$0, e){
+  dartc_scp$0.listener(1, $noargs, htmlimpl0a8e4b$LevelDom$Dart.wrapEvent$member(e));
+}
+function htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted$named($s0, $n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted($s0, e);
+}
+function htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+htmlimpl0a8e4b$EventListenerListImplementation$Dart.prototype._findOrAddWrapper$htmlimpl0a8e4b$$member_ = function(listener, useCapture){
+  var dartc_scp$0 = {listener:listener};
+  var tmp$0;
+  if (this._wrappers$htmlimpl0a8e4b$$getter_() == null) {
+    this._wrappers$htmlimpl0a8e4b$$setter_(tmp$0 = RTT.setTypeInfo([], Array.$lookupRTT())) , tmp$0;
+  }
+   else {
+    {
+      var $0 = this._wrappers$htmlimpl0a8e4b$$getter_().iterator$named(0, $noargs);
+      while ($0.hasNext$named(0, $noargs)) {
+        var wrapper = $0.next$named(0, $noargs);
+        {
+          if (wrapper.raw$getter() === dartc_scp$0.listener && EQ$operator(wrapper.useCapture$getter(), useCapture)) {
+            return wrapper.wrapped$getter();
+          }
+        }
+      }
+    }
+  }
+  var wrapped = $bind(htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted$named, htmlimpl0a8e4b$EventListenerListImplementation$Dart$_findOrAddWrapper$c0$51_51$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$0);
+  this._wrappers$htmlimpl0a8e4b$$getter_().add$named(1, $noargs, htmlimpl0a8e4b$_EventListenerWrapper$Dart._EventListenerWrapper$$Factory(dartc_scp$0.listener, wrapped, useCapture));
+  return wrapped;
+}
+;
 function htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
@@ -39037,6 +49871,743 @@ htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Cons
 ;
 htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
   htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart.prototype._on$htmlimpl0a8e4b$$getter_ = function(){
+  return this._on$htmlimpl0a8e4b$$field_;
+}
+;
+htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart.prototype._on$htmlimpl0a8e4b$$setter_ = function(tmp$0){
+  this._on$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+;
+htmlimpl0a8e4b$EventTargetWrappingImplementation$Dart.prototype.on$getter = function(){
+  var tmp$0;
+  if (this._on$htmlimpl0a8e4b$$getter_() == null) {
+    this._on$htmlimpl0a8e4b$$setter_(tmp$0 = htmlimpl0a8e4b$EventsImplementation$Dart.EventsImplementation$_wrap$20$htmlimpl0a8e4b$$Factory_(this._ptr$htmlimpl0a8e4b$$getter_())) , tmp$0;
+  }
+  return this._on$htmlimpl0a8e4b$$getter_();
+}
+;
+function htmlimpl0a8e4b$EventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$EventWrappingImplementation$Dart, htmlimpl0a8e4b$DOMWrapperBase$Dart);
+htmlimpl0a8e4b$EventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$EventWrappingImplementation$Dart'), htmlimpl0a8e4b$EventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$EventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$EventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$DOMWrapperBase$Dart.$addTo(target);
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$DOMWrapperBase$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$EventWrappingImplementation$Dart.EventWrappingImplementation$_wrap$27$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$EventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$EventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart'), htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$AudioProcessingEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.AudioProcessingEventWrappingImplementation$_wrap$42$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$AudioProcessingEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart'), htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$IDBVersionChangeEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.IDBVersionChangeEventWrappingImplementation$_wrap$43$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$IDBVersionChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart'), htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$OfflineAudioCompletionEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.OfflineAudioCompletionEventWrappingImplementation$_wrap$49$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$OfflineAudioCompletionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart'), htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$SpeechInputEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.SpeechInputEventWrappingImplementation$_wrap$38$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SpeechInputEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart'), htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$WebGLContextEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.WebGLContextEventWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$WebGLContextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart'), htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$AnimationEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.AnimationEventWrappingImplementation$_wrap$36$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$AnimationEventWrappingImplementation$Dart.prototype.elapsedTime$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().elapsedTime$getter();
+}
+;
+function htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart'), htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$BeforeLoadEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.BeforeLoadEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$BeforeLoadEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart'), htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$CloseEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.CloseEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$CloseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart'), htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$CustomEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.CustomEventWrappingImplementation$_wrap$33$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$CustomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart'), htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$DeviceMotionEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.DeviceMotionEventWrappingImplementation$_wrap$39$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$DeviceMotionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart'), htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$DeviceOrientationEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.DeviceOrientationEventWrappingImplementation$_wrap$44$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$DeviceOrientationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart'), htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$ErrorEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.ErrorEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$ErrorEventWrappingImplementation$Dart.prototype.message$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().message$getter();
+}
+;
+function htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart'), htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$HashChangeEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.HashChangeEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$HashChangeEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$_MeasurementRequest$Dart(){
+}
+htmlimpl0a8e4b$_MeasurementRequest$Dart.$lookupRTT = function(typeArgs){
+  return RTT.create($cls('htmlimpl0a8e4b$_MeasurementRequest$Dart'), null, typeArgs);
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.$Constructor = function(computeValue, completer){
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.$Initializer = function(computeValue, completer){
+  this.exception$field = false;
+  this.computeValue$field = computeValue;
+  this.completer$field = completer;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart._MeasurementRequest$$Factory = function($rtt, computeValue, completer){
+  var tmp$0 = new htmlimpl0a8e4b$_MeasurementRequest$Dart;
+  tmp$0.$typeInfo = $rtt;
+  htmlimpl0a8e4b$_MeasurementRequest$Dart.$Initializer.call(tmp$0, computeValue, completer);
+  htmlimpl0a8e4b$_MeasurementRequest$Dart.$Constructor.call(tmp$0, computeValue, completer);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.computeValue$named = function(){
+  return this.computeValue$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.computeValue$getter = function(){
+  return this.computeValue$field;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.completer$getter = function(){
+  return this.completer$field;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.value$getter = function(){
+  return this.value$field;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.value$setter = function(tmp$0){
+  this.value$field = tmp$0;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.exception$getter = function(){
+  return this.exception$field;
+}
+;
+htmlimpl0a8e4b$_MeasurementRequest$Dart.prototype.exception$setter = function(tmp$0){
+  this.exception$field = tmp$0;
+}
+;
+function htmlimpl0a8e4b$_MEASUREMENT_MESSAGE$htmlimpl0a8e4b$$getter_(){
+  return 'DART-MEASURE';
+}
+function htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_(){
+  return isolate$current.htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$field_;
+}
+function htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$setter_(tmp$0){
+  isolate$current.htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+function htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$getter_(){
+  return isolate$current.htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$field_;
+}
+function htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$setter_(tmp$0){
+  isolate$current.htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+function htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$getter_(){
+  return isolate$current.htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$field_;
+}
+function htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$setter_(tmp$0){
+  isolate$current.htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+function htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$getter_(){
+  return isolate$current.htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$field_;
+}
+function htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$setter_(tmp$0){
+  isolate$current.htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$field_ = tmp$0;
+}
+function htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted(e){
+  return htmlimpl0a8e4b$_completeMeasurementFutures$htmlimpl0a8e4b$$member_();
+}
+function htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted$named($n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted.call(this, e);
+}
+function htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+function htmlimpl0a8e4b$_maybeScheduleMeasurementFrame$htmlimpl0a8e4b$$member_(){
+  var tmp$1, tmp$0;
+  if (htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$getter_()) {
+    return;
+  }
+  htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$setter_(tmp$0 = true) , tmp$0;
+  if (htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$getter_()) {
+    htmld071c1$window$getter().on$getter().message$getter().add$named(1, $noargs, $bind(htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted$named, htmlimpl0a8e4b$$_maybeScheduleMeasurementFrame$c0$15_15$Hoisted$named$named_$lookupRTT, this));
+    htmlimpl0a8e4b$_firstMeasurementRequest$htmlimpl0a8e4b$$setter_(tmp$1 = false) , tmp$1;
+  }
+  htmld071c1$window$getter().postMessage$named(2, $noargs, htmlimpl0a8e4b$_MEASUREMENT_MESSAGE$htmlimpl0a8e4b$$getter_(), '*');
+}
+function htmlimpl0a8e4b$_createMeasurementFuture$htmlimpl0a8e4b$$member_(computeValue, completer){
+  var tmp$0;
+  if (htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_() == null) {
+    htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$setter_(tmp$0 = RTT.setTypeInfo([], Array.$lookupRTT())) , tmp$0;
+    htmlimpl0a8e4b$_maybeScheduleMeasurementFrame$htmlimpl0a8e4b$$member_();
+  }
+  htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_().add$named(1, $noargs, htmlimpl0a8e4b$_MeasurementRequest$Dart._MeasurementRequest$$Factory(htmlimpl0a8e4b$_MeasurementRequest$Dart.$lookupRTT(), computeValue, completer));
+  return completer.future$getter();
+}
+function htmlimpl0a8e4b$_completeMeasurementFutures$htmlimpl0a8e4b$$member_(){
+  var e_0, tmp$5, tmp$1, tmp$2, tmp$3, tmp$4, tmp$0;
+  if (EQ$operator(htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$getter_(), false)) {
+    return;
+  }
+  htmlimpl0a8e4b$_nextMeasurementFrameScheduled$htmlimpl0a8e4b$$setter_(tmp$0 = false) , tmp$0;
+  if (htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_() != null) {
+    {
+      var $0 = htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_().iterator$named(0, $noargs);
+      while ($0.hasNext$named(0, $noargs)) {
+        var request = $0.next$named(0, $noargs);
+        {
+          try {
+            request.value$setter(tmp$1 = request.computeValue$named(0, $noargs)) , tmp$1;
+          }
+           catch (e) {
+            e = $transformBrowserException(e);
+            {
+              e_0 = e;
+              request.value$setter(tmp$2 = e_0) , tmp$2;
+              request.exception$setter(tmp$3 = true) , tmp$3;
+            }
+          }
+        }
+      }
+    }
+  }
+  var completedRequests = htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$getter_();
+  var readyMeasurementFrameCallbacks = htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$getter_();
+  htmlimpl0a8e4b$_pendingRequests$htmlimpl0a8e4b$$setter_(tmp$4 = $Dart$Null) , tmp$4;
+  htmlimpl0a8e4b$_pendingMeasurementFrameCallbacks$htmlimpl0a8e4b$$setter_(tmp$5 = $Dart$Null) , tmp$5;
+  if (completedRequests != null) {
+    {
+      var $1 = completedRequests.iterator$named(0, $noargs);
+      while ($1.hasNext$named(0, $noargs)) {
+        var request_0 = $1.next$named(0, $noargs);
+        {
+          if (request_0.exception$getter()) {
+            request_0.completer$getter().completeException$named(1, $noargs, request_0.value$getter());
+          }
+           else {
+            request_0.completer$getter().complete$named(1, $noargs, request_0.value$getter());
+          }
+        }
+      }
+    }
+  }
+  if (readyMeasurementFrameCallbacks != null) {
+    {
+      var $2 = readyMeasurementFrameCallbacks.iterator$named(0, $noargs);
+      while ($2.hasNext$named(0, $noargs)) {
+        var handler = $2.next$named(0, $noargs);
+        {
+          handler(0, $noargs);
+        }
+      }
+    }
+  }
+}
+function htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart'), htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$MessageEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.MessageEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$MessageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart'), htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$MutationEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.MutationEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$MutationEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
 }
 ;
 function htmlimpl0a8e4b$NodeWrappingImplementation$Dart(){
@@ -39087,6 +50658,10 @@ htmlimpl0a8e4b$ElementWrappingImplementation$Dart.$addTo = function(target){
   htmld071c1$Element$Dart.$addTo(target);
 }
 ;
+htmlimpl0a8e4b$ElementWrappingImplementation$Dart.ElementWrappingImplementation$tag$29$Factory = function(tag){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapElement$member(document$getter().createElement$named(1, $noargs, tag));
+}
+;
 htmlimpl0a8e4b$ElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
   htmlimpl0a8e4b$NodeWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
 }
@@ -39103,11 +50678,6 @@ htmlimpl0a8e4b$ElementWrappingImplementation$Dart.ElementWrappingImplementation$
   return tmp$0;
 }
 ;
-htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.innerHTML$setter = function(value){
-  var tmp$0;
-  this._ptr$htmlimpl0a8e4b$$getter_().innerHTML$setter(tmp$0 = value) , tmp$0;
-}
-;
 htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.query$member = function(selectors){
   return htmlimpl0a8e4b$LevelDom$Dart.wrapElement$member(this._ptr$htmlimpl0a8e4b$$getter_().querySelector$named(1, $noargs, selectors));
 }
@@ -39116,6 +50686,33 @@ htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.query$named = functi
   if ($o.count || $n != 1)
     $nsme();
   return htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.query$member.call(this, selectors);
+}
+;
+htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.rect$named = function(){
+  return this.rect$getter().apply(this, arguments);
+}
+;
+function htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted(){
+  return htmlimpl0a8e4b$ElementRectWrappingImplementation$Dart.ElementRectWrappingImplementation$$Factory(this._ptr$htmlimpl0a8e4b$$getter_());
+}
+function htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted$named($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted.call(this);
+}
+function htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction(null, RTT.dynamicType);
+}
+htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.rect$getter = function(){
+  return htmlimpl0a8e4b$_createMeasurementFuture$htmlimpl0a8e4b$$member_($bind(htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted$named, htmlimpl0a8e4b$ElementWrappingImplementation$Dart$rect$c0$49_49$Hoisted$named$named_$lookupRTT, this), CompleterImpl$Dart.CompleterImpl$$Factory(CompleterImpl$Dart.$lookupRTT([htmld071c1$ElementRect$Dart.$lookupRTT()])));
+}
+;
+htmlimpl0a8e4b$ElementWrappingImplementation$Dart.prototype.on$getter = function(){
+  var tmp$0;
+  if (this._on$htmlimpl0a8e4b$$getter_() == null) {
+    this._on$htmlimpl0a8e4b$$setter_(tmp$0 = htmlimpl0a8e4b$ElementEventsImplementation$Dart.ElementEventsImplementation$_wrap$27$htmlimpl0a8e4b$$Factory_(this._ptr$htmlimpl0a8e4b$$getter_())) , tmp$0;
+  }
+  return this._on$htmlimpl0a8e4b$$getter_();
 }
 ;
 function htmlimpl0a8e4b$AnchorElementWrappingImplementation$Dart(){
@@ -39306,6 +50903,34 @@ htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.ButtonElementWrappingImp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().click$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$member.call(this);
+}
+;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$getter = function(){
+  return $bind(htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$named, htmlimpl0a8e4b$ButtonElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT, this);
+}
+;
 function htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -39324,6 +50949,7 @@ htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.$addTo = function(target
   htmld071c1$CanvasElement$Dart.$addTo(target);
 }
 ;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.$implements$htmld071c1$CanvasElement$Dart = 1;
 htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
   htmlimpl0a8e4b$ElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
 }
@@ -39338,6 +50964,45 @@ htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.CanvasElementWrappingImp
   htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.getContext$member = function(contextId){
+  if (contextId == null) {
+    return htmlimpl0a8e4b$LevelDom$Dart.wrapCanvasRenderingContext$member(this._ptr$htmlimpl0a8e4b$$getter_().getContext$named(0, $noargs));
+  }
+   else {
+    return htmlimpl0a8e4b$LevelDom$Dart.wrapCanvasRenderingContext$member(this._ptr$htmlimpl0a8e4b$$getter_().getContext$named(1, $noargs, contextId));
+  }
+}
+;
+htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.getContext$named = function($n, $o, contextId){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 0:
+      contextId = '$p_contextId' in $o?(++seen , $o.$p_contextId):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 1)
+    $nsme();
+  return htmlimpl0a8e4b$CanvasElementWrappingImplementation$Dart.prototype.getContext$member.call(this, contextId);
 }
 ;
 function htmlimpl0a8e4b$DListElementWrappingImplementation$Dart(){
@@ -39510,6 +51175,33 @@ htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.EmbedElementWrappingImple
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$EmbedElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$FieldSetElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$FieldSetElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -39650,6 +51342,15 @@ htmlimpl0a8e4b$HRElementWrappingImplementation$Dart.HRElementWrappingImplementat
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$HRElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$HRElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$HeadElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$HeadElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -39752,6 +51453,33 @@ htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.IFrameElementWrappingImp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$IFrameElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -39770,6 +51498,7 @@ htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.$addTo = function(target)
   htmld071c1$ImageElement$Dart.$addTo(target);
 }
 ;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.$implements$htmld071c1$ImageElement$Dart = 1;
 htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
   htmlimpl0a8e4b$ElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
 }
@@ -39784,6 +51513,49 @@ htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.ImageElementWrappingImple
   htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.complete$named = function(){
+  return this.complete$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.complete$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().complete$getter();
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().x$getter();
+}
+;
+htmlimpl0a8e4b$ImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().y$getter();
 }
 ;
 function htmlimpl0a8e4b$InputElementWrappingImplementation$Dart(){
@@ -39818,6 +51590,43 @@ htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.InputElementWrappingImple
   htmlimpl0a8e4b$InputElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$InputElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().click$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$member.call(this);
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$getter = function(){
+  return $bind(htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$named, htmlimpl0a8e4b$InputElementWrappingImplementation$Dart.prototype.click$named_$lookupRTT, this);
 }
 ;
 function htmlimpl0a8e4b$KeygenElementWrappingImplementation$Dart(){
@@ -39886,6 +51695,15 @@ htmlimpl0a8e4b$LIElementWrappingImplementation$Dart.LIElementWrappingImplementat
   htmlimpl0a8e4b$LIElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$LIElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$LIElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$LIElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$LabelElementWrappingImplementation$Dart(){
@@ -40058,6 +51876,47 @@ htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.MarqueeElementWrappingI
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.loop$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().loop$getter();
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().start$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$member.call(this);
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$getter = function(){
+  return $bind(htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$named, htmlimpl0a8e4b$MarqueeElementWrappingImplementation$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
 function htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40090,6 +51949,42 @@ htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.MediaElementWrappingImple
   htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.error$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapMediaError$member(this._ptr$htmlimpl0a8e4b$$getter_().error$getter());
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.loop$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().loop$getter();
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$member = function(){
+  this._ptr$htmlimpl0a8e4b$$getter_().load$named(0, $noargs);
+  return;
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$member.call(this);
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$getter = function(){
+  return $bind(htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$named, htmlimpl0a8e4b$MediaElementWrappingImplementation$Dart.prototype.load$named_$lookupRTT, this);
 }
 ;
 function htmlimpl0a8e4b$AudioElementWrappingImplementation$Dart(){
@@ -40228,6 +52123,15 @@ htmlimpl0a8e4b$MeterElementWrappingImplementation$Dart.MeterElementWrappingImple
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$MeterElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$MeterElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$ModElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$ModElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40296,6 +52200,14 @@ htmlimpl0a8e4b$OListElementWrappingImplementation$Dart.OListElementWrappingImple
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$OListElementWrappingImplementation$Dart.prototype.start$named = function(){
+  return this.start$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$OListElementWrappingImplementation$Dart.prototype.start$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().start$getter();
+}
+;
 function htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40328,6 +52240,24 @@ htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart.ObjectElementWrappingImp
   htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$ObjectElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$OptGroupElementWrappingImplementation$Dart(){
@@ -40398,6 +52328,15 @@ htmlimpl0a8e4b$OptionElementWrappingImplementation$Dart.OptionElementWrappingImp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$OptionElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$OptionElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40430,6 +52369,15 @@ htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart.OutputElementWrappingImp
   htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$OutputElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$ParagraphElementWrappingImplementation$Dart(){
@@ -40500,6 +52448,15 @@ htmlimpl0a8e4b$ParamElementWrappingImplementation$Dart.ParamElementWrappingImple
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$ParamElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$ParamElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$PreElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$PreElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40534,6 +52491,15 @@ htmlimpl0a8e4b$PreElementWrappingImplementation$Dart.PreElementWrappingImplement
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$PreElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$PreElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -40566,6 +52532,15 @@ htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart.ProgressElementWrappin
   htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$ProgressElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$QuoteElementWrappingImplementation$Dart(){
@@ -41044,6 +53019,14 @@ htmlimpl0a8e4b$SVGCursorElementWrappingImplementation$Dart.SVGCursorElementWrapp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGCursorElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGCursorElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGDefsElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGDefsElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41180,6 +53163,22 @@ htmlimpl0a8e4b$SVGFEBlendElementWrappingImplementation$Dart.SVGFEBlendElementWra
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEBlendElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEBlendElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEBlendElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEBlendElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41212,6 +53211,22 @@ htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart.SVGFEColorMatr
   htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEColorMatrixElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart(){
@@ -41248,6 +53263,22 @@ htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart.SVGFECom
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEComponentTransferElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41280,6 +53311,22 @@ htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart.SVGFEConvol
   htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEConvolveMatrixElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart(){
@@ -41316,6 +53363,22 @@ htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart.SVGFEDiffu
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDiffuseLightingElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41348,6 +53411,22 @@ htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart.SVGFEDispl
   htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDisplacementMapElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFEDistantLightElementWrappingImplementation$Dart(){
@@ -41418,6 +53497,22 @@ htmlimpl0a8e4b$SVGFEDropShadowElementWrappingImplementation$Dart.SVGFEDropShadow
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEDropShadowElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDropShadowElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDropShadowElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEDropShadowElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41450,6 +53545,22 @@ htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart.SVGFEFloodElementWra
   htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEFloodElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFEFuncAElementWrappingImplementation$Dart(){
@@ -41622,6 +53733,22 @@ htmlimpl0a8e4b$SVGFEGaussianBlurElementWrappingImplementation$Dart.SVGFEGaussian
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEGaussianBlurElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41656,6 +53783,22 @@ htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart.SVGFEImageElementWra
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41688,6 +53831,22 @@ htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart.SVGFEMergeElementWra
   htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEMergeElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFEMergeNodeElementWrappingImplementation$Dart(){
@@ -41758,6 +53917,22 @@ htmlimpl0a8e4b$SVGFEOffsetElementWrappingImplementation$Dart.SVGFEOffsetElementW
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFEOffsetElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEOffsetElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEOffsetElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEOffsetElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41790,6 +53965,14 @@ htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart.SVGFEPointLight
   htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumber$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFEPointLightElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumber$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart(){
@@ -41826,6 +54009,22 @@ htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart.SVGFESpec
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFESpecularLightingElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41858,6 +54057,14 @@ htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart.SVGFESpotLightEl
   htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumber$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFESpotLightElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumber$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart(){
@@ -41894,6 +54101,22 @@ htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart.SVGFETileElementWrapp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETileElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41928,6 +54151,22 @@ htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart.SVGFETurbulence
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFETurbulenceElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -41960,6 +54199,22 @@ htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart.SVGFilterElementWrapp
   htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGFilterElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGFontElementWrappingImplementation$Dart(){
@@ -42200,6 +54455,22 @@ htmlimpl0a8e4b$SVGForeignObjectElementWrappingImplementation$Dart.SVGForeignObje
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGForeignObjectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGForeignObjectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGForeignObjectElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGForeignObjectElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGGElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGGElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -42302,6 +54573,24 @@ htmlimpl0a8e4b$SVGGlyphRefElementWrappingImplementation$Dart.SVGGlyphRefElementW
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGGlyphRefElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().x$getter();
+}
+;
+htmlimpl0a8e4b$SVGGlyphRefElementWrappingImplementation$Dart.prototype.x$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().x$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGGlyphRefElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().y$getter();
+}
+;
+htmlimpl0a8e4b$SVGGlyphRefElementWrappingImplementation$Dart.prototype.y$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().y$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$SVGGradientElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGGradientElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -42402,6 +54691,22 @@ htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart.SVGImageElementWrappin
   htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGImageElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGLineElementWrappingImplementation$Dart(){
@@ -42574,6 +54879,22 @@ htmlimpl0a8e4b$SVGMaskElementWrappingImplementation$Dart.SVGMaskElementWrappingI
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGMaskElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGMaskElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGMaskElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGMaskElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGMetadataElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGMetadataElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -42708,6 +55029,22 @@ htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart.SVGPatternElementWra
   htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGPatternElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGPolygonElementWrappingImplementation$Dart(){
@@ -42846,6 +55183,22 @@ htmlimpl0a8e4b$SVGRectElementWrappingImplementation$Dart.SVGRectElementWrappingI
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGRectElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGRectElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGRectElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGRectElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -42878,6 +55231,22 @@ htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart.SVGSVGElementWrappingImp
   htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGSVGElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
 }
 ;
 function htmlimpl0a8e4b$SVGScriptElementWrappingImplementation$Dart(){
@@ -43186,6 +55555,22 @@ htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart.SVGTextPosit
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart.prototype.rotate$named = function(){
+  return this.rotate$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart.prototype.rotate$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedNumberList$member(this._ptr$htmlimpl0a8e4b$$getter_().rotate$getter());
+}
+;
+htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLengthList$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLengthList$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGAltGlyphElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGAltGlyphElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGTextPositioningElementWrappingImplementation$Dart);
@@ -43390,6 +55775,22 @@ htmlimpl0a8e4b$SVGUseElementWrappingImplementation$Dart.SVGUseElementWrappingImp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$SVGUseElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().height$getter());
+}
+;
+htmlimpl0a8e4b$SVGUseElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().width$getter());
+}
+;
+htmlimpl0a8e4b$SVGUseElementWrappingImplementation$Dart.prototype.x$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().x$getter());
+}
+;
+htmlimpl0a8e4b$SVGUseElementWrappingImplementation$Dart.prototype.y$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapSVGAnimatedLength$member(this._ptr$htmlimpl0a8e4b$$getter_().y$getter());
+}
+;
 function htmlimpl0a8e4b$SVGVKernElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGVKernElementWrappingImplementation$Dart, htmlimpl0a8e4b$SVGElementWrappingImplementation$Dart);
@@ -43492,6 +55893,15 @@ htmlimpl0a8e4b$ScriptElementWrappingImplementation$Dart.ScriptElementWrappingImp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$ScriptElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$ScriptElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -43533,6 +55943,15 @@ htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart.prototype.length$getter 
 htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart.prototype.length$setter = function(value){
   var tmp$0;
   this._ptr$htmlimpl0a8e4b$$getter_().length$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
 }
 ;
 htmlimpl0a8e4b$SelectElementWrappingImplementation$Dart.prototype.add$member = function(element, before){
@@ -43578,6 +55997,15 @@ htmlimpl0a8e4b$SourceElementWrappingImplementation$Dart.SourceElementWrappingImp
   htmlimpl0a8e4b$SourceElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SourceElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$SourceElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$SourceElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$SpanElementWrappingImplementation$Dart(){
@@ -43716,6 +56144,24 @@ htmlimpl0a8e4b$TableCellElementWrappingImplementation$Dart.TableCellElementWrapp
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$TableCellElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$TableCellElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$TableCellElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$TableCellElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$TableColElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$TableColElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -43750,6 +56196,15 @@ htmlimpl0a8e4b$TableColElementWrappingImplementation$Dart.TableColElementWrappin
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$TableColElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$TableColElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$TableElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$TableElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -43782,6 +56237,15 @@ htmlimpl0a8e4b$TableElementWrappingImplementation$Dart.TableElementWrappingImple
   htmlimpl0a8e4b$TableElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$TableElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$TableElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$TableElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$TableRowElementWrappingImplementation$Dart(){
@@ -43886,6 +56350,15 @@ htmlimpl0a8e4b$TextAreaElementWrappingImplementation$Dart.TextAreaElementWrappin
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$TextAreaElementWrappingImplementation$Dart.prototype.value$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().value$getter();
+}
+;
+htmlimpl0a8e4b$TextAreaElementWrappingImplementation$Dart.prototype.value$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().value$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$TitleElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$TitleElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -43952,6 +56425,15 @@ htmlimpl0a8e4b$TrackElementWrappingImplementation$Dart.TrackElementWrappingImple
   htmlimpl0a8e4b$TrackElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$TrackElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$TrackElementWrappingImplementation$Dart.prototype.src$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().src$getter();
+}
+;
+htmlimpl0a8e4b$TrackElementWrappingImplementation$Dart.prototype.src$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().src$setter(tmp$0 = value) , tmp$0;
 }
 ;
 function htmlimpl0a8e4b$UListElementWrappingImplementation$Dart(){
@@ -44056,6 +56538,24 @@ htmlimpl0a8e4b$VideoElementWrappingImplementation$Dart.VideoElementWrappingImple
   return tmp$0;
 }
 ;
+htmlimpl0a8e4b$VideoElementWrappingImplementation$Dart.prototype.height$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().height$getter();
+}
+;
+htmlimpl0a8e4b$VideoElementWrappingImplementation$Dart.prototype.height$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().height$setter(tmp$0 = value) , tmp$0;
+}
+;
+htmlimpl0a8e4b$VideoElementWrappingImplementation$Dart.prototype.width$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().width$getter();
+}
+;
+htmlimpl0a8e4b$VideoElementWrappingImplementation$Dart.prototype.width$setter = function(value){
+  var tmp$0;
+  this._ptr$htmlimpl0a8e4b$$getter_().width$setter(tmp$0 = value) , tmp$0;
+}
+;
 function htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart, htmlimpl0a8e4b$ElementWrappingImplementation$Dart);
@@ -44088,6 +56588,14 @@ htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart.BodyElementWrappingImpleme
   htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+htmlimpl0a8e4b$BodyElementWrappingImplementation$Dart.prototype.on$getter = function(){
+  var tmp$0;
+  if (this._on$htmlimpl0a8e4b$$getter_() == null) {
+    this._on$htmlimpl0a8e4b$$setter_(tmp$0 = htmlimpl0a8e4b$BodyElementEventsImplementation$Dart.BodyElementEventsImplementation$_wrap$31$htmlimpl0a8e4b$$Factory_(this._ptr$htmlimpl0a8e4b$$getter_())) , tmp$0;
+  }
+  return this._on$htmlimpl0a8e4b$$getter_();
 }
 ;
 function htmlimpl0a8e4b$DocumentWrappingImplementation$Dart(){
@@ -44135,6 +56643,150 @@ htmlimpl0a8e4b$DocumentWrappingImplementation$Dart.prototype.window$getter = fun
   return htmlimpl0a8e4b$LevelDom$Dart.wrapWindow$member(this._documentPtr$htmlimpl0a8e4b$$getter_().defaultView$getter());
 }
 ;
+htmlimpl0a8e4b$DocumentWrappingImplementation$Dart.prototype.on$getter = function(){
+  var tmp$0;
+  if (this._on$htmlimpl0a8e4b$$getter_() == null) {
+    this._on$htmlimpl0a8e4b$$setter_(tmp$0 = htmlimpl0a8e4b$DocumentEventsImplementation$Dart.DocumentEventsImplementation$_wrap$28$htmlimpl0a8e4b$$Factory_(this._ptr$htmlimpl0a8e4b$$getter_())) , tmp$0;
+  }
+  return this._on$htmlimpl0a8e4b$$getter_();
+}
+;
+function htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart'), htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$OverflowEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.OverflowEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$OverflowEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart'), htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$PageTransitionEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.PageTransitionEventWrappingImplementation$_wrap$41$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$PageTransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart'), htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$PopStateEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.PopStateEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$PopStateEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart'), htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$ProgressEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.ProgressEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
 function htmlimpl0a8e4b$SVGDocumentWrappingImplementation$Dart(){
 }
 $inherits(htmlimpl0a8e4b$SVGDocumentWrappingImplementation$Dart, htmlimpl0a8e4b$DocumentWrappingImplementation$Dart);
@@ -44167,6 +56819,448 @@ htmlimpl0a8e4b$SVGDocumentWrappingImplementation$Dart.SVGDocumentWrappingImpleme
   htmlimpl0a8e4b$SVGDocumentWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
   htmlimpl0a8e4b$SVGDocumentWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
   return tmp$0;
+}
+;
+function htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart'), htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$StorageEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.StorageEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$StorageEventWrappingImplementation$Dart.prototype.key$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().key$getter();
+}
+;
+function htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart'), htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$TransitionEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.TransitionEventWrappingImplementation$_wrap$37$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$TransitionEventWrappingImplementation$Dart.prototype.elapsedTime$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().elapsedTime$getter();
+}
+;
+function htmlimpl0a8e4b$UIEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$UIEventWrappingImplementation$Dart, htmlimpl0a8e4b$EventWrappingImplementation$Dart);
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$UIEventWrappingImplementation$Dart'), htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$EventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.UIEventWrappingImplementation$_wrap$29$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$UIEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart'), htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$SVGZoomEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.SVGZoomEventWrappingImplementation$_wrap$34$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$SVGZoomEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart'), htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$CompositionEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.CompositionEventWrappingImplementation$_wrap$38$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$CompositionEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart'), htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$KeyboardEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.KeyboardEventWrappingImplementation$_wrap$35$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$KeyboardEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart'), htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$MouseEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.MouseEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.prototype.clientX$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().clientX$getter();
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.prototype.clientY$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().clientY$getter();
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.prototype.x$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().x$getter();
+}
+;
+htmlimpl0a8e4b$MouseEventWrappingImplementation$Dart.prototype.y$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().y$getter();
+}
+;
+function htmlimpl0a8e4b$TextEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$TextEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$TextEventWrappingImplementation$Dart'), htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$TextEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.TextEventWrappingImplementation$_wrap$31$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$TextEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$TextEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$TextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$TextEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart'), htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$TouchEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.TouchEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$TouchEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+function htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart, htmlimpl0a8e4b$UIEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart'), htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$WheelEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$UIEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.WheelEventWrappingImplementation$_wrap$32$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.prototype.clientX$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().clientX$getter();
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.prototype.clientY$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().clientY$getter();
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.prototype.x$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().x$getter();
+}
+;
+htmlimpl0a8e4b$WheelEventWrappingImplementation$Dart.prototype.y$getter = function(){
+  return this._ptr$htmlimpl0a8e4b$$getter_().y$getter();
+}
+;
+function htmlimpl0a8e4b$WindowEventsImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$WindowEventsImplementation$Dart, htmlimpl0a8e4b$EventsImplementation$Dart);
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$WindowEventsImplementation$Dart'), htmlimpl0a8e4b$WindowEventsImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$WindowEventsImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$WindowEventsImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$EventsImplementation$Dart.$addTo(target);
+  htmld071c1$WindowEvents$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(_ptr){
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(_ptr){
+  htmlimpl0a8e4b$EventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, _ptr);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.WindowEventsImplementation$_wrap$26$htmlimpl0a8e4b$$Factory_ = function(_ptr){
+  var tmp$0 = new htmlimpl0a8e4b$WindowEventsImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$WindowEventsImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$WindowEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, _ptr);
+  htmlimpl0a8e4b$WindowEventsImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, _ptr);
+  return tmp$0;
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.click$named = function(){
+  return this.click$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.click$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('click');
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.error$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('error');
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.load$named = function(){
+  return this.load$getter().apply(this, arguments);
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.load$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('load');
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.message$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('message');
+}
+;
+htmlimpl0a8e4b$WindowEventsImplementation$Dart.prototype.mouseMove$getter = function(){
+  return this._get$htmlimpl0a8e4b$$member_('mousemove');
 }
 ;
 function htmlimpl0a8e4b$WindowWrappingImplementation$Dart(){
@@ -44216,6 +57310,42 @@ htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.length$setter = funct
   this._ptr$htmlimpl0a8e4b$$getter_().length$setter(tmp$0 = value) , tmp$0;
 }
 ;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.top$getter = function(){
+  return htmlimpl0a8e4b$LevelDom$Dart.wrapWindow$member(this._ptr$htmlimpl0a8e4b$$getter_().top$getter());
+}
+;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.postMessage$member = function(message, messagePort, targetOrigin){
+  if (targetOrigin == null) {
+    if (messagePort == null) {
+      this._ptr$htmlimpl0a8e4b$$getter_().postMessage$named(1, $noargs, message);
+      return;
+    }
+     else {
+      this._ptr$htmlimpl0a8e4b$$getter_().postMessage$named(2, $noargs, message, messagePort);
+      return;
+    }
+  }
+   else {
+    this._ptr$htmlimpl0a8e4b$$getter_().postMessage$named(3, $noargs, message, htmlimpl0a8e4b$LevelDom$Dart.unwrap$member(messagePort), targetOrigin);
+    return;
+  }
+  $Dart$ThrowException('Incorrect number or type of arguments');
+}
+;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.postMessage$named = function($n, $o, message, messagePort, targetOrigin){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      messagePort = '$p_messagePort' in $o?(++seen , $o.$p_messagePort):(++def , $Dart$Null);
+    case 2:
+      targetOrigin = '$p_targetOrigin' in $o?(++seen , $o.$p_targetOrigin):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 3)
+    $nsme();
+  return htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.postMessage$member.call(this, message, messagePort, targetOrigin);
+}
+;
 htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.print$member = function(){
   this._ptr$htmlimpl0a8e4b$$getter_().print$named(0, $noargs);
 }
@@ -44232,6 +57362,64 @@ htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.print$named_$lookupRT
 ;
 htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.print$getter = function(){
   return $bind(htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.print$named, htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.print$named_$lookupRTT, this);
+}
+;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$member = function(callback, element){
+  return this._ptr$htmlimpl0a8e4b$$getter_().webkitRequestAnimationFrame$named(2, $noargs, callback, htmlimpl0a8e4b$LevelDom$Dart.unwrap$member(element));
+}
+;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$named = function($n, $o, callback, element){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 1:
+      element = '$p_element' in $o?(++seen , $o.$p_element):(++def , $Dart$Null);
+  }
+  if (seen != $o.count || seen + def + $n != 2)
+    $nsme();
+  return htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.webkitRequestAnimationFrame$member.call(this, callback, element);
+}
+;
+htmlimpl0a8e4b$WindowWrappingImplementation$Dart.prototype.on$getter = function(){
+  var tmp$0;
+  if (this._on$htmlimpl0a8e4b$$getter_() == null) {
+    this._on$htmlimpl0a8e4b$$setter_(tmp$0 = htmlimpl0a8e4b$WindowEventsImplementation$Dart.WindowEventsImplementation$_wrap$26$htmlimpl0a8e4b$$Factory_(this._ptr$htmlimpl0a8e4b$$getter_())) , tmp$0;
+  }
+  return this._on$htmlimpl0a8e4b$$getter_();
+}
+;
+function htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart(){
+}
+$inherits(htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart, htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart);
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart'), htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$RTTimplements);
+}
+;
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$RTTimplements = function(rtt){
+  htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$addTo(rtt);
+}
+;
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$addTo = function(target){
+  var rtt = htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart.$addTo(target);
+  htmld071c1$XMLHttpRequestProgressEvent$Dart.$addTo(target);
+}
+;
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_ = function(ptr){
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_ = function(ptr){
+  htmlimpl0a8e4b$ProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(this, ptr);
+}
+;
+htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.XMLHttpRequestProgressEventWrappingImplementation$_wrap$49$htmlimpl0a8e4b$$Factory_ = function(ptr){
+  var tmp$0 = new htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart;
+  tmp$0.$typeInfo = htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart.$lookupRTT();
+  htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Initializer_.call(tmp$0, ptr);
+  htmlimpl0a8e4b$XMLHttpRequestProgressEventWrappingImplementation$Dart._wrap$htmlimpl0a8e4b$$Constructor_.call(tmp$0, ptr);
+  return tmp$0;
 }
 ;
 function htmld071c1$AnchorElement$Dart(){
@@ -44280,6 +57468,22 @@ htmld071c1$AudioElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$AudioElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$MediaElement$Dart.$addTo(target);
+}
+;
+function htmld071c1$AudioProcessingEvent$Dart(){
+}
+htmld071c1$AudioProcessingEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$AudioProcessingEvent$Dart'), htmld071c1$AudioProcessingEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$AudioProcessingEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$AudioProcessingEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$AudioProcessingEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$AudioProcessingEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
 }
 ;
 function htmld071c1$BRElement$Dart(){
@@ -44344,6 +57548,44 @@ htmld071c1$CanvasElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$CanvasElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$Element$Dart.$addTo(target);
+}
+;
+function htmld071c1$CanvasRenderingContext$Dart(){
+}
+htmld071c1$CanvasRenderingContext$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$CanvasRenderingContext$Dart'));
+}
+;
+htmld071c1$CanvasRenderingContext$Dart.$addTo = function(target){
+  var rtt = htmld071c1$CanvasRenderingContext$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$CanvasRenderingContext2D$Dart(){
+}
+htmld071c1$CanvasRenderingContext2D$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$CanvasRenderingContext2D$Dart'), htmld071c1$CanvasRenderingContext2D$Dart.$RTTimplements);
+}
+;
+htmld071c1$CanvasRenderingContext2D$Dart.$RTTimplements = function(rtt){
+  htmld071c1$CanvasRenderingContext2D$Dart.$addTo(rtt);
+}
+;
+htmld071c1$CanvasRenderingContext2D$Dart.$addTo = function(target){
+  var rtt = htmld071c1$CanvasRenderingContext2D$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$CanvasRenderingContext$Dart.$addTo(target);
+}
+;
+function htmld071c1$ClientRect$Dart(){
+}
+htmld071c1$ClientRect$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$ClientRect$Dart'));
+}
+;
+htmld071c1$ClientRect$Dart.$addTo = function(target){
+  var rtt = htmld071c1$ClientRect$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
 function htmld071c1$DListElement$Dart(){
@@ -44533,6 +57775,22 @@ htmld071c1$HeadingElement$Dart.$addTo = function(target){
   htmld071c1$Element$Dart.$addTo(target);
 }
 ;
+function htmld071c1$IDBVersionChangeEvent$Dart(){
+}
+htmld071c1$IDBVersionChangeEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$IDBVersionChangeEvent$Dart'), htmld071c1$IDBVersionChangeEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$IDBVersionChangeEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$IDBVersionChangeEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$IDBVersionChangeEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$IDBVersionChangeEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
 function htmld071c1$IFrameElement$Dart(){
 }
 htmld071c1$IFrameElement$Dart.$lookupRTT = function(){
@@ -44709,6 +57967,17 @@ htmld071c1$MediaElement$Dart.$addTo = function(target){
   htmld071c1$Element$Dart.$addTo(target);
 }
 ;
+function htmld071c1$MediaError$Dart(){
+}
+htmld071c1$MediaError$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$MediaError$Dart'));
+}
+;
+htmld071c1$MediaError$Dart.$addTo = function(target){
+  var rtt = htmld071c1$MediaError$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
 function htmld071c1$MenuElement$Dart(){
 }
 htmld071c1$MenuElement$Dart.$lookupRTT = function(){
@@ -44803,6 +58072,22 @@ htmld071c1$ObjectElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$ObjectElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$Element$Dart.$addTo(target);
+}
+;
+function htmld071c1$OfflineAudioCompletionEvent$Dart(){
+}
+htmld071c1$OfflineAudioCompletionEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$OfflineAudioCompletionEvent$Dart'), htmld071c1$OfflineAudioCompletionEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$OfflineAudioCompletionEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$OfflineAudioCompletionEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$OfflineAudioCompletionEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$OfflineAudioCompletionEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
 }
 ;
 function htmld071c1$OptGroupElement$Dart(){
@@ -45066,6 +58351,50 @@ htmld071c1$SVGAnimateTransformElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$SVGAnimateTransformElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$SVGAnimationElement$Dart.$addTo(target);
+}
+;
+function htmld071c1$SVGAnimatedLength$Dart(){
+}
+htmld071c1$SVGAnimatedLength$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SVGAnimatedLength$Dart'));
+}
+;
+htmld071c1$SVGAnimatedLength$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SVGAnimatedLength$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$SVGAnimatedLengthList$Dart(){
+}
+htmld071c1$SVGAnimatedLengthList$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SVGAnimatedLengthList$Dart'));
+}
+;
+htmld071c1$SVGAnimatedLengthList$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SVGAnimatedLengthList$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$SVGAnimatedNumber$Dart(){
+}
+htmld071c1$SVGAnimatedNumber$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SVGAnimatedNumber$Dart'));
+}
+;
+htmld071c1$SVGAnimatedNumber$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SVGAnimatedNumber$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$SVGAnimatedNumberList$Dart(){
+}
+htmld071c1$SVGAnimatedNumberList$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SVGAnimatedNumberList$Dart'));
+}
+;
+htmld071c1$SVGAnimatedNumberList$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SVGAnimatedNumberList$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
 function htmld071c1$SVGAnimationElement$Dart(){
@@ -46554,6 +59883,22 @@ htmld071c1$SVGZoomAndPan$Dart.$addTo = function(target){
   target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
+function htmld071c1$SVGZoomEvent$Dart(){
+}
+htmld071c1$SVGZoomEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SVGZoomEvent$Dart'), htmld071c1$SVGZoomEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$SVGZoomEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$SVGZoomEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$SVGZoomEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SVGZoomEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
 function htmld071c1$ScriptElement$Dart(){
 }
 htmld071c1$ScriptElement$Dart.$lookupRTT = function(){
@@ -46616,6 +59961,22 @@ htmld071c1$SpanElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$SpanElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$Element$Dart.$addTo(target);
+}
+;
+function htmld071c1$SpeechInputEvent$Dart(){
+}
+htmld071c1$SpeechInputEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$SpeechInputEvent$Dart'), htmld071c1$SpeechInputEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$SpeechInputEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$SpeechInputEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$SpeechInputEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$SpeechInputEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
 }
 ;
 function htmld071c1$StyleElement$Dart(){
@@ -46826,6 +60187,86 @@ htmld071c1$VideoElement$Dart.$addTo = function(target){
   htmld071c1$MediaElement$Dart.$addTo(target);
 }
 ;
+function htmld071c1$WebGLContextEvent$Dart(){
+}
+htmld071c1$WebGLContextEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$WebGLContextEvent$Dart'), htmld071c1$WebGLContextEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$WebGLContextEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$WebGLContextEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$WebGLContextEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$WebGLContextEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$WebGLRenderingContext$Dart(){
+}
+htmld071c1$WebGLRenderingContext$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$WebGLRenderingContext$Dart'), htmld071c1$WebGLRenderingContext$Dart.$RTTimplements);
+}
+;
+htmld071c1$WebGLRenderingContext$Dart.$RTTimplements = function(rtt){
+  htmld071c1$WebGLRenderingContext$Dart.$addTo(rtt);
+}
+;
+htmld071c1$WebGLRenderingContext$Dart.$addTo = function(target){
+  var rtt = htmld071c1$WebGLRenderingContext$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$CanvasRenderingContext$Dart.$addTo(target);
+}
+;
+function htmld071c1$AnimationEvent$Dart(){
+}
+htmld071c1$AnimationEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$AnimationEvent$Dart'), htmld071c1$AnimationEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$AnimationEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$AnimationEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$AnimationEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$AnimationEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$BeforeLoadEvent$Dart(){
+}
+htmld071c1$BeforeLoadEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$BeforeLoadEvent$Dart'), htmld071c1$BeforeLoadEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$BeforeLoadEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$BeforeLoadEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$BeforeLoadEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$BeforeLoadEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$BodyElementEvents$Dart(){
+}
+htmld071c1$BodyElementEvents$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$BodyElementEvents$Dart'), htmld071c1$BodyElementEvents$Dart.$RTTimplements);
+}
+;
+htmld071c1$BodyElementEvents$Dart.$RTTimplements = function(rtt){
+  htmld071c1$BodyElementEvents$Dart.$addTo(rtt);
+}
+;
+htmld071c1$BodyElementEvents$Dart.$addTo = function(target){
+  var rtt = htmld071c1$BodyElementEvents$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$ElementEvents$Dart.$addTo(target);
+}
+;
 function htmld071c1$BodyElement$Dart(){
 }
 htmld071c1$BodyElement$Dart.$lookupRTT = function(){
@@ -46840,6 +60281,102 @@ htmld071c1$BodyElement$Dart.$addTo = function(target){
   var rtt = htmld071c1$BodyElement$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$Element$Dart.$addTo(target);
+}
+;
+function htmld071c1$CloseEvent$Dart(){
+}
+htmld071c1$CloseEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$CloseEvent$Dart'), htmld071c1$CloseEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$CloseEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$CloseEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$CloseEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$CloseEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$CompositionEvent$Dart(){
+}
+htmld071c1$CompositionEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$CompositionEvent$Dart'), htmld071c1$CompositionEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$CompositionEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$CompositionEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$CompositionEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$CompositionEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$CustomEvent$Dart(){
+}
+htmld071c1$CustomEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$CustomEvent$Dart'), htmld071c1$CustomEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$CustomEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$CustomEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$CustomEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$CustomEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$DeviceMotionEvent$Dart(){
+}
+htmld071c1$DeviceMotionEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$DeviceMotionEvent$Dart'), htmld071c1$DeviceMotionEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$DeviceMotionEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$DeviceMotionEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$DeviceMotionEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$DeviceMotionEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$DeviceOrientationEvent$Dart(){
+}
+htmld071c1$DeviceOrientationEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$DeviceOrientationEvent$Dart'), htmld071c1$DeviceOrientationEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$DeviceOrientationEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$DeviceOrientationEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$DeviceOrientationEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$DeviceOrientationEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$DocumentEvents$Dart(){
+}
+htmld071c1$DocumentEvents$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$DocumentEvents$Dart'), htmld071c1$DocumentEvents$Dart.$RTTimplements);
+}
+;
+htmld071c1$DocumentEvents$Dart.$RTTimplements = function(rtt){
+  htmld071c1$DocumentEvents$Dart.$addTo(rtt);
+}
+;
+htmld071c1$DocumentEvents$Dart.$addTo = function(target){
+  var rtt = htmld071c1$DocumentEvents$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$ElementEvents$Dart.$addTo(target);
 }
 ;
 function htmld071c1$Document$Dart(){
@@ -46858,6 +60395,33 @@ htmld071c1$Document$Dart.$addTo = function(target){
   htmld071c1$Element$Dart.$addTo(target);
 }
 ;
+function htmld071c1$ElementEvents$Dart(){
+}
+htmld071c1$ElementEvents$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$ElementEvents$Dart'), htmld071c1$ElementEvents$Dart.$RTTimplements);
+}
+;
+htmld071c1$ElementEvents$Dart.$RTTimplements = function(rtt){
+  htmld071c1$ElementEvents$Dart.$addTo(rtt);
+}
+;
+htmld071c1$ElementEvents$Dart.$addTo = function(target){
+  var rtt = htmld071c1$ElementEvents$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Events$Dart.$addTo(target);
+}
+;
+function htmld071c1$ElementRect$Dart(){
+}
+htmld071c1$ElementRect$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$ElementRect$Dart'));
+}
+;
+htmld071c1$ElementRect$Dart.$addTo = function(target){
+  var rtt = htmld071c1$ElementRect$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
 function htmld071c1$Element$Dart(){
 }
 htmld071c1$Element$Dart.$lookupRTT = function(){
@@ -46872,6 +60436,55 @@ htmld071c1$Element$Dart.$addTo = function(target){
   var rtt = htmld071c1$Element$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$Node$Dart.$addTo(target);
+}
+;
+function htmld071c1$ErrorEvent$Dart(){
+}
+htmld071c1$ErrorEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$ErrorEvent$Dart'), htmld071c1$ErrorEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$ErrorEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$ErrorEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$ErrorEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$ErrorEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$Event$Dart(){
+}
+htmld071c1$Event$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$Event$Dart'));
+}
+;
+htmld071c1$Event$Dart.$addTo = function(target){
+  var rtt = htmld071c1$Event$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$EventListenerList$Dart(){
+}
+htmld071c1$EventListenerList$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$EventListenerList$Dart'));
+}
+;
+htmld071c1$EventListenerList$Dart.$addTo = function(target){
+  var rtt = htmld071c1$EventListenerList$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+function htmld071c1$Events$Dart(){
+}
+htmld071c1$Events$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$Events$Dart'));
+}
+;
+htmld071c1$Events$Dart.$addTo = function(target){
+  var rtt = htmld071c1$Events$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
 }
 ;
 function htmld071c1$EventTarget$Dart(){
@@ -46897,12 +60510,98 @@ function htmld071c1$secretDocument$getter(){
 function htmld071c1$secretDocument$setter(tmp$0){
   isolate$current.htmld071c1$secretDocument$field = tmp$0;
 }
+function htmld071c1$window$getter(){
+  if (htmld071c1$secretWindow$getter() == null) {
+    htmlimpl0a8e4b$LevelDom$Dart.initialize$member();
+  }
+  return htmld071c1$secretWindow$getter();
+}
 function htmld071c1$document$getter(){
   if (htmld071c1$secretWindow$getter() == null) {
     htmlimpl0a8e4b$LevelDom$Dart.initialize$member();
   }
   return htmld071c1$secretDocument$getter();
 }
+function htmld071c1$HashChangeEvent$Dart(){
+}
+htmld071c1$HashChangeEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$HashChangeEvent$Dart'), htmld071c1$HashChangeEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$HashChangeEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$HashChangeEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$HashChangeEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$HashChangeEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$KeyboardEvent$Dart(){
+}
+htmld071c1$KeyboardEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$KeyboardEvent$Dart'), htmld071c1$KeyboardEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$KeyboardEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$KeyboardEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$KeyboardEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$KeyboardEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$MessageEvent$Dart(){
+}
+htmld071c1$MessageEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$MessageEvent$Dart'), htmld071c1$MessageEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$MessageEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$MessageEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$MessageEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$MessageEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$MouseEvent$Dart(){
+}
+htmld071c1$MouseEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$MouseEvent$Dart'), htmld071c1$MouseEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$MouseEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$MouseEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$MouseEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$MouseEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$MutationEvent$Dart(){
+}
+htmld071c1$MutationEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$MutationEvent$Dart'), htmld071c1$MutationEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$MutationEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$MutationEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$MutationEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$MutationEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
 function htmld071c1$Node$Dart(){
 }
 htmld071c1$Node$Dart.$lookupRTT = function(){
@@ -46917,6 +60616,70 @@ htmld071c1$Node$Dart.$addTo = function(target){
   var rtt = htmld071c1$Node$Dart.$lookupRTT();
   target.implementedTypes[rtt.classKey] = rtt;
   htmld071c1$EventTarget$Dart.$addTo(target);
+}
+;
+function htmld071c1$OverflowEvent$Dart(){
+}
+htmld071c1$OverflowEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$OverflowEvent$Dart'), htmld071c1$OverflowEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$OverflowEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$OverflowEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$OverflowEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$OverflowEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$PageTransitionEvent$Dart(){
+}
+htmld071c1$PageTransitionEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$PageTransitionEvent$Dart'), htmld071c1$PageTransitionEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$PageTransitionEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$PageTransitionEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$PageTransitionEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$PageTransitionEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$PopStateEvent$Dart(){
+}
+htmld071c1$PopStateEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$PopStateEvent$Dart'), htmld071c1$PopStateEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$PopStateEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$PopStateEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$PopStateEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$PopStateEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$ProgressEvent$Dart(){
+}
+htmld071c1$ProgressEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$ProgressEvent$Dart'), htmld071c1$ProgressEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$ProgressEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$ProgressEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$ProgressEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$ProgressEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
 }
 ;
 function htmld071c1$SVGDocument$Dart(){
@@ -46935,6 +60698,118 @@ htmld071c1$SVGDocument$Dart.$addTo = function(target){
   htmld071c1$Document$Dart.$addTo(target);
 }
 ;
+function htmld071c1$StorageEvent$Dart(){
+}
+htmld071c1$StorageEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$StorageEvent$Dart'), htmld071c1$StorageEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$StorageEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$StorageEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$StorageEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$StorageEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$TextEvent$Dart(){
+}
+htmld071c1$TextEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$TextEvent$Dart'), htmld071c1$TextEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$TextEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$TextEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$TextEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$TextEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$TouchEvent$Dart(){
+}
+htmld071c1$TouchEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$TouchEvent$Dart'), htmld071c1$TouchEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$TouchEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$TouchEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$TouchEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$TouchEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$TransitionEvent$Dart(){
+}
+htmld071c1$TransitionEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$TransitionEvent$Dart'), htmld071c1$TransitionEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$TransitionEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$TransitionEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$TransitionEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$TransitionEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$UIEvent$Dart(){
+}
+htmld071c1$UIEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$UIEvent$Dart'), htmld071c1$UIEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$UIEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$UIEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$UIEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$UIEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Event$Dart.$addTo(target);
+}
+;
+function htmld071c1$WheelEvent$Dart(){
+}
+htmld071c1$WheelEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$WheelEvent$Dart'), htmld071c1$WheelEvent$Dart.$RTTimplements);
+}
+;
+htmld071c1$WheelEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$WheelEvent$Dart.$addTo(rtt);
+}
+;
+htmld071c1$WheelEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$WheelEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$UIEvent$Dart.$addTo(target);
+}
+;
+function htmld071c1$WindowEvents$Dart(){
+}
+htmld071c1$WindowEvents$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$WindowEvents$Dart'), htmld071c1$WindowEvents$Dart.$RTTimplements);
+}
+;
+htmld071c1$WindowEvents$Dart.$RTTimplements = function(rtt){
+  htmld071c1$WindowEvents$Dart.$addTo(rtt);
+}
+;
+htmld071c1$WindowEvents$Dart.$addTo = function(target){
+  var rtt = htmld071c1$WindowEvents$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$Events$Dart.$addTo(target);
+}
+;
 function htmld071c1$Window$Dart(){
 }
 htmld071c1$Window$Dart.$lookupRTT = function(){
@@ -46951,44 +60826,1562 @@ htmld071c1$Window$Dart.$addTo = function(target){
   htmld071c1$EventTarget$Dart.$addTo(target);
 }
 ;
-function unnamed48ba40$BadAliensDart$Dart(){
+function htmld071c1$XMLHttpRequestProgressEvent$Dart(){
 }
-unnamed48ba40$BadAliensDart$Dart.$lookupRTT = function(){
-  return RTT.create($cls('unnamed48ba40$BadAliensDart$Dart'));
-}
-;
-unnamed48ba40$BadAliensDart$Dart.$Constructor = function(){
+htmld071c1$XMLHttpRequestProgressEvent$Dart.$lookupRTT = function(){
+  return RTT.create($cls('htmld071c1$XMLHttpRequestProgressEvent$Dart'), htmld071c1$XMLHttpRequestProgressEvent$Dart.$RTTimplements);
 }
 ;
-unnamed48ba40$BadAliensDart$Dart.$Initializer = function(){
+htmld071c1$XMLHttpRequestProgressEvent$Dart.$RTTimplements = function(rtt){
+  htmld071c1$XMLHttpRequestProgressEvent$Dart.$addTo(rtt);
 }
 ;
-unnamed48ba40$BadAliensDart$Dart.BadAliensDart$$Factory = function(){
-  var tmp$0 = new unnamed48ba40$BadAliensDart$Dart;
-  tmp$0.$typeInfo = unnamed48ba40$BadAliensDart$Dart.$lookupRTT();
-  unnamed48ba40$BadAliensDart$Dart.$Initializer.call(tmp$0);
-  unnamed48ba40$BadAliensDart$Dart.$Constructor.call(tmp$0);
+htmld071c1$XMLHttpRequestProgressEvent$Dart.$addTo = function(target){
+  var rtt = htmld071c1$XMLHttpRequestProgressEvent$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  htmld071c1$ProgressEvent$Dart.$addTo(target);
+}
+;
+function unnamed48ba40$Animation$Dart(){
+}
+unnamed48ba40$Animation$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Animation$Dart'));
+}
+;
+unnamed48ba40$Animation$Dart.$Constructor = function(spriteSheet, frameWidth, frameDuration, loop){
+  var tmp$1, tmp$0;
+  this.frameHeight$setter(tmp$0 = this.spriteSheet$getter().height$getter()) , tmp$0;
+  this.totalTime$setter(tmp$1 = MUL$operator(DIV$operator(this.spriteSheet$getter().width$getter(), this.frameWidth$getter()), this.frameDuration$getter())) , tmp$1;
+}
+;
+unnamed48ba40$Animation$Dart.$Initializer = function(spriteSheet, frameWidth, frameDuration, loop){
+  this.elapsedTime$field = 0;
+  this.spriteSheet$field = spriteSheet;
+  this.frameWidth$field = frameWidth;
+  this.frameDuration$field = frameDuration;
+  this.loop$field = loop;
+}
+;
+unnamed48ba40$Animation$Dart.Animation$$Factory = function(spriteSheet, frameWidth, frameDuration, loop){
+  var tmp$0 = new unnamed48ba40$Animation$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Animation$Dart.$lookupRTT();
+  unnamed48ba40$Animation$Dart.$Initializer.call(tmp$0, spriteSheet, frameWidth, frameDuration, loop);
+  unnamed48ba40$Animation$Dart.$Constructor.call(tmp$0, spriteSheet, frameWidth, frameDuration, loop);
   return tmp$0;
 }
 ;
-unnamed48ba40$BadAliensDart$Dart.prototype.run$member = function(){
-  this.write$member('Hello World!');
+unnamed48ba40$Animation$Dart.prototype.spriteSheet$getter = function(){
+  return this.spriteSheet$field;
 }
 ;
-unnamed48ba40$BadAliensDart$Dart.prototype.run$named = function($n, $o){
+unnamed48ba40$Animation$Dart.prototype.frameWidth$getter = function(){
+  return this.frameWidth$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.frameHeight$getter = function(){
+  return this.frameHeight$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.frameHeight$setter = function(tmp$0){
+  this.frameHeight$field = tmp$0;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.frameDuration$getter = function(){
+  return this.frameDuration$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.totalTime$getter = function(){
+  return this.totalTime$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.totalTime$setter = function(tmp$0){
+  this.totalTime$field = tmp$0;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.loop$getter = function(){
+  return this.loop$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.elapsedTime$getter = function(){
+  return this.elapsedTime$field;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.elapsedTime$setter = function(tmp$0){
+  this.elapsedTime$field = tmp$0;
+}
+;
+unnamed48ba40$Animation$Dart.prototype.drawFrame$member = function(tick, ctx, x, y, scaleBy){
+  var tmp$1, tmp$0;
+  this.elapsedTime$setter(tmp$0 = ADD$operator(this.elapsedTime$getter(), tick)) , tmp$0;
+  if (this.loop$getter()) {
+    if (this.isDone$member()) {
+      this.elapsedTime$setter(tmp$1 = 0) , tmp$1;
+    }
+  }
+   else {
+    if (this.isDone$member()) {
+      return;
+    }
+  }
+  var index = this.currentFrame$member();
+  var locX = SUB$operator(x, MUL$operator(DIV$operator(this.frameWidth$getter(), 2), scaleBy));
+  var locY = SUB$operator(y, MUL$operator(DIV$operator(this.frameHeight$getter(), 2), scaleBy));
+  ctx.drawImage$named(9, $noargs, this.spriteSheet$getter(), MUL$operator(index, this.frameWidth$getter()), 0, this.frameWidth$getter(), this.frameHeight$getter(), locX, locY, MUL$operator(this.frameWidth$getter(), scaleBy), MUL$operator(this.frameHeight$getter(), scaleBy));
+}
+;
+unnamed48ba40$Animation$Dart.prototype.drawFrame$named = function($n, $o, tick, ctx, x, y, scaleBy){
+  var seen = 0;
+  var def = 0;
+  switch ($n) {
+    case 4:
+      scaleBy = '$p_scaleBy' in $o?(++seen , $o.$p_scaleBy):(++def , 1);
+  }
+  if (seen != $o.count || seen + def + $n != 5)
+    $nsme();
+  return unnamed48ba40$Animation$Dart.prototype.drawFrame$member.call(this, tick, ctx, x, y, scaleBy);
+}
+;
+unnamed48ba40$Animation$Dart.prototype.isDone$member = function(){
+  return GTE$operator(this.elapsedTime$getter(), this.totalTime$getter());
+}
+;
+unnamed48ba40$Animation$Dart.prototype.isDone$named = function($n, $o){
   if ($o.count || $n != 0)
     $nsme();
-  return unnamed48ba40$BadAliensDart$Dart.prototype.run$member.call(this);
+  return unnamed48ba40$Animation$Dart.prototype.isDone$member.call(this);
 }
 ;
-unnamed48ba40$BadAliensDart$Dart.prototype.write$member = function(message){
+unnamed48ba40$Animation$Dart.prototype.currentFrame$member = function(){
+  return DIV$operator(this.elapsedTime$getter(), this.frameDuration$getter()).floor$named(0, $noargs);
+}
+;
+unnamed48ba40$Animation$Dart.prototype.currentFrame$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Animation$Dart.prototype.currentFrame$member.call(this);
+}
+;
+var tmp$4cf8142$0;
+function unnamed48ba40$AssetManager$Dart(){
+}
+unnamed48ba40$AssetManager$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$AssetManager$Dart'));
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.successCount$getter = function(){
+  return this.successCount$field;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.successCount$setter = function(tmp$0){
+  this.successCount$field = tmp$0;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.errorCount$getter = function(){
+  return this.errorCount$field;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.errorCount$setter = function(tmp$0){
+  this.errorCount$field = tmp$0;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.cache$getter = function(){
+  var tmp$0 = this.cache$field;
+  var tmp$1 = static$initializing;
+  if (tmp$0 === tmp$1)
+    throw 'circular initialization';
+  if (tmp$0 !== static$uninitialized)
+    return tmp$0;
+  this.cache$field = tmp$1;
+  var tmp$2 = $intern((tmp$4cf8142$0 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT()) , tmp$4cf8142$0), ['', '']);
+  this.cache$field = tmp$2;
+  return tmp$2;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.downloadQueue$getter = function(){
+  var tmp$0 = this.downloadQueue$field;
+  var tmp$1 = static$initializing;
+  if (tmp$0 === tmp$1)
+    throw 'circular initialization';
+  if (tmp$0 !== static$uninitialized)
+    return tmp$0;
+  this.downloadQueue$field = tmp$1;
+  var tmp$2 = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
+  this.downloadQueue$field = tmp$2;
+  return tmp$2;
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.queueDownload$member = function(path){
+  this.downloadQueue$getter().add$named(1, $noargs, path);
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.queueDownload$named = function($n, $o, path){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart.prototype.queueDownload$member.call(this, path);
+}
+;
+function unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted(dartc_scp$0, dartc_scp$4, event_0){
   var tmp$0;
-  htmld071c1$document$getter().query$named(1, $noargs, '#status').innerHTML$setter(tmp$0 = message) , tmp$0;
+  print$getter()(1, $noargs, ADD$operator(dartc_scp$4.img.src$getter(), ' is loaded'));
+  this.successCount$setter(tmp$0 = ADD$operator(this.successCount$getter(), 1)) , tmp$0;
+  if (this.isDone$member()) {
+    dartc_scp$0.downloadCallback(0, $noargs);
+  }
+}
+function unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted$named($s0, $s1, $n, $o, event_0){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted.call(this, $s0, $s1, event_0);
+}
+function unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+function unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted(dartc_scp$0, event_0){
+  var tmp$0;
+  this.errorCount$setter(tmp$0 = ADD$operator(this.errorCount$getter(), 1)) , tmp$0;
+  if (this.isDone$member()) {
+    dartc_scp$0.downloadCallback(0, $noargs);
+  }
+}
+function unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted$named($s0, $n, $o, event_0){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted.call(this, $s0, event_0);
+}
+function unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+unnamed48ba40$AssetManager$Dart.prototype.downloadAll$member = function(downloadCallback){
+  var dartc_scp$0 = {downloadCallback:downloadCallback};
+  var dartc_scp$4, tmp$1, tmp$0;
+  if (EQ$operator(this.downloadQueue$getter().length$getter(), 0)) {
+    dartc_scp$0.downloadCallback(0, $noargs);
+  }
+  {
+    var $0 = this.downloadQueue$getter().iterator$named(0, $noargs);
+    while ($0.hasNext$named(0, $noargs)) {
+      var path = $0.next$named(0, $noargs);
+      {
+        dartc_scp$4 = {};
+        dartc_scp$4.img = htmlimpl0a8e4b$ElementWrappingImplementation$Dart.ElementWrappingImplementation$tag$29$Factory('img');
+        dartc_scp$4.img.on$getter().load$getter().add$named(1, $noargs, $bind(unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted$named, unnamed48ba40$AssetManager$Dart$downloadAll$c0$31_31$Hoisted$named$named_$lookupRTT, this, dartc_scp$0, dartc_scp$4));
+        dartc_scp$4.img.on$getter().error$getter().add$named(1, $noargs, $bind(unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted$named, unnamed48ba40$AssetManager$Dart$downloadAll$c1$31_31$Hoisted$named$named_$lookupRTT, this, dartc_scp$0));
+        dartc_scp$4.img.src$setter(tmp$0 = path) , tmp$0;
+        this.cache$getter().ASSIGN_INDEX$operator(path, tmp$1 = dartc_scp$4.img) , tmp$1;
+        dartc_scp$4 = $Dart$Null;
+      }
+    }
+  }
 }
 ;
-function unnamed48ba40$main$member(){
-  unnamed48ba40$BadAliensDart$Dart.BadAliensDart$$Factory().run$named(0, $noargs);
+unnamed48ba40$AssetManager$Dart.prototype.downloadAll$named = function($n, $o, downloadCallback){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart.prototype.downloadAll$member.call(this, downloadCallback);
 }
+;
+unnamed48ba40$AssetManager$Dart.prototype.getAsset$member = function(path){
+  return this.cache$getter().INDEX$operator(path);
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.getAsset$named = function($n, $o, path){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart.prototype.getAsset$member.call(this, path);
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.isDone$member = function(){
+  return EQ$operator(this.downloadQueue$getter().length$getter(), ADD$operator(this.successCount$getter(), this.errorCount$getter()));
+}
+;
+unnamed48ba40$AssetManager$Dart.prototype.isDone$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$AssetManager$Dart.prototype.isDone$member.call(this);
+}
+;
+unnamed48ba40$AssetManager$Dart.$Constructor = function(){
+}
+;
+unnamed48ba40$AssetManager$Dart.$Initializer = function(){
+  var tmp$0;
+  this.successCount$field = 0;
+  this.errorCount$field = 0;
+  this.cache$field = $intern((tmp$0 = LinkedHashMapImplementation$Dart.LinkedHashMapImplementation$$Factory(LinkedHashMapImplementation$Dart.$lookupRTT()) , tmp$0), ['', '']);
+  this.downloadQueue$field = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
+}
+;
+unnamed48ba40$AssetManager$Dart.AssetManager$$Factory = function(){
+  var tmp$0 = new unnamed48ba40$AssetManager$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$AssetManager$Dart.$lookupRTT();
+  unnamed48ba40$AssetManager$Dart.$Initializer.call(tmp$0);
+  unnamed48ba40$AssetManager$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
+function unnamed48ba40$$main$c0$14_14$Hoisted(dartc_scp$1){
+  dartc_scp$1.game.init$named(0, $noargs);
+  dartc_scp$1.game.start$named(0, $noargs);
+}
+function unnamed48ba40$$main$c0$14_14$Hoisted$named($s0, $n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$$main$c0$14_14$Hoisted($s0);
+}
+function unnamed48ba40$$main$c0$14_14$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction(null, RTT.dynamicType);
+}
+function unnamed48ba40$main$member(){
+  var dartc_scp$1;
+  dartc_scp$1 = {};
+  var canvas = htmld071c1$document$getter().query$named(1, $noargs, '#surface');
+  var ctx = canvas.getContext$named(1, $noargs, '2d');
+  var assetManager = unnamed48ba40$AssetManager$Dart.AssetManager$$Factory();
+  assetManager.queueDownload$named(1, $noargs, 'img/alien-explosion.png');
+  assetManager.queueDownload$named(1, $noargs, 'img/alien.png');
+  assetManager.queueDownload$named(1, $noargs, 'img/bullet.png');
+  assetManager.queueDownload$named(1, $noargs, 'img/earth.png');
+  assetManager.queueDownload$named(1, $noargs, 'img/sentry.png');
+  assetManager.queueDownload$named(1, $noargs, 'img/explosion.png');
+  dartc_scp$1.game = unnamed48ba40$EvilAliens$Dart.EvilAliens$$Factory(assetManager);
+  assetManager.downloadAll$named(1, $noargs, $bind(unnamed48ba40$$main$c0$14_14$Hoisted$named, unnamed48ba40$$main$c0$14_14$Hoisted$named$named_$lookupRTT, $Dart$Null, dartc_scp$1));
+  dartc_scp$1 = $Dart$Null;
+}
+function unnamed48ba40$Game$Dart(){
+}
+unnamed48ba40$Game$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Game$Dart'));
+}
+;
+unnamed48ba40$Game$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$Game$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+unnamed48ba40$Game$Dart.$Constructor = function(assetManager){
+  var tmp$0;
+  this.timer$setter(tmp$0 = unnamed48ba40$Timer$Dart.Timer$$Factory()) , tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.$Initializer = function(assetManager){
+  this.entities$field = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
+  this.showOutlines$field = false;
+  this.assetManager$field = assetManager;
+}
+;
+unnamed48ba40$Game$Dart.prototype.entities$getter = function(){
+  var tmp$0 = this.entities$field;
+  var tmp$1 = static$initializing;
+  if (tmp$0 === tmp$1)
+    throw 'circular initialization';
+  if (tmp$0 !== static$uninitialized)
+    return tmp$0;
+  this.entities$field = tmp$1;
+  var tmp$2 = $intern(RTT.setTypeInfo([], Array.$lookupRTT()), ['']);
+  this.entities$field = tmp$2;
+  return tmp$2;
+}
+;
+unnamed48ba40$Game$Dart.prototype.ctx$getter = function(){
+  return this.ctx$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.ctx$setter = function(tmp$0){
+  this.ctx$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.click$named = function(){
+  return this.click$getter().apply(this, arguments);
+}
+;
+unnamed48ba40$Game$Dart.prototype.click$getter = function(){
+  return this.click$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.click$setter = function(tmp$0){
+  this.click$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.mouse$getter = function(){
+  return this.mouse$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.mouse$setter = function(tmp$0){
+  this.mouse$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.timer$getter = function(){
+  return this.timer$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.timer$setter = function(tmp$0){
+  this.timer$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.clockTick$getter = function(){
+  return this.clockTick$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.clockTick$setter = function(tmp$0){
+  this.clockTick$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.surfaceWidth$getter = function(){
+  return this.surfaceWidth$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.surfaceWidth$setter = function(tmp$0){
+  this.surfaceWidth$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.surfaceHeight$getter = function(){
+  return this.surfaceHeight$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.surfaceHeight$setter = function(tmp$0){
+  this.surfaceHeight$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.halfSurfaceWidth$getter = function(){
+  return this.halfSurfaceWidth$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.halfSurfaceWidth$setter = function(tmp$0){
+  this.halfSurfaceWidth$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.halfSurfaceHeight$getter = function(){
+  return this.halfSurfaceHeight$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.halfSurfaceHeight$setter = function(tmp$0){
+  this.halfSurfaceHeight$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.clientBoundingRect$getter = function(){
+  return this.clientBoundingRect$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.clientBoundingRect$setter = function(tmp$0){
+  this.clientBoundingRect$field = tmp$0;
+}
+;
+unnamed48ba40$Game$Dart.prototype.assetManager$getter = function(){
+  return this.assetManager$field;
+}
+;
+unnamed48ba40$Game$Dart.prototype.showOutlines$getter = function(){
+  return this.showOutlines$field;
+}
+;
+function unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted(rect){
+  var tmp$0;
+  this.clientBoundingRect$setter(tmp$0 = unnamed48ba40$Point$Dart.Point$$Factory(rect.bounding$getter().left$getter(), rect.bounding$getter().top$getter())) , tmp$0;
+}
+function unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted$named($n, $o, rect){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted.call(this, rect);
+}
+function unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([htmld071c1$ElementRect$Dart.$lookupRTT()], RTT.dynamicType);
+}
+unnamed48ba40$Game$Dart.prototype.init$member = function(ctx){
+  var tmp$1, tmp$2, tmp$3, tmp$4, tmp$0;
+  this.ctx$setter(tmp$0 = ctx) , tmp$0;
+  this.surfaceWidth$setter(tmp$1 = ctx.canvas$getter().width$getter()) , tmp$1;
+  this.surfaceHeight$setter(tmp$2 = ctx.canvas$getter().height$getter()) , tmp$2;
+  this.halfSurfaceWidth$setter(tmp$3 = DIV$operator(this.surfaceWidth$getter(), 2)) , tmp$3;
+  this.halfSurfaceHeight$setter(tmp$4 = DIV$operator(this.surfaceHeight$getter(), 2)) , tmp$4;
+  var futureRect = ctx.canvas$getter().rect$getter();
+  futureRect.then$named(1, $noargs, $bind(unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted$named, unnamed48ba40$Game$Dart$init$c0$23_23$Hoisted$named$named_$lookupRTT, this));
+  this.startInput$member();
+  print$getter()(1, $noargs, 'game initialized');
+}
+;
+unnamed48ba40$Game$Dart.prototype.init$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.init$member.call(this, ctx);
+}
+;
+unnamed48ba40$Game$Dart.prototype.start$member = function(){
+  print$getter()(1, $noargs, 'starting game');
+  htmld071c1$window$getter().webkitRequestAnimationFrame$named(2, $noargs, $bind(unnamed48ba40$Game$Dart.prototype.loop$named, unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT, this), this.ctx$getter().canvas$getter());
+}
+;
+unnamed48ba40$Game$Dart.prototype.start$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.start$member.call(this);
+}
+;
+unnamed48ba40$Game$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+unnamed48ba40$Game$Dart.prototype.start$getter = function(){
+  return $bind(unnamed48ba40$Game$Dart.prototype.start$named, unnamed48ba40$Game$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
+unnamed48ba40$Game$Dart.prototype.loop$member = function(){
+  var tmp$1, tmp$0;
+  this.clockTick$setter(tmp$0 = this.timer$getter().tick$named(0, $noargs)) , tmp$0;
+  this.update$member();
+  this.draw$member();
+  this.click$setter(tmp$1 = $Dart$Null) , tmp$1;
+  htmld071c1$window$getter().webkitRequestAnimationFrame$named(2, $noargs, $bind(unnamed48ba40$Game$Dart.prototype.loop$named, unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT, this), this.ctx$getter().canvas$getter());
+}
+;
+unnamed48ba40$Game$Dart.prototype.loop$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.loop$member.call(this);
+}
+;
+unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+unnamed48ba40$Game$Dart.prototype.loop$getter = function(){
+  return $bind(unnamed48ba40$Game$Dart.prototype.loop$named, unnamed48ba40$Game$Dart.prototype.loop$named_$lookupRTT, this);
+}
+;
+function unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted(e){
+  var x = SUB$operator(SUB$operator(e.clientX$getter(), this.clientBoundingRect$getter().x$getter()), DIV$operator(this.ctx$getter().canvas$getter().width$getter(), 2));
+  var y = SUB$operator(SUB$operator(e.clientY$getter(), this.clientBoundingRect$getter().y$getter()), DIV$operator(this.ctx$getter().canvas$getter().height$getter(), 2));
+  return unnamed48ba40$Point$Dart.Point$$Factory(x, y);
+}
+function unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted$named($n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted.call(this, e);
+}
+function unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], unnamed48ba40$Point$Dart.$lookupRTT());
+}
+function unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted(dartc_scp$1, e){
+  var tmp$0;
+  this.click$setter(tmp$0 = dartc_scp$1.getXandY(1, $noargs, e)) , tmp$0;
+}
+function unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted$named($s0, $n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted.call(this, $s0, e);
+}
+function unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+function unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted(dartc_scp$1, e){
+  var tmp$0;
+  this.mouse$setter(tmp$0 = dartc_scp$1.getXandY(1, $noargs, e)) , tmp$0;
+}
+function unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted$named($s0, $n, $o, e){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted.call(this, $s0, e);
+}
+function unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted$named$named_$lookupRTT(){
+  return RTT.createFunction([RTT.dynamicType], RTT.dynamicType);
+}
+unnamed48ba40$Game$Dart.prototype.startInput$member = function(){
+  var dartc_scp$1;
+  dartc_scp$1 = {};
+  print$getter()(1, $noargs, 'Starting input');
+  dartc_scp$1.getXandY = $bind(unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted$named, unnamed48ba40$Game$Dart$startInput$c0$getXandY$23_10_2$Hoisted$named$named_$lookupRTT, this);
+  this.ctx$getter().canvas$getter().on$getter().click$getter().add$named(1, $noargs, $bind(unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted$named, unnamed48ba40$Game$Dart$startInput$c1$23_23$Hoisted$named$named_$lookupRTT, this, dartc_scp$1));
+  this.ctx$getter().canvas$getter().on$getter().mouseMove$getter().add$named(1, $noargs, $bind(unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted$named, unnamed48ba40$Game$Dart$startInput$c2$23_23$Hoisted$named$named_$lookupRTT, this, dartc_scp$1));
+  print$getter()(1, $noargs, 'Input started');
+  dartc_scp$1 = $Dart$Null;
+}
+;
+unnamed48ba40$Game$Dart.prototype.addEntity$member = function(entity){
+  this.entities$getter().add$named(1, $noargs, entity);
+}
+;
+unnamed48ba40$Game$Dart.prototype.addEntity$named = function($n, $o, entity){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.addEntity$member.call(this, entity);
+}
+;
+unnamed48ba40$Game$Dart.prototype.draw$member = function(){
+  this.ctx$getter().clearRect$named(4, $noargs, 0, 0, this.ctx$getter().canvas$getter().width$getter(), this.ctx$getter().canvas$getter().height$getter());
+  this.ctx$getter().save$named(0, $noargs);
+  this.ctx$getter().translate$named(2, $noargs, DIV$operator(this.ctx$getter().canvas$getter().width$getter(), 2), DIV$operator(this.ctx$getter().canvas$getter().height$getter(), 2));
+  {
+    var $0 = this.entities$getter().iterator$named(0, $noargs);
+    while ($0.hasNext$named(0, $noargs)) {
+      var entity = $0.next$named(0, $noargs);
+      {
+        entity.draw$named(1, $noargs, this.ctx$getter());
+      }
+    }
+  }
+  this.drawBeforeContextRestore$member(0, $noargs);
+  this.ctx$getter().restore$named(0, $noargs);
+}
+;
+unnamed48ba40$Game$Dart.prototype.draw$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.draw$member.call(this);
+}
+;
+unnamed48ba40$Game$Dart.prototype.update$member = function(){
+  var tmp$0;
+  var entitiesCount = this.entities$getter().length$getter();
+  {
+    var i = 0;
+    for (; LT$operator(i, entitiesCount); tmp$0 = i , (i = ADD$operator(tmp$0, 1) , tmp$0)) {
+      var entity = this.entities$getter().INDEX$operator(i);
+      if (!entity.removeFromWorld$getter()) {
+        entity.update$named(0, $noargs);
+      }
+    }
+  }
+  {
+    var i_0 = SUB$operator(this.entities$getter().length$getter(), 1);
+    for (; GTE$operator(i_0, 0); i_0 = SUB$operator(i_0, 1)) {
+      if (this.entities$getter().INDEX$operator(i_0).removeFromWorld$getter()) {
+        this.entities$getter().removeRange$named(2, $noargs, i_0, 1);
+      }
+    }
+  }
+}
+;
+unnamed48ba40$Game$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Game$Dart.prototype.update$member.call(this);
+}
+;
+function unnamed48ba40$EvilAliens$Dart(){
+}
+$inherits(unnamed48ba40$EvilAliens$Dart, unnamed48ba40$Game$Dart);
+unnamed48ba40$EvilAliens$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$EvilAliens$Dart'), unnamed48ba40$EvilAliens$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$EvilAliens$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$EvilAliens$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$EvilAliens$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$EvilAliens$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$Game$Dart.$addTo(target);
+}
+;
+unnamed48ba40$EvilAliens$Dart.$Constructor = function(assetManager){
+  unnamed48ba40$Game$Dart.$Constructor.call(this, assetManager);
+}
+;
+unnamed48ba40$EvilAliens$Dart.$Initializer = function(assetManager){
+  unnamed48ba40$Game$Dart.$Initializer.call(this, assetManager);
+  this.lives$field = 10;
+  this.score$field = 0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.EvilAliens$$Factory = function(assetManager){
+  var tmp$0 = new unnamed48ba40$EvilAliens$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$EvilAliens$Dart.$lookupRTT();
+  unnamed48ba40$EvilAliens$Dart.$Initializer.call(tmp$0, assetManager);
+  unnamed48ba40$EvilAliens$Dart.$Constructor.call(tmp$0, assetManager);
+  return tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.lives$getter = function(){
+  return this.lives$field;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.lives$setter = function(tmp$0){
+  this.lives$field = tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.score$getter = function(){
+  return this.score$field;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.score$setter = function(tmp$0){
+  this.score$field = tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.sentry$getter = function(){
+  return this.sentry$field;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.sentry$setter = function(tmp$0){
+  this.sentry$field = tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.earth$getter = function(){
+  return this.earth$field;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.earth$setter = function(tmp$0){
+  this.earth$field = tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.lastAlienAddedAt$getter = function(){
+  return this.lastAlienAddedAt$field;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.lastAlienAddedAt$setter = function(tmp$0){
+  this.lastAlienAddedAt$field = tmp$0;
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.start$member = function(){
+  var tmp$1, tmp$0;
+  this.sentry$setter(tmp$0 = unnamed48ba40$Sentry$Dart.Sentry$$Factory(this)) , tmp$0;
+  this.earth$setter(tmp$1 = unnamed48ba40$Earth$Dart.Earth$$Factory(this)) , tmp$1;
+  this.addEntity$member(this.earth$getter());
+  this.addEntity$member(this.sentry$getter());
+  unnamed48ba40$Game$Dart.prototype.start$member.call(this);
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.start$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$EvilAliens$Dart.prototype.start$member.call(this);
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.start$named_$lookupRTT = function(){
+  return RTT.createFunction(null, null);
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.start$getter = function(){
+  return $bind(unnamed48ba40$EvilAliens$Dart.prototype.start$named, unnamed48ba40$EvilAliens$Dart.prototype.start$named_$lookupRTT, this);
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.update$member = function(){
+  var tmp$0;
+  if (EQ$operator(this.lastAlienAddedAt$getter(), $Dart$Null) || GT$operator(SUB$operator(this.timer$getter().gameTime$getter(), this.lastAlienAddedAt$getter()), 1)) {
+    this.addEntity$member(unnamed48ba40$Alien$Dart.Alien$$Factory(this, this.ctx$getter().canvas$getter().width$getter(), MUL$operator(MUL$operator(Math$Dart.random$member(), Math$Dart.PI$getter()), 180)));
+    this.lastAlienAddedAt$setter(tmp$0 = this.timer$getter().gameTime$getter()) , tmp$0;
+  }
+  if (LTE$operator(this.score$getter(), 0)) {
+  }
+  unnamed48ba40$Game$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$EvilAliens$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$EvilAliens$Dart.prototype.update$member.call(this);
+}
+;
+function unnamed48ba40$GameEntity$Dart(){
+}
+unnamed48ba40$GameEntity$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$GameEntity$Dart'));
+}
+;
+unnamed48ba40$GameEntity$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$GameEntity$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+}
+;
+unnamed48ba40$GameEntity$Dart.$Constructor = function(game){
+}
+;
+unnamed48ba40$GameEntity$Dart.$Initializer = function(game){
+  this.removeFromWorld$field = false;
+  this.sprite$field = $Dart$Null;
+  this.game$field = game;
+}
+;
+unnamed48ba40$GameEntity$Dart.withPosition$Constructor = function(game, x, y){
+}
+;
+unnamed48ba40$GameEntity$Dart.withPosition$Initializer = function(game, x, y){
+  this.removeFromWorld$field = false;
+  this.sprite$field = $Dart$Null;
+  this.game$field = game;
+  this.x$field = x;
+  this.y$field = y;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.game$getter = function(){
+  return this.game$field;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.x$getter = function(){
+  return this.x$field;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.x$setter = function(tmp$0){
+  this.x$field = tmp$0;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.y$getter = function(){
+  return this.y$field;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.y$setter = function(tmp$0){
+  this.y$field = tmp$0;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.removeFromWorld$getter = function(){
+  return this.removeFromWorld$field;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.removeFromWorld$setter = function(tmp$0){
+  this.removeFromWorld$field = tmp$0;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.sprite$getter = function(){
+  var tmp$0 = this.sprite$field;
+  var tmp$1 = static$initializing;
+  if (tmp$0 === tmp$1)
+    throw 'circular initialization';
+  if (tmp$0 !== static$uninitialized)
+    return tmp$0;
+  this.sprite$field = tmp$1;
+  var tmp$2 = $Dart$Null;
+  this.sprite$field = tmp$2;
+  return tmp$2;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.radius$getter = function(){
+  return this.radius$field;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.radius$setter = function(tmp$0){
+  this.radius$field = tmp$0;
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.update$member = function(){
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$GameEntity$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.draw$member = function(ctx){
+  var tmp$0;
+  if (this.game$getter().showOutlines$getter()) {
+    ctx.beginPath$named(0, $noargs);
+    ctx.strokeStyle$setter(tmp$0 = 'green') , tmp$0;
+    ctx.arc$named(6, $noargs, this.x$getter(), this.y$getter(), this.radius$getter(), 0, MUL$operator(Math$Dart.PI$getter(), 2), false);
+    ctx.stroke$named(0, $noargs);
+    ctx.closePath$named(0, $noargs);
+  }
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.drawSpriteCentered$member = function(ctx){
+  var x = SUB$operator(this.x$getter(), DIV$operator(this.sprite$getter().width$getter(), 2));
+  var y = SUB$operator(this.y$getter(), DIV$operator(this.sprite$getter().height$getter(), 2));
+  ctx.drawImage$named(3, $noargs, this.sprite$getter(), x, y);
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.outsideScreen$member = function(){
+  return GT$operator(this.x$getter(), this.game$getter().halfSurfaceWidth$getter()) || LT$operator(this.x$getter(), negate$operator(this.game$getter().halfSurfaceWidth$getter())) || GT$operator(this.y$getter(), this.game$getter().halfSurfaceHeight$getter()) || LT$operator(this.y$getter(), negate$operator(this.game$getter().halfSurfaceHeight$getter()));
+}
+;
+unnamed48ba40$GameEntity$Dart.prototype.rotateAndCache$member = function(image, angle){
+  var tmp$1, tmp$0;
+  var offscreenCanvas = htmlimpl0a8e4b$ElementWrappingImplementation$Dart.ElementWrappingImplementation$tag$29$Factory('canvas');
+  var size = Math$Dart.max$member(image.width$getter(), image.height$getter());
+  offscreenCanvas.width$setter(tmp$0 = size) , tmp$0;
+  offscreenCanvas.height$setter(tmp$1 = size) , tmp$1;
+  var offscreenCtx = offscreenCanvas.getContext$named(1, $noargs, '2d');
+  offscreenCtx.save$named(0, $noargs);
+  offscreenCtx.translate$named(2, $noargs, DIV$operator(size, 2), DIV$operator(size, 2));
+  offscreenCtx.rotate$named(1, $noargs, ADD$operator(angle, DIV$operator(Math$Dart.PI$getter(), 2)));
+  offscreenCtx.translate$named(2, $noargs, 0, 0);
+  offscreenCtx.drawImage$named(3, $noargs, image, negate$operator(DIV$operator(image.width$getter(), 2)), negate$operator(DIV$operator(image.height$getter(), 2)));
+  offscreenCtx.restore$named(0, $noargs);
+  return offscreenCanvas;
+}
+;
+function unnamed48ba40$Alien$Dart(){
+}
+$inherits(unnamed48ba40$Alien$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$Alien$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Alien$Dart'), unnamed48ba40$Alien$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$Alien$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$Alien$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$Alien$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$Alien$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$Alien$Dart.prototype.$implements$unnamed48ba40$Alien$Dart = 1;
+unnamed48ba40$Alien$Dart.$Constructor = function(game, radialDistance, angle){
+  unnamed48ba40$GameEntity$Dart.$Constructor.call(this, game);
+  var tmp$1, tmp$0;
+  this.sprite$setter(tmp$0 = this.rotateAndCache$member(game.assetManager$getter().getAsset$named(1, $noargs, 'img/alien.png'), this.angle$getter())) , tmp$0;
+  this.radius$setter(tmp$1 = DIV$operator(this.sprite$getter().height$getter(), 2)) , tmp$1;
+  this.setCoords$member();
+}
+;
+unnamed48ba40$Alien$Dart.$Initializer = function(game, radialDistance, angle){
+  unnamed48ba40$GameEntity$Dart.$Initializer.call(this, game);
+  this.speed$field = 100;
+  this.radialDistance$field = radialDistance;
+  this.angle$field = angle;
+}
+;
+unnamed48ba40$Alien$Dart.Alien$$Factory = function(game, radialDistance, angle){
+  var tmp$0 = new unnamed48ba40$Alien$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Alien$Dart.$lookupRTT();
+  unnamed48ba40$Alien$Dart.$Initializer.call(tmp$0, game, radialDistance, angle);
+  unnamed48ba40$Alien$Dart.$Constructor.call(tmp$0, game, radialDistance, angle);
+  return tmp$0;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.radialDistance$getter = function(){
+  return this.radialDistance$field;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.radialDistance$setter = function(tmp$0){
+  this.radialDistance$field = tmp$0;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.angle$getter = function(){
+  return this.angle$field;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.angle$setter = function(tmp$0){
+  this.angle$field = tmp$0;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.speed$getter = function(){
+  return this.speed$field;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.sprite$getter = function(){
+  return this.sprite$field;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.radius$getter = function(){
+  return this.radius$field;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.radius$setter = function(tmp$0){
+  this.radius$field = tmp$0;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.setCoords$member = function(){
+  var tmp$1, tmp$0;
+  this.x$setter(tmp$0 = MUL$operator(this.radialDistance$getter(), Math$Dart.cos$member(this.angle$getter()))) , tmp$0;
+  this.y$setter(tmp$1 = MUL$operator(this.radialDistance$getter(), Math$Dart.sin$member(this.angle$getter()))) , tmp$1;
+}
+;
+unnamed48ba40$Alien$Dart.prototype.update$member = function(){
+  var tmp$1, tmp$2, tmp$3, tmp$0;
+  this.setCoords$member();
+  this.radialDistance$setter(tmp$0 = SUB$operator(this.radialDistance$getter(), MUL$operator(this.speed$getter(), this.game$getter().clockTick$getter()))) , tmp$0;
+  if (this.hitPlanet$member()) {
+    this.removeFromWorld$setter(tmp$1 = true) , tmp$1;
+    tmp$2 = this.game$getter() , (tmp$2.lives$setter(tmp$3 = SUB$operator(tmp$2.lives$getter(), 1)) , tmp$3);
+  }
+}
+;
+unnamed48ba40$Alien$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Alien$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$Alien$Dart.prototype.draw$member = function(ctx){
+  this.drawSpriteCentered$member(ctx);
+  unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$Alien$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Alien$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$Alien$Dart.prototype.hitPlanet$member = function(){
+  var distance_squared = ADD$operator(MUL$operator(this.x$getter(), this.x$getter()), MUL$operator(this.y$getter(), this.y$getter()));
+  var radii_squared = MUL$operator(ADD$operator(this.radius$getter(), unnamed48ba40$Earth$Dart.RADIUS$getter()), ADD$operator(this.radius$getter(), unnamed48ba40$Earth$Dart.RADIUS$getter()));
+  return LT$operator(distance_squared, radii_squared);
+}
+;
+unnamed48ba40$Alien$Dart.prototype.explode$member = function(){
+  var tmp$0;
+  this.removeFromWorld$setter(tmp$0 = true) , tmp$0;
+  this.game$getter().addEntity$named(1, $noargs, unnamed48ba40$AlienExplosion$Dart.AlienExplosion$$Factory(this.game$getter(), this.x$getter(), this.y$getter()));
+}
+;
+unnamed48ba40$Alien$Dart.prototype.explode$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Alien$Dart.prototype.explode$member.call(this);
+}
+;
+function unnamed48ba40$AlienExplosion$Dart(){
+}
+$inherits(unnamed48ba40$AlienExplosion$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$AlienExplosion$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$AlienExplosion$Dart'), unnamed48ba40$AlienExplosion$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$AlienExplosion$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$AlienExplosion$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$AlienExplosion$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$AlienExplosion$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$AlienExplosion$Dart.$Constructor = function(game, x, y){
+  unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, x, y);
+  var tmp$1, tmp$0;
+  this.animation$setter(tmp$0 = unnamed48ba40$Animation$Dart.Animation$$Factory(game.assetManager$getter().getAsset$named(1, $noargs, 'img/alien-explosion.png'), 69, 0.05, false)) , tmp$0;
+  this.radius$setter(tmp$1 = DIV$operator(this.animation$getter().frameWidth$getter(), 2)) , tmp$1;
+}
+;
+unnamed48ba40$AlienExplosion$Dart.$Initializer = function(game, x, y){
+  unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, x, y);
+}
+;
+unnamed48ba40$AlienExplosion$Dart.AlienExplosion$$Factory = function(game, x, y){
+  var tmp$0 = new unnamed48ba40$AlienExplosion$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$AlienExplosion$Dart.$lookupRTT();
+  unnamed48ba40$AlienExplosion$Dart.$Initializer.call(tmp$0, game, x, y);
+  unnamed48ba40$AlienExplosion$Dart.$Constructor.call(tmp$0, game, x, y);
+  return tmp$0;
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.animation$getter = function(){
+  return this.animation$field;
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.animation$setter = function(tmp$0){
+  this.animation$field = tmp$0;
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.update$member = function(){
+  var tmp$0;
+  if (this.animation$getter().isDone$named(0, $noargs)) {
+    this.removeFromWorld$setter(tmp$0 = true) , tmp$0;
+  }
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$AlienExplosion$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.draw$member = function(ctx){
+  unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+  this.animation$getter().drawFrame$named(4, $noargs, this.game$getter().clockTick$getter(), ctx, this.x$getter(), this.y$getter());
+}
+;
+unnamed48ba40$AlienExplosion$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$AlienExplosion$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+function unnamed48ba40$Bullet$Dart(){
+}
+$inherits(unnamed48ba40$Bullet$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$Bullet$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Bullet$Dart'), unnamed48ba40$Bullet$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$Bullet$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$Bullet$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$Bullet$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$Bullet$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$Bullet$Dart.$Constructor = function(game, x, y, angle, explodesAt){
+  unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, x, y);
+  var tmp$1, tmp$0;
+  this.sprite$setter(tmp$0 = game.assetManager$getter().getAsset$named(1, $noargs, 'img/bullet.png')) , tmp$0;
+  this.animation$setter(tmp$1 = unnamed48ba40$Animation$Dart.Animation$$Factory(this.sprite$getter(), 7, 0.05, true)) , tmp$1;
+}
+;
+unnamed48ba40$Bullet$Dart.$Initializer = function(game, x, y, angle, explodesAt){
+  unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, x, y);
+  this.radialDistance$field = 95;
+  this.explodesAt$field = explodesAt;
+}
+;
+unnamed48ba40$Bullet$Dart.Bullet$$Factory = function(game, x, y, angle, explodesAt){
+  var tmp$0 = new unnamed48ba40$Bullet$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Bullet$Dart.$lookupRTT();
+  unnamed48ba40$Bullet$Dart.$Initializer.call(tmp$0, game, x, y, angle, explodesAt);
+  unnamed48ba40$Bullet$Dart.$Constructor.call(tmp$0, game, x, y, angle, explodesAt);
+  return tmp$0;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.angle$getter = function(){
+  return this.angle$field;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.angle$setter = function(tmp$0){
+  this.angle$field = tmp$0;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.explodesAt$getter = function(){
+  return this.explodesAt$field;
+}
+;
+unnamed48ba40$Bullet$Dart.speed$getter = function(){
+  return 250;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.radialDistance$getter = function(){
+  return this.radialDistance$field;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.radialDistance$setter = function(tmp$0){
+  this.radialDistance$field = tmp$0;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.sprite$getter = function(){
+  return this.sprite$field;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.animation$getter = function(){
+  return this.animation$field;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.animation$setter = function(tmp$0){
+  this.animation$field = tmp$0;
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.update$member = function(){
+  var tmp$1, tmp$2, tmp$3, tmp$4, tmp$0;
+  if (this.outsideScreen$member()) {
+    this.removeFromWorld$setter(tmp$0 = true) , tmp$0;
+  }
+   else {
+    if (GTE$operator(this.x$getter().abs$named(0, $noargs), this.explodesAt$getter().x$getter().abs$named(0, $noargs)) || GTE$operator(this.y$getter().abs$named(0, $noargs), this.explodesAt$getter().y$getter().abs$named(0, $noargs))) {
+      this.game$getter().addEntity$named(1, $noargs, unnamed48ba40$BulletExplosion$Dart.BulletExplosion$$Factory(this.game$getter(), this.explodesAt$getter().x$getter(), this.explodesAt$getter().y$getter()));
+      this.removeFromWorld$setter(tmp$1 = true) , tmp$1;
+    }
+     else {
+      this.x$setter(tmp$2 = MUL$operator(this.radialDistance$getter(), Math$Dart.cos$member(this.angle$getter()))) , tmp$2;
+      this.y$setter(tmp$3 = MUL$operator(this.radialDistance$getter(), Math$Dart.sin$member(this.angle$getter()))) , tmp$3;
+      this.radialDistance$setter(tmp$4 = ADD$operator(this.radialDistance$getter(), MUL$operator(unnamed48ba40$Bullet$Dart.speed$getter(), this.game$getter().clockTick$getter()))) , tmp$4;
+    }
+  }
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Bullet$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.draw$member = function(ctx){
+  ctx.save$named(0, $noargs);
+  ctx.translate$named(2, $noargs, this.x$getter(), this.y$getter());
+  ctx.rotate$named(1, $noargs, ADD$operator(this.angle$getter(), DIV$operator(Math$Dart.PI$getter(), 2)));
+  ctx.translate$named(2, $noargs, negate$operator(this.x$getter()), negate$operator(this.y$getter()));
+  this.animation$getter().drawFrame$named(4, $noargs, this.game$getter().clockTick$getter(), ctx, this.x$getter(), this.y$getter());
+  ctx.restore$named(0, $noargs);
+  unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$Bullet$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Bullet$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+function unnamed48ba40$BulletExplosion$Dart(){
+}
+$inherits(unnamed48ba40$BulletExplosion$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$BulletExplosion$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$BulletExplosion$Dart'), unnamed48ba40$BulletExplosion$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$BulletExplosion$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$BulletExplosion$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.$Constructor = function(game, x, y){
+  $nsme();
+  var tmp$1, tmp$2, tmp$0;
+  this.sprite$setter(tmp$0 = game.assetManager$getter().getAsset$named(1, $noargs, 'img/explosion.png')) , tmp$0;
+  this.animation$setter(tmp$1 = unnamed48ba40$Animation$Dart.Animation$$Factory(this.sprite$getter(), 34, 0.05, false)) , tmp$1;
+  this.radius$setter(tmp$2 = DIV$operator(this.animation$getter().frameWidth$getter(), 2)) , tmp$2;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.$Initializer = function(game, x, y){
+  unnamed48ba40$GameEntity$Dart.$Initializer.call();
+}
+;
+unnamed48ba40$BulletExplosion$Dart.BulletExplosion$$Factory = function(game, x, y){
+  var tmp$0 = new unnamed48ba40$BulletExplosion$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$BulletExplosion$Dart.$lookupRTT();
+  unnamed48ba40$BulletExplosion$Dart.$Initializer.call(tmp$0, game, x, y);
+  unnamed48ba40$BulletExplosion$Dart.$Constructor.call(tmp$0, game, x, y);
+  return tmp$0;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.sprite$getter = function(){
+  return this.sprite$field;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.animation$getter = function(){
+  return this.animation$field;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.animation$setter = function(tmp$0){
+  this.animation$field = tmp$0;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.radius$getter = function(){
+  return this.radius$field;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.radius$setter = function(tmp$0){
+  this.radius$field = tmp$0;
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.update$member = function(){
+  var tmp$5, tmp$1, tmp$2, tmp$3, tmp$4, tmp$0;
+  if (this.animation$getter().isDone$named(0, $noargs)) {
+    this.removeFromWorld$setter(tmp$0 = true) , tmp$0;
+    return;
+  }
+  this.radius$setter(tmp$1 = MUL$operator(DIV$operator(this.animation$getter().frameWidth$getter(), 2), this.scaleFactor$member())) , tmp$1;
+  {
+    var i = 0;
+    for (; LT$operator(i, this.game$getter().entities$getter().length$getter()); tmp$2 = i , (i = ADD$operator(tmp$2, 1) , tmp$2)) {
+      var alien = this.game$getter().entities$getter().INDEX$operator(i);
+      if (!!(tmp$3 = alien , tmp$3 != null && tmp$3.$implements$unnamed48ba40$Alien$Dart) && this.isCaughtInExplosion$member(alien)) {
+        tmp$4 = this.game$getter() , (tmp$4.score$setter(tmp$5 = ADD$operator(tmp$4.score$getter(), 10)) , tmp$5);
+        alien.explode$named(0, $noargs);
+      }
+    }
+  }
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$BulletExplosion$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.isCaughtInExplosion$member = function(alien){
+  var distance_squared = ADD$operator(MUL$operator(SUB$operator(this.x$getter(), alien.x$getter()), SUB$operator(this.x$getter(), alien.x$getter())), MUL$operator(SUB$operator(this.y$getter(), alien.y$getter()), SUB$operator(this.y$getter(), alien.y$getter())));
+  var radii_squared = MUL$operator(ADD$operator(this.radius$getter(), alien.radius$getter()), ADD$operator(this.radius$getter(), alien.radius$getter()));
+  return LT$operator(distance_squared, radii_squared);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.scaleFactor$member = function(){
+  return ADD$operator(1, DIV$operator(this.animation$getter().currentFrame$named(0, $noargs), 3));
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.draw$member = function(ctx){
+  this.animation$getter().drawFrame$named(5, $noargs, this.game$getter().clockTick$getter(), ctx, this.x$getter(), this.y$getter(), this.scaleFactor$member());
+  unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$BulletExplosion$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$BulletExplosion$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+function unnamed48ba40$Earth$Dart(){
+}
+$inherits(unnamed48ba40$Earth$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$Earth$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Earth$Dart'), unnamed48ba40$Earth$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$Earth$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$Earth$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$Earth$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$Earth$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$Earth$Dart.$Constructor = function(game){
+  unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, 0, 0);
+  var tmp$0;
+  this.sprite$setter(tmp$0 = this.ASSET_MANAGER$getter().getAsset$named(1, $noargs, 'img/earth.png')) , tmp$0;
+}
+;
+unnamed48ba40$Earth$Dart.$Initializer = function(game){
+  unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, 0, 0);
+}
+;
+unnamed48ba40$Earth$Dart.Earth$$Factory = function(game){
+  var tmp$0 = new unnamed48ba40$Earth$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Earth$Dart.$lookupRTT();
+  unnamed48ba40$Earth$Dart.$Initializer.call(tmp$0, game);
+  unnamed48ba40$Earth$Dart.$Constructor.call(tmp$0, game);
+  return tmp$0;
+}
+;
+unnamed48ba40$Earth$Dart.RADIUS$getter = function(){
+  return 67;
+}
+;
+unnamed48ba40$Earth$Dart.prototype.sprite$getter = function(){
+  return this.sprite$field;
+}
+;
+unnamed48ba40$Earth$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$Earth$Dart.prototype.draw$member = function(ctx){
+  ctx.drawImage$named(3, $noargs, this.sprite$getter(), SUB$operator(this.x$getter(), DIV$operator(this.sprite$getter().width$getter(), 2)), SUB$operator(this.y$getter(), DIV$operator(this.sprite$getter().height$getter(), 2)));
+}
+;
+unnamed48ba40$Earth$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Earth$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+function unnamed48ba40$Point$Dart(){
+}
+unnamed48ba40$Point$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Point$Dart'));
+}
+;
+unnamed48ba40$Point$Dart.$Constructor = function(x, y){
+}
+;
+unnamed48ba40$Point$Dart.$Initializer = function(x, y){
+  this.x$field = x;
+  this.y$field = y;
+}
+;
+unnamed48ba40$Point$Dart.Point$$Factory = function(x, y){
+  var tmp$0 = new unnamed48ba40$Point$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Point$Dart.$lookupRTT();
+  unnamed48ba40$Point$Dart.$Initializer.call(tmp$0, x, y);
+  unnamed48ba40$Point$Dart.$Constructor.call(tmp$0, x, y);
+  return tmp$0;
+}
+;
+unnamed48ba40$Point$Dart.prototype.x$getter = function(){
+  return this.x$field;
+}
+;
+unnamed48ba40$Point$Dart.prototype.y$getter = function(){
+  return this.y$field;
+}
+;
+function unnamed48ba40$Sentry$Dart(){
+}
+$inherits(unnamed48ba40$Sentry$Dart, unnamed48ba40$GameEntity$Dart);
+unnamed48ba40$Sentry$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Sentry$Dart'), unnamed48ba40$Sentry$Dart.$RTTimplements);
+}
+;
+unnamed48ba40$Sentry$Dart.$RTTimplements = function(rtt){
+  unnamed48ba40$Sentry$Dart.$addTo(rtt);
+}
+;
+unnamed48ba40$Sentry$Dart.$addTo = function(target){
+  var rtt = unnamed48ba40$Sentry$Dart.$lookupRTT();
+  target.implementedTypes[rtt.classKey] = rtt;
+  unnamed48ba40$GameEntity$Dart.$addTo(target);
+}
+;
+unnamed48ba40$Sentry$Dart.$Constructor = function(game){
+  unnamed48ba40$GameEntity$Dart.withPosition$Constructor.call(this, game, 0, unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter());
+  var tmp$1, tmp$0;
+  this.sprite$setter(tmp$0 = game.assetManager$getter().getAsset$named(1, $noargs, 'img/sentry.png')) , tmp$0;
+  this.radius$setter(tmp$1 = DIV$operator(this.sprite$getter().width$getter(), 2)) , tmp$1;
+}
+;
+unnamed48ba40$Sentry$Dart.$Initializer = function(game){
+  unnamed48ba40$GameEntity$Dart.withPosition$Initializer.call(this, game, 0, unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter());
+  this.sprite$field = $Dart$Null;
+  this.angle$field = 0;
+}
+;
+unnamed48ba40$Sentry$Dart.Sentry$$Factory = function(game){
+  var tmp$0 = new unnamed48ba40$Sentry$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Sentry$Dart.$lookupRTT();
+  unnamed48ba40$Sentry$Dart.$Initializer.call(tmp$0, game);
+  unnamed48ba40$Sentry$Dart.$Constructor.call(tmp$0, game);
+  return tmp$0;
+}
+;
+unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter = function(){
+  return 85;
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.sprite$getter = function(){
+  var tmp$0 = this.sprite$field;
+  var tmp$1 = static$initializing;
+  if (tmp$0 === tmp$1)
+    throw 'circular initialization';
+  if (tmp$0 !== static$uninitialized)
+    return tmp$0;
+  this.sprite$field = tmp$1;
+  var tmp$2 = $Dart$Null;
+  this.sprite$field = tmp$2;
+  return tmp$2;
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.sprite$setter = function(tmp$0){
+  this.sprite$field = tmp$0;
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.angle$getter = function(){
+  return this.angle$field;
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.angle$setter = function(tmp$0){
+  this.angle$field = tmp$0;
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.update$member = function(){
+  var tmp$1, tmp$2, tmp$3, tmp$0;
+  if (NE$operator(this.game$getter().mouse$getter(), $Dart$Null)) {
+    this.angle$setter(tmp$0 = Math$Dart.atan2$member(this.game$getter().mouse$getter().y$getter(), this.game$getter().mouse$getter().x$getter())) , tmp$0;
+    if (LT$operator(this.angle$getter(), 0)) {
+      this.angle$setter(tmp$1 = ADD$operator(this.angle$getter(), MUL$operator(Math$Dart.PI$getter(), 2))) , tmp$1;
+    }
+    this.x$setter(tmp$2 = MUL$operator(Math$Dart.cos$member(this.angle$getter()), unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter())) , tmp$2;
+    this.y$setter(tmp$3 = MUL$operator(Math$Dart.sin$member(this.angle$getter()), unnamed48ba40$Sentry$Dart.distanceFromEarthCenter$getter())) , tmp$3;
+  }
+  if (NE$operator(this.game$getter().click$getter(), $Dart$Null)) {
+    this.shoot$member();
+  }
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.update$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Sentry$Dart.prototype.update$member.call(this);
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.draw$member = function(ctx){
+  ctx.save$named(0, $noargs);
+  ctx.translate$named(2, $noargs, this.x$getter(), this.y$getter());
+  ctx.rotate$named(1, $noargs, ADD$operator(this.angle$getter(), DIV$operator(Math$Dart.PI$getter(), 2)));
+  ctx.drawImage$named(3, $noargs, this.sprite$getter(), DIV$operator(negate$operator(this.sprite$getter().width$getter()), 2), DIV$operator(negate$operator(this.sprite$getter().height$getter()), 2));
+  ctx.restore$named(0, $noargs);
+  unnamed48ba40$GameEntity$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.draw$named = function($n, $o, ctx){
+  if ($o.count || $n != 1)
+    $nsme();
+  return unnamed48ba40$Sentry$Dart.prototype.draw$member.call(this, ctx);
+}
+;
+unnamed48ba40$Sentry$Dart.prototype.shoot$member = function(){
+  var bullet = unnamed48ba40$Bullet$Dart.Bullet$$Factory(this.game$getter(), this.x$getter(), this.y$getter(), this.angle$getter(), this.game$getter().click$getter());
+  this.game$getter().addEntity$named(1, $noargs, bullet);
+}
+;
+function unnamed48ba40$Timer$Dart(){
+}
+unnamed48ba40$Timer$Dart.$lookupRTT = function(){
+  return RTT.create($cls('unnamed48ba40$Timer$Dart'));
+}
+;
+unnamed48ba40$Timer$Dart.prototype.gameTime$getter = function(){
+  return this.gameTime$field;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.gameTime$setter = function(tmp$0){
+  this.gameTime$field = tmp$0;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.maxStep$getter = function(){
+  return this.maxStep$field;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.wallLastTimestamp$getter = function(){
+  return this.wallLastTimestamp$field;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.wallLastTimestamp$setter = function(tmp$0){
+  this.wallLastTimestamp$field = tmp$0;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.tick$member = function(){
+  var tmp$1, tmp$0;
+  var wallCurrent = DateImplementation$Dart.DateImplementation$now$18$Factory().milliseconds$getter();
+  var wallDelta = DIV$operator(SUB$operator(wallCurrent, this.wallLastTimestamp$getter()), 1000);
+  this.wallLastTimestamp$setter(tmp$0 = wallCurrent) , tmp$0;
+  var gameDelta = Math$Dart.min$member(wallDelta, this.maxStep$getter());
+  this.gameTime$setter(tmp$1 = ADD$operator(this.gameTime$getter(), gameDelta)) , tmp$1;
+  return gameDelta;
+}
+;
+unnamed48ba40$Timer$Dart.prototype.tick$named = function($n, $o){
+  if ($o.count || $n != 0)
+    $nsme();
+  return unnamed48ba40$Timer$Dart.prototype.tick$member.call(this);
+}
+;
+unnamed48ba40$Timer$Dart.$Constructor = function(){
+}
+;
+unnamed48ba40$Timer$Dart.$Initializer = function(){
+  this.gameTime$field = 0;
+  this.maxStep$field = 0.05;
+  this.wallLastTimestamp$field = 0;
+}
+;
+unnamed48ba40$Timer$Dart.Timer$$Factory = function(){
+  var tmp$0 = new unnamed48ba40$Timer$Dart;
+  tmp$0.$typeInfo = unnamed48ba40$Timer$Dart.$lookupRTT();
+  unnamed48ba40$Timer$Dart.$Initializer.call(tmp$0);
+  unnamed48ba40$Timer$Dart.$Constructor.call(tmp$0);
+  return tmp$0;
+}
+;
 isolate$inits.push(function(){
   this._callback$$field_ = static$uninitialized;
   isolate$current.ReceivePortImpl$Dart_nextFreeId$$field_ = 1;
