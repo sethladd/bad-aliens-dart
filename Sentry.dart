@@ -5,7 +5,7 @@ class Sentry extends GameEntity {
   num angle;
   
   Sentry(Game game) : super.withPosition(game, 0, distanceFromEarthCenter), angle = 0 {
-    sprite = ASSET_MANAGER.getAsset('img/sentry.png');
+    sprite = game.assetManager.getAsset('img/sentry.png');
     radius = sprite.width / 2;
   }
   

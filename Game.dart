@@ -1,23 +1,21 @@
 class Game {
   
   List entities = const [];
-  html.CanvasRenderingContext2D ctx = null;
-  Point click = null;
-  Point mouse = null;
-  Timer timer = null;
-  num clockTick = null;
-  num surfaceWidth = null;
-  num surfaceHeight = null;
-  num halfSurfaceWidth = null;
-  num halfSurfaceHeight = null;
-  Point clientBoundingRect = null;
+  html.CanvasRenderingContext2D ctx;
+  Point click;
+  Point mouse;
+  Timer timer;
+  num clockTick;
+  num surfaceWidth;
+  num surfaceHeight;
+  num halfSurfaceWidth;
+  num halfSurfaceHeight;
+  Point clientBoundingRect;
+  AssetManager assetManager;
 
   bool showOutlines = false;
   
-  num lives = 10;
-  num score = 0;
-  
-  Game() {
+  Game(AssetManager this.assetManager) {
     timer = new Timer();
   }
 
@@ -75,17 +73,19 @@ class Game {
     entities.add(entity);
   }
   
-  void draw([callback]) {
+  void draw() {
     ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     ctx.save();
     ctx.translate(ctx.canvas.width/2, ctx.canvas.height/2);
     for (final GameEntity entity in entities) {
       entity.draw(ctx);
     }
-    if (callback != null) {
-        callback(this);
-    }
-   ctx.restore();
+    drawBeforeContextRestore();
+    ctx.restore();
+  }
+  
+  void drawBeforeCtxRestore() {
+    
   }
   
   void update() {

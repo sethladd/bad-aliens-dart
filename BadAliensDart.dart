@@ -11,6 +11,7 @@
 #source('Bullet.dart');
 #source('BulletExplosion.dart');
 #source('Earth.dart');
+#source('EvilAliens.dart');
 
 class BadAliensDart {
 

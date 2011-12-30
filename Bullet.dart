@@ -8,7 +8,7 @@ class Bullet extends GameEntity {
   Animation animation;
   
   Bullet(Game game, num x, num y, num angle, Point this.explodesAt) : super.withPosition(game, x, y) {
-    sprite = ASSET_MANAGER.getAsset('img/bullet.png');
+    sprite = game.assetManager.getAsset('img/bullet.png');
     animation = new Animation(sprite, 7, 0.05, true);
   }
   

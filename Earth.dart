@@ -1,6 +1,6 @@
 class Earth extends GameEntity {
   
-  num radius = 67;
+  static final num RADIUS = 67;
   var sprite;
   
   Earth(Game game) : super.withPosition(game, 0, 0) {

@@ -7,7 +7,8 @@ class Alien extends GameEntity {
   num radius;
 
   Alien(Game game, num this.radialDistance, num this.angle) : super(game) {
-    sprite = rotateAndCache(ASSET_MANAGER.getAsset('img/alien.png'), angle);
+    sprite = rotateAndCache(game.assetManager.getAsset('img/alien.png'),
+                            angle);
     radius = sprite.height / 2;
     setCoords();
   }
@@ -41,7 +42,7 @@ class Alien extends GameEntity {
   
   void explode() {
     removeFromWorld = true;
-    game.addEntity(new AlienExplosion(this.game, this.x, this.y));
+    game.addEntity(new AlienExplosion(game, x, y));
     // TODO play sound
   }
 }

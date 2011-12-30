@@ -3,7 +3,7 @@ class AlienExplosion extends GameEntity {
   Animation animation;
 
   AlienExplosion(Game game, num x, num y) : super.withPosition(game, x, y) {
-    animation = new Animation(ASSET_MANAGER.getAsset('img/alien-explosion.png'), 69, 0.05);
+    animation = new Animation(game.assetManager.getAsset('img/alien-explosion.png'), 69, 0.05);
     this.radius = this.animation.frameWidth / 2;
   }
   

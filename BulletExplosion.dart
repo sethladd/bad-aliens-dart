@@ -5,7 +5,7 @@ class BulletExplosion extends GameEntity {
   num radius;
   
   BulletExplosion(Game game, num x, num y) : super(game, x, y) {
-    sprite = ASSET_MANAGER.getAsset('img/explosion.png');
+    sprite = game.assetManager.getAsset('img/explosion.png');
     animation = new Animation(sprite, 34, 0.05);
     radius = animation.frameWidth / 2;
   }

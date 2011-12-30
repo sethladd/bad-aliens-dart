@@ -33,7 +33,8 @@ class GameEntity {
         y > game.halfSurfaceHeight || y < -(game.halfSurfaceHeight));
   }
   
-  void rotateAndCache(offscreenCanvas, image, angle) {
+  html.CanvasElement rotateAndCache(image, angle) {
+    var offscreenCanvas = new html.Element.tag("canvas");
     var size = Math.max(image.width, image.height);
     offscreenCanvas.width = size;
     offscreenCanvas.height = size;
@@ -46,5 +47,6 @@ class GameEntity {
     offscreenCtx.restore();
     //offscreenCtx.strokeStyle = "red";
     //offscreenCtx.strokeRect(0,0,size,size);
+    return offscreenCanvas;
   }
 }
