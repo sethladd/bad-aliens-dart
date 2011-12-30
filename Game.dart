@@ -15,6 +15,7 @@ class Game {
   bool showOutlines = false;
   
   num lives = 10;
+  num score = 0;
   
   Game() {
     timer = new Timer();

@@ -8,7 +8,7 @@ class Animation {
   bool loop;
   int elapsedTime = 0;
   
-  Animation(this.spriteSheet, this.frameWidth, this.frameDuration, this.loop) {
+  Animation(this.spriteSheet, this.frameWidth, this.frameDuration, [this.loop = false]) {
     frameHeight = spriteSheet.height;
     totalTime = (spriteSheet.width / frameWidth) * frameDuration;
   }

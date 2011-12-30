@@ -9,6 +9,7 @@
 #source('AlienExplosion.dart');
 #source('Sentry.dart');
 #source('Bullet.dart');
+#source('BulletExplosion.dart');
 
 class BadAliensDart {
 
