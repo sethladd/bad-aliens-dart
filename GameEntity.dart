@@ -23,9 +23,9 @@ class GameEntity {
   }
   
   void drawSpriteCentered(ctx) {
-    num x = x - sprite.width/2;
-    num y = y - sprite.height/2;
-    ctx.drawImage(sprite, x, y);
+    num _x = x - sprite.width/2;
+    num _y = y - sprite.height/2;
+    ctx.drawImage(sprite, _x, _y);
   }
   
   bool outsideScreen() {
