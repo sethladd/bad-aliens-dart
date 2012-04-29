@@ -39,7 +39,7 @@ class Game {
   
   void start() {
     print("starting game");
-    html.window.webkitRequestAnimationFrame(loop);
+    html.window.requestAnimationFrame(loop);
   }
   
   void loop(int time) {
@@ -47,7 +47,7 @@ class Game {
     update();
     draw();
     click = null;
-    html.window.webkitRequestAnimationFrame(loop);
+    html.window.requestAnimationFrame(loop);
   }
   
   void startInput() {
