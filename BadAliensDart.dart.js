@@ -1,6467 +1,6977 @@
-//  ********** Library dart:core **************
-//  ********** Natives dart:core **************
-Object.prototype.$typeNameOf = function() {
-  if ((typeof(window) != 'undefined' && window.constructor.name == 'DOMWindow')
-      || typeof(process) != 'undefined') { // fast-path for Chrome and Node
-    return this.constructor.name;
-  }
-  var str = Object.prototype.toString.call(this);
-  str = str.substring(8, str.length - 1);
-  if (str == 'Window') str = 'DOMWindow';
-  return str;
-}
-/**
- * Generates a dynamic call stub for a function.
- * Our goal is to create a stub method like this on-the-fly:
- *   function($0, $1, capture) { return this($0, $1, true, capture); }
- *
- * This stub then replaces the dynamic one on Function, with one that is
- * specialized for that particular function, taking into account its default
- * arguments.
- */
-Function.prototype.$genStub = function(argsLength, names) {
-  // Fast path: if no named arguments and arg count matches
-  if (this.length == argsLength && !names) {
-    return this;
-  }
+function Isolate() {}
+init();
 
-  function $throwArgMismatch() {
-    // TODO(jmesserly): better error message
-    $throw(new ClosureArgumentMismatchException());
-  }
+var $$ = {};
+var $ = Isolate.$isolateProperties;
+$$.ExceptionImplementation = {"":
+ ["_msg"],
+ super: "Object",
+ toString$0: function() {
+  var t1 = this._msg;
+  return t1 === (void 0) ? 'Exception' : 'Exception: ' + $.S(t1);
+ }
+};
 
-  var paramsNamed = this.$optional ? (this.$optional.length / 2) : 0;
-  var paramsBare = this.length - paramsNamed;
-  var argsNamed = names ? names.length : 0;
-  var argsBare = argsLength - argsNamed;
-
-  // Check we got the right number of arguments
-  if (argsBare < paramsBare || argsLength > this.length ||
-      argsNamed > paramsNamed) {
-    return $throwArgMismatch;
-  }
-
-  // First, fill in all of the default values
-  var p = new Array(paramsBare);
-  if (paramsNamed) {
-    p = p.concat(this.$optional.slice(paramsNamed));
-  }
-  // Fill in positional args
-  var a = new Array(argsLength);
-  for (var i = 0; i < argsBare; i++) {
-    p[i] = a[i] = '$' + i;
-  }
-  // Then overwrite with supplied values for optional args
-  var lastParameterIndex;
-  var namesInOrder = true;
-  for (var i = 0; i < argsNamed; i++) {
-    var name = names[i];
-    a[i + argsBare] = name;
-    var j = this.$optional.indexOf(name);
-    if (j < 0 || j >= paramsNamed) {
-      return $throwArgMismatch;
-    } else if (lastParameterIndex && lastParameterIndex > j) {
-      namesInOrder = false;
-    }
-    p[j + paramsBare] = name;
-    lastParameterIndex = j;
-  }
-
-  if (this.length == argsLength && namesInOrder) {
-    // Fast path #2: named arguments, but they're in order.
-    return this;
-  }
-
-  // Note: using Function instead of 'eval' to get a clean scope.
-  // TODO(jmesserly): evaluate the performance of these stubs.
-  var f = 'function(' + a.join(',') + '){return $f(' + p.join(',') + ');}';
-  return new Function('$f', 'return ' + f + '').call(null, this);
-}
-function $throw(e) {
-  // If e is not a value, we can use V8's captureStackTrace utility method.
-  // TODO(jmesserly): capture the stack trace on other JS engines.
-  if (e && (typeof e == 'object') && Error.captureStackTrace) {
-    // TODO(jmesserly): this will clobber the e.stack property
-    Error.captureStackTrace(e, $throw);
-  }
-  throw e;
-}
-Object.prototype.$index = function(i) {
-  var proto = Object.getPrototypeOf(this);
-  if (proto !== Object) {
-    proto.$index = function(i) { return this[i]; }
-  }
-  return this[i];
-}
-Array.prototype.$index = function(i) { return this[i]; }
-String.prototype.$index = function(i) { return this[i]; }
-Object.prototype.$setindex = function(i, value) {
-  var proto = Object.getPrototypeOf(this);
-  if (proto !== Object) {
-    proto.$setindex = function(i, value) { return this[i] = value; }
-  }
-  return this[i] = value;
-}
-Array.prototype.$setindex = function(i, value) { return this[i] = value; }
-function $wrap_call$1(fn) { return fn; }
-function $eq(x, y) {
-  if (x == null) return y == null;
-  return (typeof(x) == 'number' && typeof(y) == 'number') ||
-         (typeof(x) == 'boolean' && typeof(y) == 'boolean') ||
-         (typeof(x) == 'string' && typeof(y) == 'string')
-    ? x == y : x.$eq(y);
-}
-// TODO(jimhug): Should this or should it not match equals?
-Object.prototype.$eq = function(other) { return this === other; }
-function $truncdiv(x, y) {
-  if (typeof(x) == 'number' && typeof(y) == 'number') {
-    if (y == 0) $throw(new IntegerDivisionByZeroException());
-    var tmp = x / y;
-    return (tmp < 0) ? Math.ceil(tmp) : Math.floor(tmp);
-  } else {
-    return x.$truncdiv(y);
-  }
-}
-// ********** Code for Object **************
-Object.prototype.get$dynamic = function() {
-  return this;
-}
-Object.prototype.noSuchMethod = function(name, args) {
-  $throw(new NoSuchMethodException(this, name, args));
-}
-Object.prototype.add$1 = function($0) {
-  return this.noSuchMethod("add", [$0]);
-};
-Object.prototype.addEventListener$3 = function($0, $1, $2) {
-  return this.noSuchMethod("addEventListener", [$0, $1, $2]);
-};
-Object.prototype.arc$6 = function($0, $1, $2, $3, $4, $5) {
-  return this.noSuchMethod("arc", [$0, $1, $2, $3, $4, $5]);
-};
-Object.prototype.beginPath$0 = function() {
-  return this.noSuchMethod("beginPath", []);
-};
-Object.prototype.clearRect$4 = function($0, $1, $2, $3) {
-  return this.noSuchMethod("clearRect", [$0, $1, $2, $3]);
-};
-Object.prototype.closePath$0 = function() {
-  return this.noSuchMethod("closePath", []);
-};
-Object.prototype.drawImage$3 = function($0, $1, $2) {
-  return this.noSuchMethod("drawImage", [$0, $1, $2]);
-};
-Object.prototype.drawImage$5 = function($0, $1, $2, $3, $4) {
-  return this.noSuchMethod("drawImage", [$0, $1, $2, $3, $4]);
-};
-Object.prototype.drawImage$9 = function($0, $1, $2, $3, $4, $5, $6, $7, $8) {
-  return this.noSuchMethod("drawImage", [$0, $1, $2, $3, $4, $5, $6, $7, $8]);
-};
-Object.prototype.explode$0 = function() {
-  return this.noSuchMethod("explode", []);
-};
-Object.prototype.fillText$3 = function($0, $1, $2) {
-  return this.noSuchMethod("fillText", [$0, $1, $2]);
-};
-Object.prototype.fillText$4 = function($0, $1, $2, $3) {
-  return this.noSuchMethod("fillText", [$0, $1, $2, $3]);
-};
-Object.prototype.getContext$0 = function() {
-  return this.noSuchMethod("getContext", []);
-};
-Object.prototype.getContext$1 = function($0) {
-  return this.noSuchMethod("getContext", [$0]);
-};
-Object.prototype.hashCode$0 = function() {
-  return this.noSuchMethod("hashCode", []);
-};
-Object.prototype.init$1 = function($0) {
-  return this.noSuchMethod("init", [$0]);
-};
-Object.prototype.is$CanvasElement = function() {
-  return false;
-};
-Object.prototype.is$ImageElement = function() {
-  return false;
-};
-Object.prototype.postMessage$1 = function($0) {
-  return this.noSuchMethod("postMessage", [$0]);
-};
-Object.prototype.postMessage$2 = function($0, $1) {
-  return this.noSuchMethod("postMessage", [$0, $1]);
-};
-Object.prototype.postMessage$3 = function($0, $1, $2) {
-  return this.noSuchMethod("postMessage", [$0, $1, $2]);
-};
-Object.prototype.querySelector$1 = function($0) {
-  return this.noSuchMethod("querySelector", [$0]);
-};
-Object.prototype.restore$0 = function() {
-  return this.noSuchMethod("restore", []);
-};
-Object.prototype.rotate$1 = function($0) {
-  return this.noSuchMethod("rotate", [$0]);
-};
-Object.prototype.save$0 = function() {
-  return this.noSuchMethod("save", []);
-};
-Object.prototype.start$0 = function() {
-  return this.noSuchMethod("start", []);
-};
-Object.prototype.stroke$0 = function() {
-  return this.noSuchMethod("stroke", []);
-};
-Object.prototype.toString$0 = function() {
-  return this.toString();
-};
-Object.prototype.translate$2 = function($0, $1) {
-  return this.noSuchMethod("translate", [$0, $1]);
-};
-Object.prototype.update$0 = function() {
-  return this.noSuchMethod("update", []);
-};
-Object.prototype.webkitRequestAnimationFrame$2 = function($0, $1) {
-  return this.noSuchMethod("webkitRequestAnimationFrame", [$0, $1]);
-};
-// ********** Code for NoSuchMethodException **************
-function NoSuchMethodException(_receiver, _functionName, _arguments) {
-  this._receiver = _receiver;
-  this._functionName = _functionName;
-  this._arguments = _arguments;
-  // Initializers done
-}
-NoSuchMethodException.prototype.toString = function() {
-  var sb = new StringBufferImpl("");
-  for (var i = 0;
-   i < this._arguments.get$length(); i++) {
-    if (i > 0) {
-      sb.add(", ");
-    }
-    sb.add(this._arguments.$index(i));
-  }
-  sb.add("]");
-  return ("NoSuchMethodException - receiver: '" + this._receiver + "' ") + ("function name: '" + this._functionName + "' arguments: [" + sb + "]");
-}
-NoSuchMethodException.prototype.toString$0 = NoSuchMethodException.prototype.toString;
-// ********** Code for ObjectNotClosureException **************
-function ObjectNotClosureException() {
-  // Initializers done
-}
-ObjectNotClosureException.prototype.toString = function() {
-  return "Object is not closure";
-}
-ObjectNotClosureException.prototype.toString$0 = ObjectNotClosureException.prototype.toString;
-// ********** Code for IllegalArgumentException **************
-function IllegalArgumentException(args) {
-  this._args = args;
-  // Initializers done
-}
-IllegalArgumentException.prototype.toString = function() {
-  return ("Illegal argument(s): " + this._args);
-}
-IllegalArgumentException.prototype.toString$0 = IllegalArgumentException.prototype.toString;
-// ********** Code for StackOverflowException **************
-function StackOverflowException() {
-  // Initializers done
-}
-StackOverflowException.prototype.toString = function() {
-  return "Stack Overflow";
-}
-StackOverflowException.prototype.toString$0 = StackOverflowException.prototype.toString;
-// ********** Code for BadNumberFormatException **************
-function BadNumberFormatException() {}
-BadNumberFormatException.prototype.toString = function() {
-  return ("BadNumberFormatException: '" + this._s + "'");
-}
-BadNumberFormatException.prototype.toString$0 = BadNumberFormatException.prototype.toString;
-// ********** Code for NullPointerException **************
-function NullPointerException() {
-  // Initializers done
-}
-NullPointerException.prototype.toString = function() {
-  return "NullPointerException";
-}
-NullPointerException.prototype.toString$0 = NullPointerException.prototype.toString;
-// ********** Code for UnsupportedOperationException **************
-function UnsupportedOperationException(_message) {
-  this._message = _message;
-  // Initializers done
-}
-UnsupportedOperationException.prototype.toString = function() {
-  return ("UnsupportedOperationException: " + this._message);
-}
-UnsupportedOperationException.prototype.toString$0 = UnsupportedOperationException.prototype.toString;
-// ********** Code for Function **************
-Function.prototype.to$call$0 = function() {
-  this.call$0 = this.$genStub(0);
-  this.to$call$0 = function() { return this.call$0; };
-  return this.call$0;
-};
-Function.prototype.call$0 = function() {
-  return this.to$call$0()();
-};
-function to$call$0(f) { return f && f.to$call$0(); }
-Function.prototype.to$call$1 = function() {
-  this.call$1 = this.$genStub(1);
-  this.to$call$1 = function() { return this.call$1; };
-  return this.call$1;
-};
-Function.prototype.call$1 = function($0) {
-  return this.to$call$1()($0);
-};
-function to$call$1(f) { return f && f.to$call$1(); }
-// ********** Code for Math **************
-Math.min = function(a, b) {
-  if (a == b) return a;
-    if (a < b) {
-      if (isNaN(b)) return b;
-      else return a;
-    }
-    if (isNaN(a)) return a;
-    else return b;
-}
-Math.max = function(a, b) {
-  return (a >= b) ? a : b;
-}
-// ********** Code for top level **************
-function dart_core_print(obj) {
-  return _print(obj);
-}
-function _print(obj) {
-  if (typeof console == 'object') {
-    if (obj) obj = obj.toString();
-    console.log(obj);
-  } else {
-    write(obj);
-    write('\n');
-  }
-}
-function _toDartException(e) {
-  function attachStack(dartEx) {
-    // TODO(jmesserly): setting the stack property is not a long term solution.
-    var stack = e.stack;
-    // The stack contains the error message, and the stack is all that is
-    // printed (the exception's toString() is never called).  Make the Dart
-    // exception's toString() be the dominant message.
-    if (typeof stack == 'string') {
-      var message = dartEx.toString();
-      if (/^(Type|Range)Error:/.test(stack)) {
-        // Indent JS message (it can be helpful) so new message stands out.
-        stack = '    (' + stack.substring(0, stack.indexOf('\n')) + ')\n' +
-                stack.substring(stack.indexOf('\n') + 1);
+$$.FutureImpl = {"":
+ ["_completionListeners", "_exceptionHandlers", "_successListeners", "_exceptionHandled", "_stackTrace", "_exception", "_value", "_isComplete"],
+ super: "Object",
+ _setException$2: function(exception, stackTrace) {
+  if (exception === (void 0)) throw $.captureStackTrace($.IllegalArgumentException$1((void 0)));
+  if (this._isComplete === true) throw $.captureStackTrace($.FutureAlreadyCompleteException$0());
+  this._exception = exception;
+  this._stackTrace = stackTrace;
+  this._complete$0();
+ },
+ _setValue$1: function(value) {
+  if (this._isComplete === true) throw $.captureStackTrace($.FutureAlreadyCompleteException$0());
+  this._value = value;
+  this._complete$0();
+ },
+ _complete$0: function() {
+  this._isComplete = true;
+  try {
+    if (!(this._exception === (void 0))) {
+      for (var t1 = $.iterator(this._exceptionHandlers); t1.hasNext$0() === true; ) {
+        var handler = t1.next$0();
+        if ($.eqB(handler.$call$1(this._exception), true)) {
+          this._exceptionHandled = true;
+          break;
+        }
       }
-      stack = message + '\n' + stack;
     }
-    dartEx.stack = stack;
-    return dartEx;
-  }
-
-  if (e instanceof TypeError) {
-    switch(e.type) {
-      case 'property_not_function':
-      case 'called_non_callable':
-        if (e.arguments[0] == null) {
-          return attachStack(new NullPointerException());
-        } else {
-          return attachStack(new ObjectNotClosureException());
-        }
-        break;
-      case 'non_object_property_call':
-      case 'non_object_property_load':
-        return attachStack(new NullPointerException());
-        break;
-      case 'undefined_method':
-        var mname = e.arguments[0];
-        if (typeof(mname) == 'string' && (mname.indexOf('call$') == 0
-            || mname == 'call' || mname == 'apply')) {
-          return attachStack(new ObjectNotClosureException());
-        } else {
-          // TODO(jmesserly): fix noSuchMethod on operators so we don't hit this
-          return attachStack(new NoSuchMethodException('', e.arguments[0], []));
-        }
-        break;
+    if (this.get$hasValue() === true) {
+      for (t1 = $.iterator(this._successListeners); t1.hasNext$0() === true; ) {
+        var listener = t1.next$0();
+        listener.$call$1(this.get$value());
+      }
+    } else {
+      if (this._exceptionHandled !== true && $.gtB($.get$length(this._successListeners), 0)) throw $.captureStackTrace(this._exception);
     }
-  } else if (e instanceof RangeError) {
-    if (e.message.indexOf('call stack') >= 0) {
-      return attachStack(new StackOverflowException());
+  } finally {
+    for (t1 = $.iterator(this._completionListeners); t1.hasNext$0() === true; ) {
+      var listener0 = t1.next$0();
+      try {
+        listener0.$call$1(this);
+      } catch (exception) {
+        $.unwrapException(exception);
+      }
     }
   }
-  return e;
-}
-//  ********** Library dart:coreimpl **************
-// ********** Code for ListFactory **************
-ListFactory = Array;
-ListFactory.prototype.get$length = function() { return this.length; };
-ListFactory.prototype.set$length = function(value) { return this.length = value; };
-ListFactory.prototype.add = function(value) {
-  this.push(value);
-}
-ListFactory.prototype.clear = function() {
-  this.set$length(0);
-}
-ListFactory.prototype.removeRange = function(start, length) {
-  this.splice(start, length);
-}
-ListFactory.prototype.add$1 = ListFactory.prototype.add;
-ListFactory_E = ListFactory;
-ListFactory_String = ListFactory;
-ListFactory_V = ListFactory;
-ListFactory__EventListenerWrapper = ListFactory;
-// ********** Code for NumImplementation **************
-NumImplementation = Number;
-NumImplementation.prototype.abs = function() {
-  return Math.abs(this);
-}
-NumImplementation.prototype.floor = function() {
-  return Math.floor(this);
-}
-NumImplementation.prototype.hashCode = function() {
-  return this & 0xFFFFFFF;
-}
-NumImplementation.prototype.hashCode$0 = NumImplementation.prototype.hashCode;
-// ********** Code for FutureNotCompleteException **************
-function FutureNotCompleteException() {
-  // Initializers done
-}
-// ********** Code for FutureAlreadyCompleteException **************
-function FutureAlreadyCompleteException() {
-  // Initializers done
-}
-// ********** Code for FutureImpl **************
-function FutureImpl() {
-  this._listeners = new Array();
-  this._exceptionHandlers = new Array();
-  // Initializers done
-  this._isComplete = false;
-  this._exceptionHandled = false;
-}
-FutureImpl.prototype.get$value = function() {
-  if (!this.get$isComplete()) {
-    $throw(new FutureNotCompleteException());
+ },
+ then$1: function(onSuccess) {
+  if (this.get$hasValue() === true) onSuccess.$call$1(this.get$value());
+  else {
+    if (this.get$isComplete() !== true) $.add$1(this._successListeners, onSuccess);
+    else {
+      if (this._exceptionHandled !== true) throw $.captureStackTrace(this._exception);
+    }
   }
-  if (this._exception != null) {
-    $throw(this._exception);
-  }
-  return this._value;
-}
-FutureImpl.prototype.get$isComplete = function() {
+ },
+ get$hasValue: function() {
+  return this.get$isComplete() === true && this._exception === (void 0);
+ },
+ get$isComplete: function() {
   return this._isComplete;
-}
-FutureImpl.prototype.get$hasValue = function() {
-  return this.get$isComplete() && this._exception == null;
-}
-FutureImpl.prototype.then = function(onComplete) {
-  if (this.get$hasValue()) {
-    onComplete(this.get$value());
-  }
-  else {
-    this._listeners.add(onComplete);
-  }
-}
-FutureImpl.prototype._complete = function() {
-  this._isComplete = true;
-  if (this._exception != null) {
-    var $$list = this._exceptionHandlers;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var handler = $$list.$index($$i);
-      if (handler.call$1(this._exception)) {
-        this._exceptionHandled = true;
-      }
-    }
-  }
-  if (this.get$hasValue()) {
-    var $$list = this._listeners;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var listener = $$list.$index($$i);
-      listener.call$1(this.get$value());
-    }
-  }
-  else {
-    if (!this._exceptionHandled && this._listeners.get$length() > 0) {
-      $throw(this._exception);
-    }
-  }
-}
-FutureImpl.prototype._setValue = function(value) {
-  if (this._isComplete) {
-    $throw(new FutureAlreadyCompleteException());
-  }
-  this._value = value;
-  this._complete();
-}
-FutureImpl.prototype._setException = function(exception) {
-  if (exception == null) {
-    $throw(new IllegalArgumentException(null));
-  }
-  if (this._isComplete) {
-    $throw(new FutureAlreadyCompleteException());
-  }
-  this._exception = exception;
-  this._complete();
-}
-// ********** Code for FutureImpl_T **************
-/** Implements extends for Dart classes on JavaScript prototypes. */
-function $inherits(child, parent) {
-  if (child.prototype.__proto__) {
-    child.prototype.__proto__ = parent.prototype;
-  } else {
-    function tmp() {};
-    tmp.prototype = parent.prototype;
-    child.prototype = new tmp();
-    child.prototype.constructor = child;
-  }
-}
-$inherits(FutureImpl_T, FutureImpl);
-function FutureImpl_T() {}
-FutureImpl_T.prototype._complete = function() {
-  this._isComplete = true;
-  if (this._exception != null) {
-    var $$list = this._exceptionHandlers;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var handler = $$list.$index($$i);
-      if (handler.call$1(this._exception)) {
-        this._exceptionHandled = true;
-      }
-    }
-  }
-  if (this.get$hasValue()) {
-    var $$list = this._listeners;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var listener = $$list.$index($$i);
-      listener.call$1(this.get$value());
-    }
-  }
-  else {
-    if (!this._exceptionHandled && this._listeners.get$length() > 0) {
-      $throw(this._exception);
-    }
-  }
-}
-FutureImpl_T.prototype._setValue = function(value) {
-  if (this._isComplete) {
-    $throw(new FutureAlreadyCompleteException());
-  }
-  this._value = value;
-  this._complete();
-}
-FutureImpl_T.prototype._setException = function(exception) {
-  if (exception == null) {
-    $throw(new IllegalArgumentException(null));
-  }
-  if (this._isComplete) {
-    $throw(new FutureAlreadyCompleteException());
-  }
-  this._exception = exception;
-  this._complete();
-}
-// ********** Code for CompleterImpl **************
-function CompleterImpl() {
-  this._futureImpl = new FutureImpl();
-  // Initializers done
-}
-CompleterImpl.prototype.get$future = function() {
+ },
+ get$exception: function() {
+  if (this.get$isComplete() !== true) throw $.captureStackTrace($.FutureNotCompleteException$0());
+  return this._exception;
+ },
+ get$value: function() {
+  if (this.get$isComplete() !== true) throw $.captureStackTrace($.FutureNotCompleteException$0());
+  var t1 = this._exception;
+  if (!(t1 === (void 0))) throw $.captureStackTrace(t1);
+  return this._value;
+ }
+};
+
+$$.CompleterImpl = {"":
+ ["_futureImpl"],
+ super: "Object",
+ completeException$2: function(exception, stackTrace) {
+  this._futureImpl._setException$2(exception, stackTrace);
+ },
+ completeException$1: function(exception) {
+  return this.completeException$2(exception,(void 0))
+},
+ complete$1: function(value) {
+  this._futureImpl._setValue$1(value);
+ },
+ get$future: function() {
   return this._futureImpl;
-}
-CompleterImpl.prototype.complete = function(value) {
-  this._futureImpl._setValue(value);
-}
-CompleterImpl.prototype.completeException = function(exception) {
-  this._futureImpl._setException(exception);
-}
-// ********** Code for CompleterImpl_ElementRect **************
-$inherits(CompleterImpl_ElementRect, CompleterImpl);
-function CompleterImpl_ElementRect() {}
-// ********** Code for HashMapImplementation **************
-function HashMapImplementation() {
-  // Initializers done
+ }
+};
+
+$$.HashMapImplementation = {"":
+ ["_numberOfDeleted", "_numberOfEntries", "_loadLimit", "_values", "_keys?"],
+ super: "Object",
+ toString$0: function() {
+  return $.mapToString(this);
+ },
+ containsKey$1: function(key) {
+  return !$.eqB(this._probeForLookup$1(key), -1);
+ },
+ forEach$1: function(f) {
+  var length$ = $.get$length(this._keys);
+  if (typeof length$ !== 'number') return this.forEach$1$bailout(1, f, length$);
+  for (var i = 0; i < length$; ++i) {
+    var key = $.index(this._keys, i);
+    !(key === (void 0)) && !(key === $.CTC2) && f.$call$2(key, $.index(this._values, i));
+  }
+ },
+ forEach$1$bailout: function(state, f, length$) {
+  for (var i = 0; $.ltB(i, length$); ++i) {
+    var key = $.index(this._keys, i);
+    !(key === (void 0)) && !(key === $.CTC2) && f.$call$2(key, $.index(this._values, i));
+  }
+ },
+ get$length: function() {
+  return this._numberOfEntries;
+ },
+ isEmpty$0: function() {
+  return $.eq(this._numberOfEntries, 0);
+ },
+ operator$index$1: function(key) {
+  var index = this._probeForLookup$1(key);
+  if (typeof index !== 'number') return this.operator$index$1$bailout(1, index, 0);
+  if (index < 0) return;
+  var t1 = this._values;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.operator$index$1$bailout(2, t1, index);
+  if (index !== (index | 0)) throw $.iae(index);
+  var t2 = t1.length;
+  if (index < 0 || index >= t2) throw $.ioore(index);
+  return t1[index];
+ },
+ operator$index$1$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      index = env0;
+      break;
+    case 2:
+      t1 = env0;
+      index = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var index = this._probeForLookup$1(key);
+    case 1:
+      state = 0;
+      if ($.ltB(index, 0)) return;
+      var t1 = this._values;
+    case 2:
+      state = 0;
+      return $.index(t1, index);
+  }
+ },
+ operator$indexSet$2: function(key, value) {
+  this._ensureCapacity$0();
+  var index = this._probeForAdding$1(key);
+  if ($.index(this._keys, index) === (void 0) || $.index(this._keys, index) === $.CTC2) this._numberOfEntries = $.add(this._numberOfEntries, 1);
+  $.indexSet(this._keys, index, key);
+  $.indexSet(this._values, index, value);
+ },
+ clear$0: function() {
   this._numberOfEntries = 0;
   this._numberOfDeleted = 0;
-  this._loadLimit = HashMapImplementation._computeLoadLimit(8/*HashMapImplementation._INITIAL_CAPACITY*/);
-  this._keys = new Array(8/*HashMapImplementation._INITIAL_CAPACITY*/);
-  this._values = new Array(8/*HashMapImplementation._INITIAL_CAPACITY*/);
-}
-HashMapImplementation._computeLoadLimit = function(capacity) {
-  return $truncdiv((capacity * 3), 4);
-}
-HashMapImplementation._firstProbe = function(hashCode, length) {
-  return hashCode & (length - 1);
-}
-HashMapImplementation._nextProbe = function(currentProbe, numberOfProbes, length) {
-  return (currentProbe + numberOfProbes) & (length - 1);
-}
-HashMapImplementation.prototype._probeForAdding = function(key) {
-  var hash = HashMapImplementation._firstProbe(key.hashCode$0(), this._keys.get$length());
-  var numberOfProbes = 1;
-  var initialHash = hash;
-  var insertionIndex = -1;
-  while (true) {
-    var existingKey = this._keys.$index(hash);
-    if (existingKey == null) {
-      if (insertionIndex < 0) return hash;
-      return insertionIndex;
-    }
-    else if ($eq(existingKey, key)) {
-      return hash;
-    }
-    else if ((insertionIndex < 0) && (const$3/*HashMapImplementation._DELETED_KEY*/ === existingKey)) {
-      insertionIndex = hash;
-    }
-    hash = HashMapImplementation._nextProbe(hash, numberOfProbes++, this._keys.get$length());
+  var length$ = $.get$length(this._keys);
+  if (typeof length$ !== 'number') return this.clear$0$bailout(1, length$);
+  for (var i = 0; i < length$; ++i) {
+    $.indexSet(this._keys, i, (void 0));
+    $.indexSet(this._values, i, (void 0));
   }
-}
-HashMapImplementation.prototype._probeForLookup = function(key) {
-  var hash = HashMapImplementation._firstProbe(key.hashCode$0(), this._keys.get$length());
-  var numberOfProbes = 1;
-  var initialHash = hash;
-  while (true) {
-    var existingKey = this._keys.$index(hash);
-    if (existingKey == null) return -1;
-    if ($eq(existingKey, key)) return hash;
-    hash = HashMapImplementation._nextProbe(hash, numberOfProbes++, this._keys.get$length());
+ },
+ clear$0$bailout: function(state, length$) {
+  for (var i = 0; $.ltB(i, length$); ++i) {
+    $.indexSet(this._keys, i, (void 0));
+    $.indexSet(this._values, i, (void 0));
   }
-}
-HashMapImplementation.prototype._ensureCapacity = function() {
-  var newNumberOfEntries = this._numberOfEntries + 1;
-  if (newNumberOfEntries >= this._loadLimit) {
-    this._grow(this._keys.get$length() * 2);
-    return;
-  }
-  var capacity = this._keys.get$length();
-  var numberOfFreeOrDeleted = capacity - newNumberOfEntries;
-  var numberOfFree = numberOfFreeOrDeleted - this._numberOfDeleted;
-  if (this._numberOfDeleted > numberOfFree) {
-    this._grow(this._keys.get$length());
-  }
-}
-HashMapImplementation._isPowerOfTwo = function(x) {
-  return ((x & (x - 1)) == 0);
-}
-HashMapImplementation.prototype._grow = function(newCapacity) {
-  var capacity = this._keys.get$length();
-  this._loadLimit = HashMapImplementation._computeLoadLimit(newCapacity);
+ },
+ _grow$1: function(newCapacity) {
+  var capacity = $.get$length(this._keys);
+  if (typeof capacity !== 'number') return this._grow$1$bailout(1, newCapacity, capacity, 0, 0);
+  this._loadLimit = $._computeLoadLimit(newCapacity);
   var oldKeys = this._keys;
+  if (typeof oldKeys !== 'string' && (typeof oldKeys !== 'object' || (oldKeys.constructor !== Array && !oldKeys.is$JavaScriptIndexingBehavior()))) return this._grow$1$bailout(2, newCapacity, oldKeys, capacity, 0);
   var oldValues = this._values;
-  this._keys = new Array(newCapacity);
-  this._values = new Array(newCapacity);
-  for (var i = 0;
-   i < capacity; i++) {
-    var key = oldKeys.$index(i);
-    if (key == null || key === const$3/*HashMapImplementation._DELETED_KEY*/) {
-      continue;
-    }
-    var value = oldValues.$index(i);
-    var newIndex = this._probeForAdding(key);
-    this._keys.$setindex(newIndex, key);
-    this._values.$setindex(newIndex, value);
+  if (typeof oldValues !== 'string' && (typeof oldValues !== 'object' || (oldValues.constructor !== Array && !oldValues.is$JavaScriptIndexingBehavior()))) return this._grow$1$bailout(3, newCapacity, oldKeys, oldValues, capacity);
+  this._keys = $.List(newCapacity);
+  var t1 = $.List(newCapacity);
+  $.setRuntimeTypeInfo(t1, ({E: 'V'}));
+  this._values = t1;
+  for (var i = 0; i < capacity; ++i) {
+    t1 = oldKeys.length;
+    if (i < 0 || i >= t1) throw $.ioore(i);
+    var t2 = oldKeys[i];
+    if (t2 === (void 0) || t2 === $.CTC2) continue;
+    t1 = oldValues.length;
+    if (i < 0 || i >= t1) throw $.ioore(i);
+    var t3 = oldValues[i];
+    var newIndex = this._probeForAdding$1(t2);
+    $.indexSet(this._keys, newIndex, t2);
+    $.indexSet(this._values, newIndex, t3);
   }
   this._numberOfDeleted = 0;
-}
-HashMapImplementation.prototype.$setindex = function(key, value) {
-  this._ensureCapacity();
-  var index = this._probeForAdding(key);
-  if ((this._keys.$index(index) == null) || (this._keys.$index(index) === const$3/*HashMapImplementation._DELETED_KEY*/)) {
-    this._numberOfEntries++;
+ },
+ _grow$1$bailout: function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      var newCapacity = env0;
+      capacity = env1;
+      break;
+    case 2:
+      newCapacity = env0;
+      oldKeys = env1;
+      capacity = env2;
+      break;
+    case 3:
+      newCapacity = env0;
+      oldKeys = env1;
+      oldValues = env2;
+      capacity = env3;
+      break;
   }
-  this._keys.$setindex(index, key);
-  this._values.$setindex(index, value);
-}
-HashMapImplementation.prototype.$index = function(key) {
-  var index = this._probeForLookup(key);
-  if (index < 0) return null;
-  return this._values.$index(index);
-}
-HashMapImplementation.prototype.putIfAbsent = function(key, ifAbsent) {
-  var index = this._probeForLookup(key);
-  if (index >= 0) return this._values.$index(index);
-  var value = ifAbsent();
-  this.$setindex(key, value);
-  return value;
-}
-// ********** Code for HashMapImplementation_E$E **************
-$inherits(HashMapImplementation_E$E, HashMapImplementation);
-function HashMapImplementation_E$E() {}
-// ********** Code for _DeletedKeySentinel **************
-function _DeletedKeySentinel() {
-  // Initializers done
-}
-// ********** Code for StringBufferImpl **************
-function StringBufferImpl(content) {
-  // Initializers done
-  this.clear();
-  this.add(content);
-}
-StringBufferImpl.prototype.add = function(obj) {
-  var str = obj.toString();
-  if (str == null || str.isEmpty()) return this;
-  this._buffer.add(str);
-  this._length += str.length;
+  switch (state) {
+    case 0:
+      var capacity = $.get$length(this._keys);
+    case 1:
+      state = 0;
+      this._loadLimit = $._computeLoadLimit(newCapacity);
+      var oldKeys = this._keys;
+    case 2:
+      state = 0;
+      var oldValues = this._values;
+    case 3:
+      state = 0;
+      this._keys = $.List(newCapacity);
+      var t1 = $.List(newCapacity);
+      $.setRuntimeTypeInfo(t1, ({E: 'V'}));
+      this._values = t1;
+      for (var i = 0; $.ltB(i, capacity); ++i) {
+        var key = $.index(oldKeys, i);
+        if (key === (void 0) || key === $.CTC2) continue;
+        var value = $.index(oldValues, i);
+        var newIndex = this._probeForAdding$1(key);
+        $.indexSet(this._keys, newIndex, key);
+        $.indexSet(this._values, newIndex, value);
+      }
+      this._numberOfDeleted = 0;
+  }
+ },
+ _ensureCapacity$0: function() {
+  var newNumberOfEntries = $.add(this._numberOfEntries, 1);
+  if ($.geB(newNumberOfEntries, this._loadLimit)) {
+    this._grow$1($.mul($.get$length(this._keys), 2));
+    return;
+  }
+  var numberOfFree = $.sub($.sub($.get$length(this._keys), newNumberOfEntries), this._numberOfDeleted);
+  $.gtB(this._numberOfDeleted, numberOfFree) && this._grow$1($.get$length(this._keys));
+ },
+ _probeForLookup$1: function(key) {
+  var hash = $._firstProbe($.hashCode(key), $.get$length(this._keys));
+  for (var numberOfProbes = 1; true; ) {
+    var existingKey = $.index(this._keys, hash);
+    if (existingKey === (void 0)) return -1;
+    if ($.eqB(existingKey, key)) return hash;
+    var numberOfProbes0 = numberOfProbes + 1;
+    hash = $._nextProbe(hash, numberOfProbes, $.get$length(this._keys));
+    numberOfProbes = numberOfProbes0;
+  }
+ },
+ _probeForAdding$1: function(key) {
+  var hash = $._firstProbe($.hashCode(key), $.get$length(this._keys));
+  if (hash !== (hash | 0)) return this._probeForAdding$1$bailout(1, key, hash);
+  for (var numberOfProbes = 1, insertionIndex = -1; true; ) {
+    var existingKey = $.index(this._keys, hash);
+    if (existingKey === (void 0)) {
+      if ($.ltB(insertionIndex, 0)) return hash;
+      return insertionIndex;
+    }
+    if ($.eqB(existingKey, key)) return hash;
+    if ($.ltB(insertionIndex, 0) && $.CTC2 === existingKey) insertionIndex = hash;
+    var numberOfProbes0 = numberOfProbes + 1;
+    hash = $._nextProbe(hash, numberOfProbes, $.get$length(this._keys));
+    numberOfProbes = numberOfProbes0;
+  }
+ },
+ _probeForAdding$1$bailout: function(state, key, hash) {
+  for (var numberOfProbes = 1, insertionIndex = -1; true; ) {
+    var existingKey = $.index(this._keys, hash);
+    if (existingKey === (void 0)) {
+      if ($.ltB(insertionIndex, 0)) return hash;
+      return insertionIndex;
+    }
+    if ($.eqB(existingKey, key)) return hash;
+    if ($.ltB(insertionIndex, 0) && $.CTC2 === existingKey) insertionIndex = hash;
+    var numberOfProbes0 = numberOfProbes + 1;
+    hash = $._nextProbe(hash, numberOfProbes, $.get$length(this._keys));
+    numberOfProbes = numberOfProbes0;
+  }
+ },
+ HashMapImplementation$0: function() {
+  this._numberOfEntries = 0;
+  this._numberOfDeleted = 0;
+  this._loadLimit = $._computeLoadLimit(8);
+  this._keys = $.List(8);
+  var t1 = $.List(8);
+  $.setRuntimeTypeInfo(t1, ({E: 'V'}));
+  this._values = t1;
+ },
+ is$Map: function() { return true; }
+};
+
+$$.HashSetImplementation = {"":
+ ["_backingMap?"],
+ super: "Object",
+ toString$0: function() {
+  return $.collectionToString(this);
+ },
+ iterator$0: function() {
+  var t1 = $.HashSetIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({E: 'E'}));
+  return t1;
+ },
+ get$length: function() {
+  return $.get$length(this._backingMap);
+ },
+ isEmpty$0: function() {
+  return $.isEmpty(this._backingMap);
+ },
+ forEach$1: function(f) {
+  var t1 = ({});
+  t1.f_10 = f;
+  $.forEach(this._backingMap, new $.Closure18(t1));
+ },
+ contains$1: function(value) {
+  return this._backingMap.containsKey$1(value);
+ },
+ add$1: function(value) {
+  var t1 = this._backingMap;
+  if (typeof t1 !== 'object' || ((t1.constructor !== Array || !!t1.immutable$list) && !t1.is$JavaScriptIndexingBehavior())) return this.add$1$bailout(1, t1, value);
+  if (value !== (value | 0)) throw $.iae(value);
+  var t2 = t1.length;
+  if (value < 0 || value >= t2) throw $.ioore(value);
+  t1[value] = value;
+ },
+ add$1$bailout: function(state, t1, value) {
+  $.indexSet(t1, value, value);
+ },
+ clear$0: function() {
+  $.clear(this._backingMap);
+ },
+ HashSetImplementation$0: function() {
+  this._backingMap = $.HashMapImplementation$0();
+ },
+ is$Collection: function() { return true; }
+};
+
+$$.HashSetIterator = {"":
+ ["_nextValidIndex", "_entries"],
+ super: "Object",
+ _advance$0: function() {
+  var t1 = this._entries;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this._advance$0$bailout(1, t1);
+  var length$ = t1.length;
+  var entry = (void 0);
+  do {
+    var t2 = $.add(this._nextValidIndex, 1);
+    this._nextValidIndex = t2;
+    if ($.geB(t2, length$)) break;
+    t2 = this._nextValidIndex;
+    if (t2 !== (t2 | 0)) throw $.iae(t2);
+    var t3 = t1.length;
+    if (t2 < 0 || t2 >= t3) throw $.ioore(t2);
+    entry = t1[t2];
+  } while ((entry === (void 0) || entry === $.CTC2));
+ },
+ _advance$0$bailout: function(state, t1) {
+  var length$ = $.get$length(t1);
+  var entry = (void 0);
+  do {
+    var t2 = $.add(this._nextValidIndex, 1);
+    this._nextValidIndex = t2;
+    if ($.geB(t2, length$)) break;
+    entry = $.index(t1, this._nextValidIndex);
+  } while ((entry === (void 0) || entry === $.CTC2));
+ },
+ next$0: function() {
+  if (this.hasNext$0() !== true) throw $.captureStackTrace($.CTC0);
+  var t1 = this._entries;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.next$0$bailout(1, t1);
+  var t2 = this._nextValidIndex;
+  if (t2 !== (t2 | 0)) throw $.iae(t2);
+  var t3 = t1.length;
+  if (t2 < 0 || t2 >= t3) throw $.ioore(t2);
+  t2 = t1[t2];
+  this._advance$0();
+  return t2;
+ },
+ next$0$bailout: function(state, t1) {
+  var res = $.index(t1, this._nextValidIndex);
+  this._advance$0();
+  return res;
+ },
+ hasNext$0: function() {
+  var t1 = this._nextValidIndex;
+  if (typeof t1 !== 'number') return this.hasNext$0$bailout(1, t1, 0);
+  var t2 = this._entries;
+  if (typeof t2 !== 'string' && (typeof t2 !== 'object' || (t2.constructor !== Array && !t2.is$JavaScriptIndexingBehavior()))) return this.hasNext$0$bailout(2, t1, t2);
+  var t3 = t2.length;
+  if (t1 >= t3) return false;
+  if (t1 !== (t1 | 0)) throw $.iae(t1);
+  if (t1 < 0 || t1 >= t3) throw $.ioore(t1);
+  t2[t1] === $.CTC2 && this._advance$0();
+  t1 = this._nextValidIndex;
+  if (typeof t1 !== 'number') return this.hasNext$0$bailout(3, t1, t2);
+  return t1 < t2.length;
+ },
+ hasNext$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 3:
+      t1 = env0;
+      t2 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = this._nextValidIndex;
+    case 1:
+      state = 0;
+      var t2 = this._entries;
+    case 2:
+      state = 0;
+      if ($.geB(t1, $.get$length(t2))) return false;
+      $.index(t2, this._nextValidIndex) === $.CTC2 && this._advance$0();
+      t1 = this._nextValidIndex;
+    case 3:
+      state = 0;
+      return $.lt(t1, $.get$length(t2));
+  }
+ },
+ HashSetIterator$1: function(set_) {
+  this._advance$0();
+ }
+};
+
+$$._DeletedKeySentinel = {"":
+ [],
+ super: "Object"
+};
+
+$$.KeyValuePair = {"":
+ ["value=", "key?"],
+ super: "Object"
+};
+
+$$.LinkedHashMapImplementation = {"":
+ ["_map", "_list"],
+ super: "Object",
+ toString$0: function() {
+  return $.mapToString(this);
+ },
+ clear$0: function() {
+  $.clear(this._map);
+  $.clear(this._list);
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ get$length: function() {
+  return $.get$length(this._map);
+ },
+ containsKey$1: function(key) {
+  return this._map.containsKey$1(key);
+ },
+ forEach$1: function(f) {
+  var t1 = ({});
+  t1.f_1 = f;
+  $.forEach(this._list, new $.Closure7(t1));
+ },
+ operator$index$1: function(key) {
+  var t1 = this._map;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.operator$index$1$bailout(1, key, t1);
+  if (key !== (key | 0)) throw $.iae(key);
+  var t2 = t1.length;
+  if (key < 0 || key >= t2) throw $.ioore(key);
+  t1 = t1[key];
+  if (t1 === (void 0)) return;
+  return t1.get$element().get$value();
+ },
+ operator$index$1$bailout: function(state, key, t1) {
+  var entry = $.index(t1, key);
+  if (entry === (void 0)) return;
+  return entry.get$element().get$value();
+ },
+ operator$indexSet$2: function(key, value) {
+  if (this._map.containsKey$1(key) === true) {
+    var t1 = this._map;
+    if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.operator$indexSet$2$bailout(1, key, value, t1);
+    if (key !== (key | 0)) throw $.iae(key);
+    var t2 = t1.length;
+    if (key < 0 || key >= t2) throw $.ioore(key);
+    t1[key].get$element().set$value(value);
+  } else {
+    $.addLast(this._list, $.KeyValuePair$2(key, value));
+    t1 = this._map;
+    if (typeof t1 !== 'object' || ((t1.constructor !== Array || !!t1.immutable$list) && !t1.is$JavaScriptIndexingBehavior())) return this.operator$indexSet$2$bailout(2, key, t1, 0);
+    t2 = this._list.lastEntry$0();
+    if (key !== (key | 0)) throw $.iae(key);
+    var t3 = t1.length;
+    if (key < 0 || key >= t3) throw $.ioore(key);
+    t1[key] = t2;
+  }
+ },
+ operator$indexSet$2$bailout: function(state, env0, env1, env2) {
+  switch (state) {
+    case 1:
+      var key = env0;
+      var value = env1;
+      t1 = env2;
+      break;
+    case 2:
+      key = env0;
+      t1 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+    case 2:
+      if (state == 1 || (state == 0 && this._map.containsKey$1(key) === true)) {
+        switch (state) {
+          case 0:
+            var t1 = this._map;
+          case 1:
+            state = 0;
+            $.index(t1, key).get$element().set$value(value);
+        }
+      } else {
+        switch (state) {
+          case 0:
+            $.addLast(this._list, $.KeyValuePair$2(key, value));
+            t1 = this._map;
+          case 2:
+            state = 0;
+            $.indexSet(t1, key, this._list.lastEntry$0());
+        }
+      }
+  }
+ },
+ LinkedHashMapImplementation$0: function() {
+  this._map = $.HashMapImplementation$0();
+  var t1 = $.DoubleLinkedQueue$0();
+  $.setRuntimeTypeInfo(t1, ({E: 'KeyValuePair<K, V>'}));
+  this._list = t1;
+ },
+ is$Map: function() { return true; }
+};
+
+$$.DoubleLinkedQueueEntry = {"":
+ ["_element?", "_next=", "_previous="],
+ super: "Object",
+ get$element: function() {
+  return this._element;
+ },
+ previousEntry$0: function() {
+  return this._previous._asNonSentinelEntry$0();
+ },
+ _asNonSentinelEntry$0: function() {
   return this;
-}
-StringBufferImpl.prototype.clear = function() {
-  this._buffer = new Array();
+ },
+ remove$0: function() {
+  var t1 = this._next;
+  this._previous.set$_next(t1);
+  t1 = this._previous;
+  this._next.set$_previous(t1);
+  this._next = (void 0);
+  this._previous = (void 0);
+  return this._element;
+ },
+ prepend$1: function(e) {
+  var t1 = $.DoubleLinkedQueueEntry$1(e);
+  $.setRuntimeTypeInfo(t1, ({E: 'E'}));
+  t1._link$2(this._previous, this);
+ },
+ _link$2: function(p, n) {
+  this._next = n;
+  this._previous = p;
+  p.set$_next(this);
+  n.set$_previous(this);
+ },
+ DoubleLinkedQueueEntry$1: function(e) {
+  this._element = e;
+ }
+};
+
+$$._DoubleLinkedQueueEntrySentinel = {"":
+ ["_element", "_next", "_previous"],
+ super: "DoubleLinkedQueueEntry",
+ get$element: function() {
+  throw $.captureStackTrace($.CTC1);
+ },
+ _asNonSentinelEntry$0: function() {
+  return;
+ },
+ remove$0: function() {
+  throw $.captureStackTrace($.CTC1);
+ },
+ _DoubleLinkedQueueEntrySentinel$0: function() {
+  this._link$2(this, this);
+ }
+};
+
+$$.DoubleLinkedQueue = {"":
+ ["_sentinel"],
+ super: "Object",
+ toString$0: function() {
+  return $.collectionToString(this);
+ },
+ iterator$0: function() {
+  var t1 = $._DoubleLinkedQueueIterator$1(this._sentinel);
+  $.setRuntimeTypeInfo(t1, ({E: 'E'}));
+  return t1;
+ },
+ forEach$1: function(f) {
+  var entry = this._sentinel.get$_next();
+  for (; !(entry === this._sentinel); ) {
+    var nextEntry = entry.get$_next();
+    f.$call$1(entry.get$_element());
+    entry = nextEntry;
+  }
+ },
+ clear$0: function() {
+  var t1 = this._sentinel;
+  t1.set$_next(t1);
+  t1 = this._sentinel;
+  t1.set$_previous(t1);
+ },
+ isEmpty$0: function() {
+  return this._sentinel.get$_next() === this._sentinel;
+ },
+ get$length: function() {
+  var t1 = ({});
+  t1.counter_1 = 0;
+  this.forEach$1(new $.Closure6(t1));
+  return t1.counter_1;
+ },
+ lastEntry$0: function() {
+  return this._sentinel.previousEntry$0();
+ },
+ removeLast$0: function() {
+  return this._sentinel.get$_previous().remove$0();
+ },
+ add$1: function(value) {
+  this.addLast$1(value);
+ },
+ addLast$1: function(value) {
+  this._sentinel.prepend$1(value);
+ },
+ DoubleLinkedQueue$0: function() {
+  var t1 = $._DoubleLinkedQueueEntrySentinel$0();
+  $.setRuntimeTypeInfo(t1, ({E: 'E'}));
+  this._sentinel = t1;
+ },
+ is$Collection: function() { return true; }
+};
+
+$$._DoubleLinkedQueueIterator = {"":
+ ["_currentEntry", "_sentinel"],
+ super: "Object",
+ next$0: function() {
+  if (this.hasNext$0() !== true) throw $.captureStackTrace($.CTC0);
+  this._currentEntry = this._currentEntry.get$_next();
+  return this._currentEntry.get$element();
+ },
+ hasNext$0: function() {
+  return !(this._currentEntry.get$_next() === this._sentinel);
+ },
+ _DoubleLinkedQueueIterator$1: function(_sentinel) {
+  this._currentEntry = this._sentinel;
+ }
+};
+
+$$.StringBufferImpl = {"":
+ ["_length", "_buffer"],
+ super: "Object",
+ toString$0: function() {
+  if ($.get$length(this._buffer) === 0) return '';
+  if ($.get$length(this._buffer) === 1) return $.index(this._buffer, 0);
+  var result = $.concatAll(this._buffer);
+  $.clear(this._buffer);
+  $.add$1(this._buffer, result);
+  return result;
+ },
+ clear$0: function() {
+  var t1 = $.List((void 0));
+  $.setRuntimeTypeInfo(t1, ({E: 'String'}));
+  this._buffer = t1;
   this._length = 0;
   return this;
-}
-StringBufferImpl.prototype.toString = function() {
-  if (this._buffer.get$length() == 0) return "";
-  if (this._buffer.get$length() == 1) return this._buffer.$index(0);
-  var result = StringBase.concatAll(this._buffer);
-  this._buffer.clear();
-  this._buffer.add(result);
-  return result;
-}
-StringBufferImpl.prototype.add$1 = StringBufferImpl.prototype.add;
-StringBufferImpl.prototype.toString$0 = StringBufferImpl.prototype.toString;
-// ********** Code for StringBase **************
-function StringBase() {}
-StringBase.join = function(strings, separator) {
-  if (strings.get$length() == 0) return '';
-  var s = strings.$index(0);
-  for (var i = 1;
-   i < strings.get$length(); i++) {
-    s = s + separator + strings.$index(i);
-  }
-  return s;
-}
-StringBase.concatAll = function(strings) {
-  return StringBase.join(strings, "");
-}
-// ********** Code for StringImplementation **************
-StringImplementation = String;
-StringImplementation.prototype.isEmpty = function() {
-  return this.length == 0;
-}
-StringImplementation.prototype.contains = function(pattern, startIndex) {
-  return this.indexOf(pattern, startIndex) >= 0;
-}
-StringImplementation.prototype.hashCode = function() {
-  if (this.hash_ === undefined) {
-      for (var i = 0; i < this.length; i++) {
-        var ch = this.charCodeAt(i);
-        this.hash_ += ch;
-        this.hash_ += this.hash_ << 10;
-        this.hash_ ^= this.hash_ >> 6;
-      }
-
-      this.hash_ += this.hash_ << 3;
-      this.hash_ ^= this.hash_ >> 11;
-      this.hash_ += this.hash_ << 15;
-      this.hash_ = this.hash_ & ((1 << 29) - 1);
-    }
-    return this.hash_;
-}
-StringImplementation.prototype.hashCode$0 = StringImplementation.prototype.hashCode;
-// ********** Code for DateImplementation **************
-function DateImplementation() {}
-DateImplementation.now$ctor = function() {
-  this.timeZone = new TimeZoneImplementation.local$ctor();
-  this.value = DateImplementation._now();
-  // Initializers done
-  this._asJs();
-}
-DateImplementation.now$ctor.prototype = DateImplementation.prototype;
-DateImplementation.fromEpoch$ctor = function(value, timeZone) {
-  this.value = value;
-  this.timeZone = timeZone;
-  // Initializers done
-}
-DateImplementation.fromEpoch$ctor.prototype = DateImplementation.prototype;
-DateImplementation.prototype.get$value = function() { return this.value; };
-DateImplementation.prototype.get$timeZone = function() { return this.timeZone; };
-DateImplementation.prototype.$eq = function(other) {
-  if (!((other instanceof DateImplementation))) return false;
-  return (this.value == other.get$value()) && ($eq(this.timeZone, other.get$timeZone()));
-}
-DateImplementation.prototype.get$year = function() {
-  return this.isUtc ? this._asJs().getUTCFullYear() :
-      this._asJs().getFullYear();
-}
-DateImplementation.prototype.get$month = function() {
-  return this.isUtc ? this._asJs().getMonth() + 1 :
-        this._asJs().getMonth() + 1;
-}
-DateImplementation.prototype.get$day = function() {
-  return this.isUtc ? this._asJs().getUTCDate() : this._asJs().getDate()
-}
-DateImplementation.prototype.get$hours = function() {
-  return this.isUtc ? this._asJs().getUTCHours() : this._asJs().getHours()
-}
-DateImplementation.prototype.get$minutes = function() {
-  return this.isUtc ? this._asJs().getUTCMinutes() : this._asJs().getMinutes()
-}
-DateImplementation.prototype.get$seconds = function() {
-  return this.isUtc ? this._asJs().getUTCSeconds() : this._asJs().getSeconds()
-}
-DateImplementation.prototype.get$milliseconds = function() {
-  return this.isUtc ? this._asJs().getUTCMilliseconds() :
-      this._asJs().getMilliseconds();
-}
-DateImplementation.prototype.isUtc = function() {
-  return this.timeZone.isUtc;
-}
-DateImplementation.prototype.get$isUtc = function() {
-  return this.isUtc.bind(this);
-}
-DateImplementation.prototype.toString = function() {
-  function threeDigits(n) {
-    if (n >= 100) return ("" + n);
-    if (n > 10) return ("0" + n);
-    return ("00" + n);
-  }
-  function twoDigits(n) {
-    if (n >= 10) return ("" + n);
-    return ("0" + n);
-  }
-  var m = twoDigits(this.get$month());
-  var d = twoDigits(this.get$day());
-  var h = twoDigits(this.get$hours());
-  var min = twoDigits(this.get$minutes());
-  var sec = twoDigits(this.get$seconds());
-  var ms = threeDigits(this.get$milliseconds());
-  if (this.timeZone.isUtc) {
-    return ("" + this.get$year() + "-" + m + "-" + d + " " + h + ":" + min + ":" + sec + "." + ms + "Z");
-  }
-  else {
-    return ("" + this.get$year() + "-" + m + "-" + d + " " + h + ":" + min + ":" + sec + "." + ms);
-  }
-}
-DateImplementation.prototype.add = function(duration) {
-  return new DateImplementation.fromEpoch$ctor(this.value + duration.inMilliseconds, this.timeZone);
-}
-DateImplementation._now = function() {
-  return new Date().valueOf();
-}
-DateImplementation.prototype._asJs = function() {
-    if (!this.date) {
-      this.date = new Date(this.value);
-    }
-    return this.date;
-}
-DateImplementation.prototype.add$1 = DateImplementation.prototype.add;
-DateImplementation.prototype.toString$0 = DateImplementation.prototype.toString;
-// ********** Code for TimeZoneImplementation **************
-function TimeZoneImplementation() {}
-TimeZoneImplementation.local$ctor = function() {
-  this.isUtc = false;
-  // Initializers done
-}
-TimeZoneImplementation.local$ctor.prototype = TimeZoneImplementation.prototype;
-TimeZoneImplementation.prototype.$eq = function(other) {
-  if (!((other instanceof TimeZoneImplementation))) return false;
-  return $eq(this.isUtc, other.get$isUtc());
-}
-TimeZoneImplementation.prototype.toString = function() {
-  if (this.isUtc) return "TimeZone (UTC)";
-  return "TimeZone (Local)";
-}
-TimeZoneImplementation.prototype.get$isUtc = function() { return this.isUtc; };
-TimeZoneImplementation.prototype.toString$0 = TimeZoneImplementation.prototype.toString;
-// ********** Code for top level **************
-//  ********** Library dom **************
-//  ********** Natives dom_frog.js **************
-// Copyright (c) 2011, the Dart project authors.  Please see the AUTHORS file
-// for details. All rights reserved. Use of this source code is governed by a
-// BSD-style license that can be found in the LICENSE file.
-
-// TODO(jmesserly): we need to find a way to avoid conflicts with other
-// generated "typeName" fields. Ideally we wouldn't be patching 'Object' here.
-Object.prototype.get$typeName = Object.prototype.$typeNameOf;
-// ********** Code for dom_Window **************
-var dom_Window = {};
-// ********** Code for dom_AbstractWorker **************
-var dom_AbstractWorker = {};
-function $dynamic(name) {
-  var f = Object.prototype[name];
-  if (f && f.methods) return f.methods;
-
-  var methods = {};
-  if (f) methods.Object = f;
-  function $dynamicBind() {
-    // Find the target method
-    var method;
-    var proto = Object.getPrototypeOf(this);
-    var obj = this;
-    do {
-      method = methods[obj.$typeNameOf()];
-      if (method) break;
-      obj = Object.getPrototypeOf(obj);
-    } while (obj);
-
-    // Patch the prototype, but don't overwrite an existing stub, like
-    // the one on Object.prototype.
-    if (!proto.hasOwnProperty(name)) proto[name] = method || methods.Object;
-
-    return method.apply(this, Array.prototype.slice.call(arguments));
-  };
-  $dynamicBind.methods = methods;
-  Object.prototype[name] = $dynamicBind;
-  return methods;
-}
-$dynamic("get$dartObjectLocalStorage").AbstractWorker = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AbstractWorker = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").AbstractWorker = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_ArrayBuffer **************
-var dom_ArrayBuffer = {};
-$dynamic("get$dartObjectLocalStorage").ArrayBuffer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ArrayBuffer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ArrayBufferView **************
-var dom_ArrayBufferView = {};
-$dynamic("get$dartObjectLocalStorage").ArrayBufferView = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ArrayBufferView = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Attr **************
-var dom_Attr = {};
-$dynamic("get$value").Attr = function() { return this.value; };
-$dynamic("set$value").Attr = function(value) { return this.value = value; };
-// ********** Code for dom_AudioBuffer **************
-var dom_AudioBuffer = {};
-$dynamic("get$dartObjectLocalStorage").AudioBuffer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AudioBuffer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_AudioBufferSourceNode **************
-var dom_AudioBufferSourceNode = {};
-// ********** Code for dom_AudioChannelMerger **************
-var dom_AudioChannelMerger = {};
-// ********** Code for dom_AudioChannelSplitter **************
-var dom_AudioChannelSplitter = {};
-// ********** Code for dom_AudioContext **************
-var dom_AudioContext = {};
-$dynamic("get$dartObjectLocalStorage").AudioContext = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AudioContext = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_AudioDestinationNode **************
-var dom_AudioDestinationNode = {};
-// ********** Code for dom_AudioGain **************
-var dom_AudioGain = {};
-// ********** Code for dom_AudioGainNode **************
-var dom_AudioGainNode = {};
-// ********** Code for dom_AudioListener **************
-var dom_AudioListener = {};
-$dynamic("get$dartObjectLocalStorage").AudioListener = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AudioListener = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_AudioNode **************
-var dom_AudioNode = {};
-$dynamic("get$dartObjectLocalStorage").AudioNode = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AudioNode = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_AudioPannerNode **************
-var dom_AudioPannerNode = {};
-// ********** Code for dom_AudioParam **************
-var dom_AudioParam = {};
-$dynamic("get$value").AudioParam = function() { return this.value; };
-$dynamic("set$value").AudioParam = function(value) { return this.value = value; };
-$dynamic("get$dartObjectLocalStorage").AudioParam = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").AudioParam = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_AudioProcessingEvent **************
-var dom_AudioProcessingEvent = {};
-// ********** Code for dom_AudioSourceNode **************
-var dom_AudioSourceNode = {};
-// ********** Code for dom_BarInfo **************
-var dom_BarInfo = {};
-$dynamic("get$dartObjectLocalStorage").BarInfo = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").BarInfo = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_BeforeLoadEvent **************
-var dom_BeforeLoadEvent = {};
-// ********** Code for dom_BiquadFilterNode **************
-var dom_BiquadFilterNode = {};
-// ********** Code for dom_Blob **************
-var dom_Blob = {};
-$dynamic("get$dartObjectLocalStorage").Blob = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Blob = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CDATASection **************
-var dom_CDATASection = {};
-// ********** Code for dom_CSSCharsetRule **************
-var dom_CSSCharsetRule = {};
-// ********** Code for dom_CSSFontFaceRule **************
-var dom_CSSFontFaceRule = {};
-// ********** Code for dom_CSSImportRule **************
-var dom_CSSImportRule = {};
-// ********** Code for dom_CSSMediaRule **************
-var dom_CSSMediaRule = {};
-// ********** Code for dom_CSSPageRule **************
-var dom_CSSPageRule = {};
-// ********** Code for dom_CSSPrimitiveValue **************
-var dom_CSSPrimitiveValue = {};
-// ********** Code for CSSRule **************
-CSSRule.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-CSSRule.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CSSRuleList **************
-var dom_CSSRuleList = {};
-$dynamic("get$dartObjectLocalStorage").CSSRuleList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CSSRuleList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CSSStyleDeclaration **************
-var dom_CSSStyleDeclaration = {};
-$dynamic("get$dartObjectLocalStorage").CSSStyleDeclaration = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CSSStyleDeclaration = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CSSStyleRule **************
-var dom_CSSStyleRule = {};
-// ********** Code for dom_CSSStyleSheet **************
-var dom_CSSStyleSheet = {};
-// ********** Code for dom_CSSUnknownRule **************
-var dom_CSSUnknownRule = {};
-// ********** Code for dom_CSSValue **************
-var dom_CSSValue = {};
-$dynamic("get$dartObjectLocalStorage").CSSValue = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CSSValue = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CSSValueList **************
-var dom_CSSValueList = {};
-// ********** Code for dom_CanvasGradient **************
-var dom_CanvasGradient = {};
-$dynamic("get$dartObjectLocalStorage").CanvasGradient = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CanvasGradient = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CanvasPattern **************
-var dom_CanvasPattern = {};
-$dynamic("get$dartObjectLocalStorage").CanvasPattern = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CanvasPattern = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CanvasPixelArray **************
-var dom_CanvasPixelArray = {};
-$dynamic("get$dartObjectLocalStorage").CanvasPixelArray = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CanvasPixelArray = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CanvasRenderingContext **************
-var dom_CanvasRenderingContext = {};
-$dynamic("get$canvas").CanvasRenderingContext = function() { return this.canvas; };
-$dynamic("set$canvas").CanvasRenderingContext = function(value) { return this.canvas = value; };
-$dynamic("get$dartObjectLocalStorage").CanvasRenderingContext = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").CanvasRenderingContext = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CanvasRenderingContext2D **************
-var dom_CanvasRenderingContext2D = {};
-$dynamic("get$fillStyle").CanvasRenderingContext2D = function() { return this.fillStyle; };
-$dynamic("set$fillStyle").CanvasRenderingContext2D = function(value) { return this.fillStyle = value; };
-$dynamic("get$font").CanvasRenderingContext2D = function() { return this.font; };
-$dynamic("set$font").CanvasRenderingContext2D = function(value) { return this.font = value; };
-$dynamic("get$strokeStyle").CanvasRenderingContext2D = function() { return this.strokeStyle; };
-$dynamic("set$strokeStyle").CanvasRenderingContext2D = function(value) { return this.strokeStyle = value; };
-$dynamic("get$rotate").CanvasRenderingContext2D = function() {
-  return this.rotate.bind(this);
-}
-$dynamic("arc$6").CanvasRenderingContext2D = function($0, $1, $2, $3, $4, $5) {
-  return this.arc($0, $1, $2, $3, $4, $5);
-};
-$dynamic("beginPath$0").CanvasRenderingContext2D = function() {
-  return this.beginPath();
-};
-$dynamic("clearRect$4").CanvasRenderingContext2D = function($0, $1, $2, $3) {
-  return this.clearRect($0, $1, $2, $3);
-};
-$dynamic("closePath$0").CanvasRenderingContext2D = function() {
-  return this.closePath();
-};
-$dynamic("drawImage$3").CanvasRenderingContext2D = function($0, $1, $2) {
-  return this.drawImage($0, $1, $2);
-};
-$dynamic("drawImage$5").CanvasRenderingContext2D = function($0, $1, $2, $3, $4) {
-  return this.drawImage($0, $1, $2, $3, $4);
-};
-$dynamic("drawImage$9").CanvasRenderingContext2D = function($0, $1, $2, $3, $4, $5, $6, $7, $8) {
-  return this.drawImage($0, $1, $2, $3, $4, $5, $6, $7, $8);
-};
-$dynamic("fillText$3").CanvasRenderingContext2D = function($0, $1, $2) {
-  return this.fillText($0, $1, $2);
-};
-$dynamic("fillText$4").CanvasRenderingContext2D = function($0, $1, $2, $3) {
-  return this.fillText($0, $1, $2, $3);
-};
-$dynamic("restore$0").CanvasRenderingContext2D = function() {
-  return this.restore();
-};
-$dynamic("rotate$1").CanvasRenderingContext2D = function($0) {
-  return this.rotate($0);
-};
-$dynamic("save$0").CanvasRenderingContext2D = function() {
-  return this.save();
-};
-$dynamic("stroke$0").CanvasRenderingContext2D = function() {
-  return this.stroke();
-};
-$dynamic("translate$2").CanvasRenderingContext2D = function($0, $1) {
-  return this.translate($0, $1);
-};
-// ********** Code for CharacterData **************
-// ********** Code for dom_ClientRect **************
-var dom_ClientRect = {};
-$dynamic("get$height").ClientRect = function() { return this.height; };
-$dynamic("set$height").ClientRect = function(value) { return this.height = value; };
-$dynamic("get$left").ClientRect = function() { return this.left; };
-$dynamic("set$left").ClientRect = function(value) { return this.left = value; };
-$dynamic("get$top").ClientRect = function() { return this.top; };
-$dynamic("set$top").ClientRect = function(value) { return this.top = value; };
-$dynamic("get$width").ClientRect = function() { return this.width; };
-$dynamic("set$width").ClientRect = function(value) { return this.width = value; };
-$dynamic("get$dartObjectLocalStorage").ClientRect = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ClientRect = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ClientRectList **************
-var dom_ClientRectList = {};
-$dynamic("get$dartObjectLocalStorage").ClientRectList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ClientRectList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Clipboard **************
-var dom_Clipboard = {};
-$dynamic("get$dartObjectLocalStorage").Clipboard = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Clipboard = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CloseEvent **************
-var dom_CloseEvent = {};
-// ********** Code for dom_Comment **************
-var dom_Comment = {};
-// ********** Code for dom_CompositionEvent **************
-var dom_CompositionEvent = {};
-// ********** Code for Console **************
-Console = (typeof console == 'undefined' ? {} : console);
-Console.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-Console.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ConvolverNode **************
-var dom_ConvolverNode = {};
-// ********** Code for dom_Coordinates **************
-var dom_Coordinates = {};
-$dynamic("get$dartObjectLocalStorage").Coordinates = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Coordinates = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Counter **************
-var dom_Counter = {};
-$dynamic("get$dartObjectLocalStorage").Counter = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Counter = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Crypto **************
-var dom_Crypto = {};
-$dynamic("get$dartObjectLocalStorage").Crypto = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Crypto = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_CustomEvent **************
-var dom_CustomEvent = {};
-// ********** Code for dom_DOMApplicationCache **************
-var dom_DOMApplicationCache = {};
-$dynamic("get$dartObjectLocalStorage").DOMApplicationCache = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMApplicationCache = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").DOMApplicationCache = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-$dynamic("update$0").DOMApplicationCache = function() {
-  return this.update();
-};
-// ********** Code for dom_DOMException **************
-var dom_DOMException = {};
-$dynamic("get$dartObjectLocalStorage").DOMException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").DOMException = function() {
-  return this.toString();
-};
-// ********** Code for dom_DOMFileSystem **************
-var dom_DOMFileSystem = {};
-$dynamic("get$dartObjectLocalStorage").DOMFileSystem = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMFileSystem = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMFileSystemSync **************
-var dom_DOMFileSystemSync = {};
-$dynamic("get$dartObjectLocalStorage").DOMFileSystemSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMFileSystemSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMFormData **************
-var dom_DOMFormData = {};
-$dynamic("get$dartObjectLocalStorage").DOMFormData = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMFormData = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMImplementation **************
-var dom_DOMImplementation = {};
-$dynamic("get$dartObjectLocalStorage").DOMImplementation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMImplementation = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMMimeType **************
-var dom_DOMMimeType = {};
-$dynamic("get$dartObjectLocalStorage").DOMMimeType = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMMimeType = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMMimeTypeArray **************
-var dom_DOMMimeTypeArray = {};
-$dynamic("get$dartObjectLocalStorage").DOMMimeTypeArray = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMMimeTypeArray = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMParser **************
-var dom_DOMParser = {};
-$dynamic("get$dartObjectLocalStorage").DOMParser = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMParser = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMPlugin **************
-var dom_DOMPlugin = {};
-$dynamic("get$dartObjectLocalStorage").DOMPlugin = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMPlugin = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMPluginArray **************
-var dom_DOMPluginArray = {};
-$dynamic("get$dartObjectLocalStorage").DOMPluginArray = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMPluginArray = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMSelection **************
-var dom_DOMSelection = {};
-$dynamic("get$dartObjectLocalStorage").DOMSelection = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMSelection = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").DOMSelection = function() {
-  return this.toString();
-};
-// ********** Code for dom_DOMSettableTokenList **************
-var dom_DOMSettableTokenList = {};
-$dynamic("get$value").DOMSettableTokenList = function() { return this.value; };
-$dynamic("set$value").DOMSettableTokenList = function(value) { return this.value = value; };
-// ********** Code for dom_DOMTokenList **************
-var dom_DOMTokenList = {};
-$dynamic("get$dartObjectLocalStorage").DOMTokenList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMTokenList = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("add$1").DOMTokenList = function($0) {
-  return this.add($0);
-};
-$dynamic("toString$0").DOMTokenList = function() {
-  return this.toString();
-};
-// ********** Code for dom_DOMURL **************
-var dom_DOMURL = {};
-$dynamic("get$dartObjectLocalStorage").DOMURL = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMURL = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DOMWindow **************
-var dom_DOMWindow = {};
-$dynamic("get$top").DOMWindow = function() { return this.top; };
-$dynamic("set$top").DOMWindow = function(value) { return this.top = value; };
-$dynamic("get$dartObjectLocalStorage").DOMWindow = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DOMWindow = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").DOMWindow = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-$dynamic("postMessage$2").DOMWindow = function($0, $1) {
-  return this.postMessage($0, $1);
-};
-$dynamic("postMessage$3").DOMWindow = function($0, $1, $2) {
-  return this.postMessage($0, $1, $2);
-};
-$dynamic("webkitRequestAnimationFrame$2").DOMWindow = function($0, $1) {
-  return this.webkitRequestAnimationFrame($wrap_call$1(to$call$1($0)), $1);
-};
-// ********** Code for dom_DataTransferItem **************
-var dom_DataTransferItem = {};
-$dynamic("get$dartObjectLocalStorage").DataTransferItem = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DataTransferItem = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DataTransferItemList **************
-var dom_DataTransferItemList = {};
-$dynamic("get$dartObjectLocalStorage").DataTransferItemList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DataTransferItemList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DataView **************
-var dom_DataView = {};
-// ********** Code for dom_Database **************
-var dom_Database = {};
-$dynamic("get$dartObjectLocalStorage").Database = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Database = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DatabaseSync **************
-var dom_DatabaseSync = {};
-$dynamic("get$dartObjectLocalStorage").DatabaseSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DatabaseSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DedicatedWorkerContext **************
-var dom_DedicatedWorkerContext = {};
-$dynamic("postMessage$1").DedicatedWorkerContext = function($0) {
-  return this.postMessage($0);
-};
-$dynamic("postMessage$2").DedicatedWorkerContext = function($0, $1) {
-  return this.postMessage($0, $1);
-};
-// ********** Code for dom_DelayNode **************
-var dom_DelayNode = {};
-// ********** Code for dom_DeviceMotionEvent **************
-var dom_DeviceMotionEvent = {};
-// ********** Code for dom_DeviceOrientationEvent **************
-var dom_DeviceOrientationEvent = {};
-// ********** Code for dom_DirectoryEntry **************
-var dom_DirectoryEntry = {};
-// ********** Code for dom_DirectoryEntrySync **************
-var dom_DirectoryEntrySync = {};
-// ********** Code for dom_DirectoryReader **************
-var dom_DirectoryReader = {};
-$dynamic("get$dartObjectLocalStorage").DirectoryReader = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DirectoryReader = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_DirectoryReaderSync **************
-var dom_DirectoryReaderSync = {};
-$dynamic("get$dartObjectLocalStorage").DirectoryReaderSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").DirectoryReaderSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for Document **************
-Document.prototype.get$documentElement = function() { return this.documentElement; };
-Document.prototype.set$documentElement = function(value) { return this.documentElement = value; };
-Document.prototype.querySelector$1 = function($0) {
-  return this.querySelector($0);
-};
-// ********** Code for dom_DocumentFragment **************
-var dom_DocumentFragment = {};
-$dynamic("querySelector$1").DocumentFragment = function($0) {
-  return this.querySelector($0);
-};
-// ********** Code for dom_DocumentType **************
-var dom_DocumentType = {};
-// ********** Code for dom_DynamicsCompressorNode **************
-var dom_DynamicsCompressorNode = {};
-// ********** Code for Element **************
-Element.prototype.querySelector$1 = function($0) {
-  return this.querySelector($0);
-};
-// ********** Code for dom_ElementTimeControl **************
-var dom_ElementTimeControl = {};
-$dynamic("get$dartObjectLocalStorage").ElementTimeControl = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ElementTimeControl = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ElementTraversal **************
-var dom_ElementTraversal = {};
-$dynamic("get$dartObjectLocalStorage").ElementTraversal = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ElementTraversal = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Entity **************
-var dom_Entity = {};
-// ********** Code for dom_EntityReference **************
-var dom_EntityReference = {};
-// ********** Code for dom_Entry **************
-var dom_Entry = {};
-$dynamic("get$dartObjectLocalStorage").Entry = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Entry = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_EntryArray **************
-var dom_EntryArray = {};
-$dynamic("get$dartObjectLocalStorage").EntryArray = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EntryArray = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_EntryArraySync **************
-var dom_EntryArraySync = {};
-$dynamic("get$dartObjectLocalStorage").EntryArraySync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EntryArraySync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_EntrySync **************
-var dom_EntrySync = {};
-$dynamic("get$dartObjectLocalStorage").EntrySync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EntrySync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ErrorEvent **************
-var dom_ErrorEvent = {};
-// ********** Code for Event **************
-Event.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-Event.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_EventException **************
-var dom_EventException = {};
-$dynamic("get$dartObjectLocalStorage").EventException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EventException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").EventException = function() {
-  return this.toString();
-};
-// ********** Code for dom_EventSource **************
-var dom_EventSource = {};
-$dynamic("get$dartObjectLocalStorage").EventSource = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EventSource = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").EventSource = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_EventTarget **************
-var dom_EventTarget = {};
-$dynamic("get$dartObjectLocalStorage").EventTarget = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").EventTarget = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").EventTarget = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_File **************
-var dom_File = {};
-// ********** Code for dom_FileEntry **************
-var dom_FileEntry = {};
-// ********** Code for dom_FileEntrySync **************
-var dom_FileEntrySync = {};
-// ********** Code for dom_FileError **************
-var dom_FileError = {};
-$dynamic("get$dartObjectLocalStorage").FileError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_FileException **************
-var dom_FileException = {};
-$dynamic("get$dartObjectLocalStorage").FileException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").FileException = function() {
-  return this.toString();
-};
-// ********** Code for dom_FileList **************
-var dom_FileList = {};
-$dynamic("get$dartObjectLocalStorage").FileList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_FileReader **************
-var dom_FileReader = {};
-$dynamic("get$dartObjectLocalStorage").FileReader = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileReader = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_FileReaderSync **************
-var dom_FileReaderSync = {};
-$dynamic("get$dartObjectLocalStorage").FileReaderSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileReaderSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_FileWriter **************
-var dom_FileWriter = {};
-$dynamic("get$dartObjectLocalStorage").FileWriter = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileWriter = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_FileWriterSync **************
-var dom_FileWriterSync = {};
-$dynamic("get$dartObjectLocalStorage").FileWriterSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").FileWriterSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Float32Array **************
-var dom_Float32Array = {};
-$dynamic("get$length").Float32Array = function() { return this.length; };
-$dynamic("set$length").Float32Array = function(value) { return this.length = value; };
-// ********** Code for dom_Float64Array **************
-var dom_Float64Array = {};
-$dynamic("get$length").Float64Array = function() { return this.length; };
-$dynamic("set$length").Float64Array = function(value) { return this.length = value; };
-// ********** Code for dom_Geolocation **************
-var dom_Geolocation = {};
-$dynamic("get$dartObjectLocalStorage").Geolocation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Geolocation = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Geoposition **************
-var dom_Geoposition = {};
-$dynamic("get$dartObjectLocalStorage").Geoposition = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Geoposition = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_HTMLAllCollection **************
-var dom_HTMLAllCollection = {};
-$dynamic("get$dartObjectLocalStorage").HTMLAllCollection = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").HTMLAllCollection = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_HTMLAnchorElement **************
-var dom_HTMLAnchorElement = {};
-$dynamic("toString$0").HTMLAnchorElement = function() {
-  return this.toString();
-};
-// ********** Code for dom_HTMLAppletElement **************
-var dom_HTMLAppletElement = {};
-$dynamic("get$height").HTMLAppletElement = function() { return this.height; };
-$dynamic("set$height").HTMLAppletElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLAppletElement = function() { return this.width; };
-$dynamic("set$width").HTMLAppletElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLAreaElement **************
-var dom_HTMLAreaElement = {};
-// ********** Code for dom_HTMLAudioElement **************
-var dom_HTMLAudioElement = {};
-// ********** Code for dom_HTMLBRElement **************
-var dom_HTMLBRElement = {};
-// ********** Code for dom_HTMLBaseElement **************
-var dom_HTMLBaseElement = {};
-// ********** Code for dom_HTMLBaseFontElement **************
-var dom_HTMLBaseFontElement = {};
-// ********** Code for dom_HTMLBodyElement **************
-var dom_HTMLBodyElement = {};
-// ********** Code for dom_HTMLButtonElement **************
-var dom_HTMLButtonElement = {};
-$dynamic("get$value").HTMLButtonElement = function() { return this.value; };
-$dynamic("set$value").HTMLButtonElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLCanvasElement **************
-var dom_HTMLCanvasElement = {};
-$dynamic("get$height").HTMLCanvasElement = function() { return this.height; };
-$dynamic("set$height").HTMLCanvasElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLCanvasElement = function() { return this.width; };
-$dynamic("set$width").HTMLCanvasElement = function(value) { return this.width = value; };
-$dynamic("getContext$1").HTMLCanvasElement = function($0) {
-  return this.getContext($0);
-};
-// ********** Code for HTMLCollection **************
-HTMLCollection.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-HTMLCollection.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_HTMLDListElement **************
-var dom_HTMLDListElement = {};
-// ********** Code for dom_HTMLDataListElement **************
-var dom_HTMLDataListElement = {};
-// ********** Code for dom_HTMLDetailsElement **************
-var dom_HTMLDetailsElement = {};
-// ********** Code for dom_HTMLDirectoryElement **************
-var dom_HTMLDirectoryElement = {};
-// ********** Code for dom_HTMLDivElement **************
-var dom_HTMLDivElement = {};
-// ********** Code for dom_HTMLDocument **************
-var dom_HTMLDocument = {};
-$dynamic("get$height").HTMLDocument = function() { return this.height; };
-$dynamic("set$height").HTMLDocument = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLDocument = function() { return this.width; };
-$dynamic("set$width").HTMLDocument = function(value) { return this.width = value; };
-// ********** Code for HTMLElement **************
-// ********** Code for dom_HTMLEmbedElement **************
-var dom_HTMLEmbedElement = {};
-$dynamic("get$height").HTMLEmbedElement = function() { return this.height; };
-$dynamic("set$height").HTMLEmbedElement = function(value) { return this.height = value; };
-$dynamic("get$src").HTMLEmbedElement = function() { return this.src; };
-$dynamic("set$src").HTMLEmbedElement = function(value) { return this.src = value; };
-$dynamic("get$width").HTMLEmbedElement = function() { return this.width; };
-$dynamic("set$width").HTMLEmbedElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLFieldSetElement **************
-var dom_HTMLFieldSetElement = {};
-// ********** Code for dom_HTMLFontElement **************
-var dom_HTMLFontElement = {};
-// ********** Code for dom_HTMLFormElement **************
-var dom_HTMLFormElement = {};
-// ********** Code for dom_HTMLFrameElement **************
-var dom_HTMLFrameElement = {};
-$dynamic("get$height").HTMLFrameElement = function() { return this.height; };
-$dynamic("set$height").HTMLFrameElement = function(value) { return this.height = value; };
-$dynamic("get$src").HTMLFrameElement = function() { return this.src; };
-$dynamic("set$src").HTMLFrameElement = function(value) { return this.src = value; };
-$dynamic("get$width").HTMLFrameElement = function() { return this.width; };
-$dynamic("set$width").HTMLFrameElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLFrameSetElement **************
-var dom_HTMLFrameSetElement = {};
-// ********** Code for dom_HTMLHRElement **************
-var dom_HTMLHRElement = {};
-$dynamic("get$width").HTMLHRElement = function() { return this.width; };
-$dynamic("set$width").HTMLHRElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLHeadElement **************
-var dom_HTMLHeadElement = {};
-// ********** Code for dom_HTMLHeadingElement **************
-var dom_HTMLHeadingElement = {};
-// ********** Code for dom_HTMLHtmlElement **************
-var dom_HTMLHtmlElement = {};
-// ********** Code for dom_HTMLIFrameElement **************
-var dom_HTMLIFrameElement = {};
-$dynamic("get$height").HTMLIFrameElement = function() { return this.height; };
-$dynamic("set$height").HTMLIFrameElement = function(value) { return this.height = value; };
-$dynamic("get$src").HTMLIFrameElement = function() { return this.src; };
-$dynamic("set$src").HTMLIFrameElement = function(value) { return this.src = value; };
-$dynamic("get$width").HTMLIFrameElement = function() { return this.width; };
-$dynamic("set$width").HTMLIFrameElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLImageElement **************
-var dom_HTMLImageElement = {};
-$dynamic("get$height").HTMLImageElement = function() { return this.height; };
-$dynamic("set$height").HTMLImageElement = function(value) { return this.height = value; };
-$dynamic("get$src").HTMLImageElement = function() { return this.src; };
-$dynamic("set$src").HTMLImageElement = function(value) { return this.src = value; };
-$dynamic("get$width").HTMLImageElement = function() { return this.width; };
-$dynamic("set$width").HTMLImageElement = function(value) { return this.width = value; };
-// ********** Code for HTMLInputElement **************
-HTMLInputElement.prototype.get$src = function() { return this.src; };
-HTMLInputElement.prototype.set$src = function(value) { return this.src = value; };
-HTMLInputElement.prototype.get$value = function() { return this.value; };
-HTMLInputElement.prototype.set$value = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLIsIndexElement **************
-var dom_HTMLIsIndexElement = {};
-// ********** Code for dom_HTMLKeygenElement **************
-var dom_HTMLKeygenElement = {};
-// ********** Code for dom_HTMLLIElement **************
-var dom_HTMLLIElement = {};
-$dynamic("get$value").HTMLLIElement = function() { return this.value; };
-$dynamic("set$value").HTMLLIElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLLabelElement **************
-var dom_HTMLLabelElement = {};
-// ********** Code for dom_HTMLLegendElement **************
-var dom_HTMLLegendElement = {};
-// ********** Code for dom_HTMLLinkElement **************
-var dom_HTMLLinkElement = {};
-// ********** Code for dom_HTMLMapElement **************
-var dom_HTMLMapElement = {};
-// ********** Code for dom_HTMLMarqueeElement **************
-var dom_HTMLMarqueeElement = {};
-$dynamic("get$height").HTMLMarqueeElement = function() { return this.height; };
-$dynamic("set$height").HTMLMarqueeElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLMarqueeElement = function() { return this.width; };
-$dynamic("set$width").HTMLMarqueeElement = function(value) { return this.width = value; };
-$dynamic("get$start").HTMLMarqueeElement = function() {
-  return this.start.bind(this);
-}
-$dynamic("start$0").HTMLMarqueeElement = function() {
-  return this.start();
-};
-// ********** Code for HTMLMediaElement **************
-HTMLMediaElement.prototype.get$src = function() { return this.src; };
-HTMLMediaElement.prototype.set$src = function(value) { return this.src = value; };
-// ********** Code for dom_HTMLMenuElement **************
-var dom_HTMLMenuElement = {};
-// ********** Code for dom_HTMLMetaElement **************
-var dom_HTMLMetaElement = {};
-// ********** Code for dom_HTMLMeterElement **************
-var dom_HTMLMeterElement = {};
-$dynamic("get$value").HTMLMeterElement = function() { return this.value; };
-$dynamic("set$value").HTMLMeterElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLModElement **************
-var dom_HTMLModElement = {};
-// ********** Code for dom_HTMLOListElement **************
-var dom_HTMLOListElement = {};
-$dynamic("get$start").HTMLOListElement = function() { return this.start; };
-$dynamic("set$start").HTMLOListElement = function(value) { return this.start = value; };
-$dynamic("start$0").HTMLOListElement = function() {
-  return this.start();
-};
-// ********** Code for dom_HTMLObjectElement **************
-var dom_HTMLObjectElement = {};
-$dynamic("get$height").HTMLObjectElement = function() { return this.height; };
-$dynamic("set$height").HTMLObjectElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLObjectElement = function() { return this.width; };
-$dynamic("set$width").HTMLObjectElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLOptGroupElement **************
-var dom_HTMLOptGroupElement = {};
-// ********** Code for dom_HTMLOptionElement **************
-var dom_HTMLOptionElement = {};
-$dynamic("get$value").HTMLOptionElement = function() { return this.value; };
-$dynamic("set$value").HTMLOptionElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLOptionsCollection **************
-var dom_HTMLOptionsCollection = {};
-// ********** Code for dom_HTMLOutputElement **************
-var dom_HTMLOutputElement = {};
-$dynamic("get$value").HTMLOutputElement = function() { return this.value; };
-$dynamic("set$value").HTMLOutputElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLParagraphElement **************
-var dom_HTMLParagraphElement = {};
-// ********** Code for dom_HTMLParamElement **************
-var dom_HTMLParamElement = {};
-$dynamic("get$value").HTMLParamElement = function() { return this.value; };
-$dynamic("set$value").HTMLParamElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLPreElement **************
-var dom_HTMLPreElement = {};
-$dynamic("get$width").HTMLPreElement = function() { return this.width; };
-$dynamic("set$width").HTMLPreElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLProgressElement **************
-var dom_HTMLProgressElement = {};
-$dynamic("get$value").HTMLProgressElement = function() { return this.value; };
-$dynamic("set$value").HTMLProgressElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLQuoteElement **************
-var dom_HTMLQuoteElement = {};
-// ********** Code for dom_HTMLScriptElement **************
-var dom_HTMLScriptElement = {};
-$dynamic("get$src").HTMLScriptElement = function() { return this.src; };
-$dynamic("set$src").HTMLScriptElement = function(value) { return this.src = value; };
-// ********** Code for dom_HTMLSelectElement **************
-var dom_HTMLSelectElement = {};
-$dynamic("get$value").HTMLSelectElement = function() { return this.value; };
-$dynamic("set$value").HTMLSelectElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLSourceElement **************
-var dom_HTMLSourceElement = {};
-$dynamic("get$src").HTMLSourceElement = function() { return this.src; };
-$dynamic("set$src").HTMLSourceElement = function(value) { return this.src = value; };
-// ********** Code for dom_HTMLSpanElement **************
-var dom_HTMLSpanElement = {};
-// ********** Code for dom_HTMLStyleElement **************
-var dom_HTMLStyleElement = {};
-// ********** Code for dom_HTMLTableCaptionElement **************
-var dom_HTMLTableCaptionElement = {};
-// ********** Code for dom_HTMLTableCellElement **************
-var dom_HTMLTableCellElement = {};
-$dynamic("get$height").HTMLTableCellElement = function() { return this.height; };
-$dynamic("set$height").HTMLTableCellElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLTableCellElement = function() { return this.width; };
-$dynamic("set$width").HTMLTableCellElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLTableColElement **************
-var dom_HTMLTableColElement = {};
-$dynamic("get$width").HTMLTableColElement = function() { return this.width; };
-$dynamic("set$width").HTMLTableColElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLTableElement **************
-var dom_HTMLTableElement = {};
-$dynamic("get$width").HTMLTableElement = function() { return this.width; };
-$dynamic("set$width").HTMLTableElement = function(value) { return this.width = value; };
-// ********** Code for dom_HTMLTableRowElement **************
-var dom_HTMLTableRowElement = {};
-// ********** Code for dom_HTMLTableSectionElement **************
-var dom_HTMLTableSectionElement = {};
-// ********** Code for dom_HTMLTextAreaElement **************
-var dom_HTMLTextAreaElement = {};
-$dynamic("get$value").HTMLTextAreaElement = function() { return this.value; };
-$dynamic("set$value").HTMLTextAreaElement = function(value) { return this.value = value; };
-// ********** Code for dom_HTMLTitleElement **************
-var dom_HTMLTitleElement = {};
-// ********** Code for dom_HTMLTrackElement **************
-var dom_HTMLTrackElement = {};
-$dynamic("get$src").HTMLTrackElement = function() { return this.src; };
-$dynamic("set$src").HTMLTrackElement = function(value) { return this.src = value; };
-// ********** Code for dom_HTMLUListElement **************
-var dom_HTMLUListElement = {};
-// ********** Code for dom_HTMLUnknownElement **************
-var dom_HTMLUnknownElement = {};
-// ********** Code for dom_HTMLVideoElement **************
-var dom_HTMLVideoElement = {};
-$dynamic("get$height").HTMLVideoElement = function() { return this.height; };
-$dynamic("set$height").HTMLVideoElement = function(value) { return this.height = value; };
-$dynamic("get$width").HTMLVideoElement = function() { return this.width; };
-$dynamic("set$width").HTMLVideoElement = function(value) { return this.width = value; };
-// ********** Code for dom_HashChangeEvent **************
-var dom_HashChangeEvent = {};
-// ********** Code for dom_HighPass2FilterNode **************
-var dom_HighPass2FilterNode = {};
-// ********** Code for dom_History **************
-var dom_History = {};
-$dynamic("get$dartObjectLocalStorage").History = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").History = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBAny **************
-var dom_IDBAny = {};
-$dynamic("get$dartObjectLocalStorage").IDBAny = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBAny = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBCursor **************
-var dom_IDBCursor = {};
-$dynamic("get$dartObjectLocalStorage").IDBCursor = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBCursor = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBCursorWithValue **************
-var dom_IDBCursorWithValue = {};
-$dynamic("get$value").IDBCursorWithValue = function() { return this.value; };
-$dynamic("set$value").IDBCursorWithValue = function(value) { return this.value = value; };
-// ********** Code for dom_IDBDatabase **************
-var dom_IDBDatabase = {};
-$dynamic("get$dartObjectLocalStorage").IDBDatabase = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBDatabase = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").IDBDatabase = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_IDBDatabaseError **************
-var dom_IDBDatabaseError = {};
-$dynamic("get$dartObjectLocalStorage").IDBDatabaseError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBDatabaseError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBDatabaseException **************
-var dom_IDBDatabaseException = {};
-$dynamic("get$dartObjectLocalStorage").IDBDatabaseException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBDatabaseException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").IDBDatabaseException = function() {
-  return this.toString();
-};
-// ********** Code for dom_IDBFactory **************
-var dom_IDBFactory = {};
-$dynamic("get$dartObjectLocalStorage").IDBFactory = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBFactory = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBIndex **************
-var dom_IDBIndex = {};
-$dynamic("get$dartObjectLocalStorage").IDBIndex = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBIndex = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBKey **************
-var dom_IDBKey = {};
-$dynamic("get$dartObjectLocalStorage").IDBKey = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBKey = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBKeyRange **************
-var dom_IDBKeyRange = {};
-$dynamic("get$dartObjectLocalStorage").IDBKeyRange = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBKeyRange = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_IDBObjectStore **************
-var dom_IDBObjectStore = {};
-$dynamic("get$dartObjectLocalStorage").IDBObjectStore = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBObjectStore = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("add$1").IDBObjectStore = function($0) {
-  return this.add($0);
-};
-// ********** Code for dom_IDBRequest **************
-var dom_IDBRequest = {};
-$dynamic("get$dartObjectLocalStorage").IDBRequest = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBRequest = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").IDBRequest = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_IDBTransaction **************
-var dom_IDBTransaction = {};
-$dynamic("get$dartObjectLocalStorage").IDBTransaction = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").IDBTransaction = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").IDBTransaction = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_IDBVersionChangeEvent **************
-var dom_IDBVersionChangeEvent = {};
-// ********** Code for dom_IDBVersionChangeRequest **************
-var dom_IDBVersionChangeRequest = {};
-// ********** Code for dom_ImageData **************
-var dom_ImageData = {};
-$dynamic("get$height").ImageData = function() { return this.height; };
-$dynamic("set$height").ImageData = function(value) { return this.height = value; };
-$dynamic("get$width").ImageData = function() { return this.width; };
-$dynamic("set$width").ImageData = function(value) { return this.width = value; };
-$dynamic("get$dartObjectLocalStorage").ImageData = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ImageData = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_InjectedScriptHost **************
-var dom_InjectedScriptHost = {};
-$dynamic("get$dartObjectLocalStorage").InjectedScriptHost = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").InjectedScriptHost = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_InspectorFrontendHost **************
-var dom_InspectorFrontendHost = {};
-$dynamic("get$dartObjectLocalStorage").InspectorFrontendHost = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").InspectorFrontendHost = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Int16Array **************
-var dom_Int16Array = {};
-$dynamic("get$length").Int16Array = function() { return this.length; };
-$dynamic("set$length").Int16Array = function(value) { return this.length = value; };
-// ********** Code for dom_Int32Array **************
-var dom_Int32Array = {};
-$dynamic("get$length").Int32Array = function() { return this.length; };
-$dynamic("set$length").Int32Array = function(value) { return this.length = value; };
-// ********** Code for dom_Int8Array **************
-var dom_Int8Array = {};
-$dynamic("get$length").Int8Array = function() { return this.length; };
-$dynamic("set$length").Int8Array = function(value) { return this.length = value; };
-// ********** Code for dom_JavaScriptAudioNode **************
-var dom_JavaScriptAudioNode = {};
-// ********** Code for dom_JavaScriptCallFrame **************
-var dom_JavaScriptCallFrame = {};
-$dynamic("get$dartObjectLocalStorage").JavaScriptCallFrame = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").JavaScriptCallFrame = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_KeyboardEvent **************
-var dom_KeyboardEvent = {};
-// ********** Code for dom_Location **************
-var dom_Location = {};
-$dynamic("get$dartObjectLocalStorage").Location = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Location = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").Location = function() {
-  return this.toString();
-};
-// ********** Code for dom_LowPass2FilterNode **************
-var dom_LowPass2FilterNode = {};
-// ********** Code for dom_MediaElementAudioSourceNode **************
-var dom_MediaElementAudioSourceNode = {};
-// ********** Code for dom_MediaError **************
-var dom_MediaError = {};
-$dynamic("get$dartObjectLocalStorage").MediaError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MediaError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MediaList **************
-var dom_MediaList = {};
-$dynamic("get$dartObjectLocalStorage").MediaList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MediaList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MediaQueryList **************
-var dom_MediaQueryList = {};
-$dynamic("get$dartObjectLocalStorage").MediaQueryList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MediaQueryList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MediaQueryListListener **************
-var dom_MediaQueryListListener = {};
-$dynamic("get$dartObjectLocalStorage").MediaQueryListListener = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MediaQueryListListener = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MemoryInfo **************
-var dom_MemoryInfo = {};
-$dynamic("get$dartObjectLocalStorage").MemoryInfo = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MemoryInfo = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MessageChannel **************
-var dom_MessageChannel = {};
-$dynamic("get$dartObjectLocalStorage").MessageChannel = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MessageChannel = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MessageEvent **************
-var dom_MessageEvent = {};
-// ********** Code for dom_MessagePort **************
-var dom_MessagePort = {};
-$dynamic("get$start").MessagePort = function() {
-  return this.start.bind(this);
-}
-$dynamic("get$dartObjectLocalStorage").MessagePort = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MessagePort = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").MessagePort = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-$dynamic("postMessage$1").MessagePort = function($0) {
-  return this.postMessage($0);
-};
-$dynamic("postMessage$2").MessagePort = function($0, $1) {
-  return this.postMessage($0, $1);
-};
-$dynamic("start$0").MessagePort = function() {
-  return this.start();
-};
-// ********** Code for dom_Metadata **************
-var dom_Metadata = {};
-$dynamic("get$dartObjectLocalStorage").Metadata = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Metadata = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MouseEvent **************
-var dom_MouseEvent = {};
-$dynamic("get$clientX").MouseEvent = function() { return this.clientX; };
-$dynamic("set$clientX").MouseEvent = function(value) { return this.clientX = value; };
-$dynamic("get$clientY").MouseEvent = function() { return this.clientY; };
-$dynamic("set$clientY").MouseEvent = function(value) { return this.clientY = value; };
-// ********** Code for dom_MutationCallback **************
-var dom_MutationCallback = {};
-$dynamic("get$dartObjectLocalStorage").MutationCallback = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MutationCallback = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_MutationEvent **************
-var dom_MutationEvent = {};
-// ********** Code for dom_MutationRecord **************
-var dom_MutationRecord = {};
-$dynamic("get$dartObjectLocalStorage").MutationRecord = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").MutationRecord = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NamedNodeMap **************
-var dom_NamedNodeMap = {};
-$dynamic("get$dartObjectLocalStorage").NamedNodeMap = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NamedNodeMap = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Navigator **************
-var dom_Navigator = {};
-$dynamic("get$dartObjectLocalStorage").Navigator = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Navigator = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NavigatorUserMediaError **************
-var dom_NavigatorUserMediaError = {};
-$dynamic("get$dartObjectLocalStorage").NavigatorUserMediaError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NavigatorUserMediaError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NavigatorUserMediaSuccessCallback **************
-var dom_NavigatorUserMediaSuccessCallback = {};
-$dynamic("get$dartObjectLocalStorage").NavigatorUserMediaSuccessCallback = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NavigatorUserMediaSuccessCallback = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for Node **************
-Node.prototype.get$parentNode = function() { return this.parentNode; };
-Node.prototype.set$parentNode = function(value) { return this.parentNode = value; };
-Node.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-Node.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-Node.prototype.addEventListener$3 = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_NodeFilter **************
-var dom_NodeFilter = {};
-$dynamic("get$dartObjectLocalStorage").NodeFilter = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NodeFilter = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NodeIterator **************
-var dom_NodeIterator = {};
-$dynamic("get$dartObjectLocalStorage").NodeIterator = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NodeIterator = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NodeList **************
-var dom_NodeList = {};
-$dynamic("get$dartObjectLocalStorage").NodeList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NodeList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_NodeSelector **************
-var dom_NodeSelector = {};
-$dynamic("get$dartObjectLocalStorage").NodeSelector = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NodeSelector = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("querySelector$1").NodeSelector = function($0) {
-  return this.querySelector($0);
-};
-// ********** Code for dom_Notation **************
-var dom_Notation = {};
-// ********** Code for dom_Notification **************
-var dom_Notification = {};
-$dynamic("get$dartObjectLocalStorage").Notification = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Notification = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").Notification = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_NotificationCenter **************
-var dom_NotificationCenter = {};
-$dynamic("get$dartObjectLocalStorage").NotificationCenter = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").NotificationCenter = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_OESStandardDerivatives **************
-var dom_OESStandardDerivatives = {};
-$dynamic("get$dartObjectLocalStorage").OESStandardDerivatives = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").OESStandardDerivatives = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_OESTextureFloat **************
-var dom_OESTextureFloat = {};
-$dynamic("get$dartObjectLocalStorage").OESTextureFloat = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").OESTextureFloat = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_OESVertexArrayObject **************
-var dom_OESVertexArrayObject = {};
-$dynamic("get$dartObjectLocalStorage").OESVertexArrayObject = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").OESVertexArrayObject = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_OfflineAudioCompletionEvent **************
-var dom_OfflineAudioCompletionEvent = {};
-// ********** Code for dom_OperationNotAllowedException **************
-var dom_OperationNotAllowedException = {};
-$dynamic("get$dartObjectLocalStorage").OperationNotAllowedException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").OperationNotAllowedException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").OperationNotAllowedException = function() {
-  return this.toString();
-};
-// ********** Code for dom_OverflowEvent **************
-var dom_OverflowEvent = {};
-// ********** Code for dom_PageTransitionEvent **************
-var dom_PageTransitionEvent = {};
-// ********** Code for dom_Performance **************
-var dom_Performance = {};
-$dynamic("get$dartObjectLocalStorage").Performance = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Performance = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_PerformanceNavigation **************
-var dom_PerformanceNavigation = {};
-$dynamic("get$dartObjectLocalStorage").PerformanceNavigation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").PerformanceNavigation = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_PerformanceTiming **************
-var dom_PerformanceTiming = {};
-$dynamic("get$dartObjectLocalStorage").PerformanceTiming = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").PerformanceTiming = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_PopStateEvent **************
-var dom_PopStateEvent = {};
-// ********** Code for dom_PositionError **************
-var dom_PositionError = {};
-$dynamic("get$dartObjectLocalStorage").PositionError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").PositionError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ProcessingInstruction **************
-var dom_ProcessingInstruction = {};
-// ********** Code for dom_ProgressEvent **************
-var dom_ProgressEvent = {};
-// ********** Code for dom_RGBColor **************
-var dom_RGBColor = {};
-$dynamic("get$dartObjectLocalStorage").RGBColor = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").RGBColor = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Range **************
-var dom_Range = {};
-$dynamic("get$dartObjectLocalStorage").Range = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Range = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").Range = function() {
-  return this.toString();
-};
-// ********** Code for dom_RangeException **************
-var dom_RangeException = {};
-$dynamic("get$dartObjectLocalStorage").RangeException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").RangeException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").RangeException = function() {
-  return this.toString();
-};
-// ********** Code for dom_RealtimeAnalyserNode **************
-var dom_RealtimeAnalyserNode = {};
-// ********** Code for dom_Rect **************
-var dom_Rect = {};
-$dynamic("get$left").Rect = function() { return this.left; };
-$dynamic("set$left").Rect = function(value) { return this.left = value; };
-$dynamic("get$top").Rect = function() { return this.top; };
-$dynamic("set$top").Rect = function(value) { return this.top = value; };
-$dynamic("get$dartObjectLocalStorage").Rect = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Rect = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLError **************
-var dom_SQLError = {};
-$dynamic("get$dartObjectLocalStorage").SQLError = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLError = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLException **************
-var dom_SQLException = {};
-$dynamic("get$dartObjectLocalStorage").SQLException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLException = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLResultSet **************
-var dom_SQLResultSet = {};
-$dynamic("get$dartObjectLocalStorage").SQLResultSet = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLResultSet = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLResultSetRowList **************
-var dom_SQLResultSetRowList = {};
-$dynamic("get$dartObjectLocalStorage").SQLResultSetRowList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLResultSetRowList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLTransaction **************
-var dom_SQLTransaction = {};
-$dynamic("get$dartObjectLocalStorage").SQLTransaction = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLTransaction = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SQLTransactionSync **************
-var dom_SQLTransactionSync = {};
-$dynamic("get$dartObjectLocalStorage").SQLTransactionSync = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SQLTransactionSync = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAElement **************
-var dom_SVGAElement = {};
-// ********** Code for dom_SVGAltGlyphDefElement **************
-var dom_SVGAltGlyphDefElement = {};
-// ********** Code for dom_SVGAltGlyphElement **************
-var dom_SVGAltGlyphElement = {};
-// ********** Code for dom_SVGAltGlyphItemElement **************
-var dom_SVGAltGlyphItemElement = {};
-// ********** Code for dom_SVGAngle **************
-var dom_SVGAngle = {};
-$dynamic("get$value").SVGAngle = function() { return this.value; };
-$dynamic("set$value").SVGAngle = function(value) { return this.value = value; };
-$dynamic("get$dartObjectLocalStorage").SVGAngle = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAngle = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimateColorElement **************
-var dom_SVGAnimateColorElement = {};
-// ********** Code for dom_SVGAnimateElement **************
-var dom_SVGAnimateElement = {};
-// ********** Code for dom_SVGAnimateMotionElement **************
-var dom_SVGAnimateMotionElement = {};
-// ********** Code for dom_SVGAnimateTransformElement **************
-var dom_SVGAnimateTransformElement = {};
-// ********** Code for dom_SVGAnimatedAngle **************
-var dom_SVGAnimatedAngle = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedAngle = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedAngle = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedBoolean **************
-var dom_SVGAnimatedBoolean = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedBoolean = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedBoolean = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedEnumeration **************
-var dom_SVGAnimatedEnumeration = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedEnumeration = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedEnumeration = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedInteger **************
-var dom_SVGAnimatedInteger = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedInteger = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedInteger = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedLength **************
-var dom_SVGAnimatedLength = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedLength = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedLength = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedLengthList **************
-var dom_SVGAnimatedLengthList = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedLengthList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedLengthList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedNumber **************
-var dom_SVGAnimatedNumber = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedNumber = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedNumber = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedNumberList **************
-var dom_SVGAnimatedNumberList = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedNumberList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedNumberList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedPreserveAspectRatio **************
-var dom_SVGAnimatedPreserveAspectRatio = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedPreserveAspectRatio = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedPreserveAspectRatio = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedRect **************
-var dom_SVGAnimatedRect = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedRect = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedRect = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedString **************
-var dom_SVGAnimatedString = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedString = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedString = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimatedTransformList **************
-var dom_SVGAnimatedTransformList = {};
-$dynamic("get$dartObjectLocalStorage").SVGAnimatedTransformList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGAnimatedTransformList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGAnimationElement **************
-var dom_SVGAnimationElement = {};
-// ********** Code for dom_SVGCircleElement **************
-var dom_SVGCircleElement = {};
-// ********** Code for dom_SVGClipPathElement **************
-var dom_SVGClipPathElement = {};
-// ********** Code for dom_SVGColor **************
-var dom_SVGColor = {};
-// ********** Code for dom_SVGComponentTransferFunctionElement **************
-var dom_SVGComponentTransferFunctionElement = {};
-// ********** Code for dom_SVGCursorElement **************
-var dom_SVGCursorElement = {};
-// ********** Code for dom_SVGDefsElement **************
-var dom_SVGDefsElement = {};
-// ********** Code for dom_SVGDescElement **************
-var dom_SVGDescElement = {};
-// ********** Code for dom_SVGDocument **************
-var dom_SVGDocument = {};
-// ********** Code for SVGElement **************
-// ********** Code for dom_SVGElementInstance **************
-var dom_SVGElementInstance = {};
-$dynamic("get$parentNode").SVGElementInstance = function() { return this.parentNode; };
-$dynamic("set$parentNode").SVGElementInstance = function(value) { return this.parentNode = value; };
-$dynamic("get$dartObjectLocalStorage").SVGElementInstance = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGElementInstance = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").SVGElementInstance = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_SVGElementInstanceList **************
-var dom_SVGElementInstanceList = {};
-$dynamic("get$dartObjectLocalStorage").SVGElementInstanceList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGElementInstanceList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGEllipseElement **************
-var dom_SVGEllipseElement = {};
-// ********** Code for dom_SVGException **************
-var dom_SVGException = {};
-$dynamic("get$dartObjectLocalStorage").SVGException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").SVGException = function() {
-  return this.toString();
-};
-// ********** Code for dom_SVGExternalResourcesRequired **************
-var dom_SVGExternalResourcesRequired = {};
-$dynamic("get$dartObjectLocalStorage").SVGExternalResourcesRequired = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGExternalResourcesRequired = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGFEBlendElement **************
-var dom_SVGFEBlendElement = {};
-$dynamic("get$height").SVGFEBlendElement = function() { return this.height; };
-$dynamic("set$height").SVGFEBlendElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEBlendElement = function() { return this.width; };
-$dynamic("set$width").SVGFEBlendElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEColorMatrixElement **************
-var dom_SVGFEColorMatrixElement = {};
-$dynamic("get$height").SVGFEColorMatrixElement = function() { return this.height; };
-$dynamic("set$height").SVGFEColorMatrixElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEColorMatrixElement = function() { return this.width; };
-$dynamic("set$width").SVGFEColorMatrixElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEComponentTransferElement **************
-var dom_SVGFEComponentTransferElement = {};
-$dynamic("get$height").SVGFEComponentTransferElement = function() { return this.height; };
-$dynamic("set$height").SVGFEComponentTransferElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEComponentTransferElement = function() { return this.width; };
-$dynamic("set$width").SVGFEComponentTransferElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFECompositeElement **************
-var dom_SVGFECompositeElement = {};
-$dynamic("get$height").SVGFECompositeElement = function() { return this.height; };
-$dynamic("set$height").SVGFECompositeElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFECompositeElement = function() { return this.width; };
-$dynamic("set$width").SVGFECompositeElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEConvolveMatrixElement **************
-var dom_SVGFEConvolveMatrixElement = {};
-$dynamic("get$height").SVGFEConvolveMatrixElement = function() { return this.height; };
-$dynamic("set$height").SVGFEConvolveMatrixElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEConvolveMatrixElement = function() { return this.width; };
-$dynamic("set$width").SVGFEConvolveMatrixElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEDiffuseLightingElement **************
-var dom_SVGFEDiffuseLightingElement = {};
-$dynamic("get$height").SVGFEDiffuseLightingElement = function() { return this.height; };
-$dynamic("set$height").SVGFEDiffuseLightingElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEDiffuseLightingElement = function() { return this.width; };
-$dynamic("set$width").SVGFEDiffuseLightingElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEDisplacementMapElement **************
-var dom_SVGFEDisplacementMapElement = {};
-$dynamic("get$height").SVGFEDisplacementMapElement = function() { return this.height; };
-$dynamic("set$height").SVGFEDisplacementMapElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEDisplacementMapElement = function() { return this.width; };
-$dynamic("set$width").SVGFEDisplacementMapElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEDistantLightElement **************
-var dom_SVGFEDistantLightElement = {};
-// ********** Code for dom_SVGFEDropShadowElement **************
-var dom_SVGFEDropShadowElement = {};
-$dynamic("get$height").SVGFEDropShadowElement = function() { return this.height; };
-$dynamic("set$height").SVGFEDropShadowElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEDropShadowElement = function() { return this.width; };
-$dynamic("set$width").SVGFEDropShadowElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEFloodElement **************
-var dom_SVGFEFloodElement = {};
-$dynamic("get$height").SVGFEFloodElement = function() { return this.height; };
-$dynamic("set$height").SVGFEFloodElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEFloodElement = function() { return this.width; };
-$dynamic("set$width").SVGFEFloodElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEFuncAElement **************
-var dom_SVGFEFuncAElement = {};
-// ********** Code for dom_SVGFEFuncBElement **************
-var dom_SVGFEFuncBElement = {};
-// ********** Code for dom_SVGFEFuncGElement **************
-var dom_SVGFEFuncGElement = {};
-// ********** Code for dom_SVGFEFuncRElement **************
-var dom_SVGFEFuncRElement = {};
-// ********** Code for dom_SVGFEGaussianBlurElement **************
-var dom_SVGFEGaussianBlurElement = {};
-$dynamic("get$height").SVGFEGaussianBlurElement = function() { return this.height; };
-$dynamic("set$height").SVGFEGaussianBlurElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEGaussianBlurElement = function() { return this.width; };
-$dynamic("set$width").SVGFEGaussianBlurElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEImageElement **************
-var dom_SVGFEImageElement = {};
-$dynamic("get$height").SVGFEImageElement = function() { return this.height; };
-$dynamic("set$height").SVGFEImageElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEImageElement = function() { return this.width; };
-$dynamic("set$width").SVGFEImageElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEMergeElement **************
-var dom_SVGFEMergeElement = {};
-$dynamic("get$height").SVGFEMergeElement = function() { return this.height; };
-$dynamic("set$height").SVGFEMergeElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEMergeElement = function() { return this.width; };
-$dynamic("set$width").SVGFEMergeElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEMergeNodeElement **************
-var dom_SVGFEMergeNodeElement = {};
-// ********** Code for dom_SVGFEMorphologyElement **************
-var dom_SVGFEMorphologyElement = {};
-$dynamic("get$height").SVGFEMorphologyElement = function() { return this.height; };
-$dynamic("set$height").SVGFEMorphologyElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEMorphologyElement = function() { return this.width; };
-$dynamic("set$width").SVGFEMorphologyElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEOffsetElement **************
-var dom_SVGFEOffsetElement = {};
-$dynamic("get$height").SVGFEOffsetElement = function() { return this.height; };
-$dynamic("set$height").SVGFEOffsetElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFEOffsetElement = function() { return this.width; };
-$dynamic("set$width").SVGFEOffsetElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFEPointLightElement **************
-var dom_SVGFEPointLightElement = {};
-// ********** Code for dom_SVGFESpecularLightingElement **************
-var dom_SVGFESpecularLightingElement = {};
-$dynamic("get$height").SVGFESpecularLightingElement = function() { return this.height; };
-$dynamic("set$height").SVGFESpecularLightingElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFESpecularLightingElement = function() { return this.width; };
-$dynamic("set$width").SVGFESpecularLightingElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFESpotLightElement **************
-var dom_SVGFESpotLightElement = {};
-// ********** Code for dom_SVGFETileElement **************
-var dom_SVGFETileElement = {};
-$dynamic("get$height").SVGFETileElement = function() { return this.height; };
-$dynamic("set$height").SVGFETileElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFETileElement = function() { return this.width; };
-$dynamic("set$width").SVGFETileElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFETurbulenceElement **************
-var dom_SVGFETurbulenceElement = {};
-$dynamic("get$height").SVGFETurbulenceElement = function() { return this.height; };
-$dynamic("set$height").SVGFETurbulenceElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFETurbulenceElement = function() { return this.width; };
-$dynamic("set$width").SVGFETurbulenceElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFilterElement **************
-var dom_SVGFilterElement = {};
-$dynamic("get$height").SVGFilterElement = function() { return this.height; };
-$dynamic("set$height").SVGFilterElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFilterElement = function() { return this.width; };
-$dynamic("set$width").SVGFilterElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFilterPrimitiveStandardAttributes **************
-var dom_SVGFilterPrimitiveStandardAttributes = {};
-$dynamic("get$height").SVGFilterPrimitiveStandardAttributes = function() { return this.height; };
-$dynamic("set$height").SVGFilterPrimitiveStandardAttributes = function(value) { return this.height = value; };
-$dynamic("get$width").SVGFilterPrimitiveStandardAttributes = function() { return this.width; };
-$dynamic("set$width").SVGFilterPrimitiveStandardAttributes = function(value) { return this.width = value; };
-// ********** Code for dom_SVGFitToViewBox **************
-var dom_SVGFitToViewBox = {};
-$dynamic("get$dartObjectLocalStorage").SVGFitToViewBox = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGFitToViewBox = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGFontElement **************
-var dom_SVGFontElement = {};
-// ********** Code for dom_SVGFontFaceElement **************
-var dom_SVGFontFaceElement = {};
-// ********** Code for dom_SVGFontFaceFormatElement **************
-var dom_SVGFontFaceFormatElement = {};
-// ********** Code for dom_SVGFontFaceNameElement **************
-var dom_SVGFontFaceNameElement = {};
-// ********** Code for dom_SVGFontFaceSrcElement **************
-var dom_SVGFontFaceSrcElement = {};
-// ********** Code for dom_SVGFontFaceUriElement **************
-var dom_SVGFontFaceUriElement = {};
-// ********** Code for dom_SVGForeignObjectElement **************
-var dom_SVGForeignObjectElement = {};
-$dynamic("get$height").SVGForeignObjectElement = function() { return this.height; };
-$dynamic("set$height").SVGForeignObjectElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGForeignObjectElement = function() { return this.width; };
-$dynamic("set$width").SVGForeignObjectElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGGElement **************
-var dom_SVGGElement = {};
-// ********** Code for dom_SVGGlyphElement **************
-var dom_SVGGlyphElement = {};
-// ********** Code for dom_SVGGlyphRefElement **************
-var dom_SVGGlyphRefElement = {};
-// ********** Code for SVGGradientElement **************
-// ********** Code for dom_SVGHKernElement **************
-var dom_SVGHKernElement = {};
-// ********** Code for dom_SVGImageElement **************
-var dom_SVGImageElement = {};
-$dynamic("get$height").SVGImageElement = function() { return this.height; };
-$dynamic("set$height").SVGImageElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGImageElement = function() { return this.width; };
-$dynamic("set$width").SVGImageElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGLangSpace **************
-var dom_SVGLangSpace = {};
-$dynamic("get$dartObjectLocalStorage").SVGLangSpace = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGLangSpace = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGLength **************
-var dom_SVGLength = {};
-$dynamic("get$value").SVGLength = function() { return this.value; };
-$dynamic("set$value").SVGLength = function(value) { return this.value = value; };
-$dynamic("get$dartObjectLocalStorage").SVGLength = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGLength = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGLengthList **************
-var dom_SVGLengthList = {};
-$dynamic("get$dartObjectLocalStorage").SVGLengthList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGLengthList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGLineElement **************
-var dom_SVGLineElement = {};
-// ********** Code for dom_SVGLinearGradientElement **************
-var dom_SVGLinearGradientElement = {};
-// ********** Code for dom_SVGLocatable **************
-var dom_SVGLocatable = {};
-$dynamic("get$dartObjectLocalStorage").SVGLocatable = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGLocatable = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGMPathElement **************
-var dom_SVGMPathElement = {};
-// ********** Code for dom_SVGMarkerElement **************
-var dom_SVGMarkerElement = {};
-// ********** Code for dom_SVGMaskElement **************
-var dom_SVGMaskElement = {};
-$dynamic("get$height").SVGMaskElement = function() { return this.height; };
-$dynamic("set$height").SVGMaskElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGMaskElement = function() { return this.width; };
-$dynamic("set$width").SVGMaskElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGMatrix **************
-var dom_SVGMatrix = {};
-$dynamic("get$rotate").SVGMatrix = function() {
-  return this.rotate.bind(this);
-}
-$dynamic("get$dartObjectLocalStorage").SVGMatrix = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGMatrix = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("rotate$1").SVGMatrix = function($0) {
-  return this.rotate($0);
-};
-$dynamic("translate$2").SVGMatrix = function($0, $1) {
-  return this.translate($0, $1);
-};
-// ********** Code for dom_SVGMetadataElement **************
-var dom_SVGMetadataElement = {};
-// ********** Code for dom_SVGMissingGlyphElement **************
-var dom_SVGMissingGlyphElement = {};
-// ********** Code for dom_SVGNumber **************
-var dom_SVGNumber = {};
-$dynamic("get$value").SVGNumber = function() { return this.value; };
-$dynamic("set$value").SVGNumber = function(value) { return this.value = value; };
-$dynamic("get$dartObjectLocalStorage").SVGNumber = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGNumber = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGNumberList **************
-var dom_SVGNumberList = {};
-$dynamic("get$dartObjectLocalStorage").SVGNumberList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGNumberList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGPaint **************
-var dom_SVGPaint = {};
-// ********** Code for dom_SVGPathElement **************
-var dom_SVGPathElement = {};
-// ********** Code for dom_SVGPathSeg **************
-var dom_SVGPathSeg = {};
-$dynamic("get$dartObjectLocalStorage").SVGPathSeg = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGPathSeg = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGPathSegArcAbs **************
-var dom_SVGPathSegArcAbs = {};
-// ********** Code for dom_SVGPathSegArcRel **************
-var dom_SVGPathSegArcRel = {};
-// ********** Code for dom_SVGPathSegClosePath **************
-var dom_SVGPathSegClosePath = {};
-// ********** Code for dom_SVGPathSegCurvetoCubicAbs **************
-var dom_SVGPathSegCurvetoCubicAbs = {};
-// ********** Code for dom_SVGPathSegCurvetoCubicRel **************
-var dom_SVGPathSegCurvetoCubicRel = {};
-// ********** Code for dom_SVGPathSegCurvetoCubicSmoothAbs **************
-var dom_SVGPathSegCurvetoCubicSmoothAbs = {};
-// ********** Code for dom_SVGPathSegCurvetoCubicSmoothRel **************
-var dom_SVGPathSegCurvetoCubicSmoothRel = {};
-// ********** Code for dom_SVGPathSegCurvetoQuadraticAbs **************
-var dom_SVGPathSegCurvetoQuadraticAbs = {};
-// ********** Code for dom_SVGPathSegCurvetoQuadraticRel **************
-var dom_SVGPathSegCurvetoQuadraticRel = {};
-// ********** Code for dom_SVGPathSegCurvetoQuadraticSmoothAbs **************
-var dom_SVGPathSegCurvetoQuadraticSmoothAbs = {};
-// ********** Code for dom_SVGPathSegCurvetoQuadraticSmoothRel **************
-var dom_SVGPathSegCurvetoQuadraticSmoothRel = {};
-// ********** Code for dom_SVGPathSegLinetoAbs **************
-var dom_SVGPathSegLinetoAbs = {};
-// ********** Code for dom_SVGPathSegLinetoHorizontalAbs **************
-var dom_SVGPathSegLinetoHorizontalAbs = {};
-// ********** Code for dom_SVGPathSegLinetoHorizontalRel **************
-var dom_SVGPathSegLinetoHorizontalRel = {};
-// ********** Code for dom_SVGPathSegLinetoRel **************
-var dom_SVGPathSegLinetoRel = {};
-// ********** Code for dom_SVGPathSegLinetoVerticalAbs **************
-var dom_SVGPathSegLinetoVerticalAbs = {};
-// ********** Code for dom_SVGPathSegLinetoVerticalRel **************
-var dom_SVGPathSegLinetoVerticalRel = {};
-// ********** Code for dom_SVGPathSegList **************
-var dom_SVGPathSegList = {};
-$dynamic("get$dartObjectLocalStorage").SVGPathSegList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGPathSegList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGPathSegMovetoAbs **************
-var dom_SVGPathSegMovetoAbs = {};
-// ********** Code for dom_SVGPathSegMovetoRel **************
-var dom_SVGPathSegMovetoRel = {};
-// ********** Code for dom_SVGPatternElement **************
-var dom_SVGPatternElement = {};
-$dynamic("get$height").SVGPatternElement = function() { return this.height; };
-$dynamic("set$height").SVGPatternElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGPatternElement = function() { return this.width; };
-$dynamic("set$width").SVGPatternElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGPoint **************
-var dom_SVGPoint = {};
-$dynamic("get$dartObjectLocalStorage").SVGPoint = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGPoint = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGPointList **************
-var dom_SVGPointList = {};
-$dynamic("get$dartObjectLocalStorage").SVGPointList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGPointList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGPolygonElement **************
-var dom_SVGPolygonElement = {};
-// ********** Code for dom_SVGPolylineElement **************
-var dom_SVGPolylineElement = {};
-// ********** Code for dom_SVGPreserveAspectRatio **************
-var dom_SVGPreserveAspectRatio = {};
-$dynamic("get$dartObjectLocalStorage").SVGPreserveAspectRatio = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGPreserveAspectRatio = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGRadialGradientElement **************
-var dom_SVGRadialGradientElement = {};
-// ********** Code for dom_SVGRect **************
-var dom_SVGRect = {};
-$dynamic("get$height").SVGRect = function() { return this.height; };
-$dynamic("set$height").SVGRect = function(value) { return this.height = value; };
-$dynamic("get$width").SVGRect = function() { return this.width; };
-$dynamic("set$width").SVGRect = function(value) { return this.width = value; };
-$dynamic("get$dartObjectLocalStorage").SVGRect = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGRect = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGRectElement **************
-var dom_SVGRectElement = {};
-$dynamic("get$height").SVGRectElement = function() { return this.height; };
-$dynamic("set$height").SVGRectElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGRectElement = function() { return this.width; };
-$dynamic("set$width").SVGRectElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGRenderingIntent **************
-var dom_SVGRenderingIntent = {};
-$dynamic("get$dartObjectLocalStorage").SVGRenderingIntent = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGRenderingIntent = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGSVGElement **************
-var dom_SVGSVGElement = {};
-$dynamic("get$height").SVGSVGElement = function() { return this.height; };
-$dynamic("set$height").SVGSVGElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGSVGElement = function() { return this.width; };
-$dynamic("set$width").SVGSVGElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGScriptElement **************
-var dom_SVGScriptElement = {};
-// ********** Code for dom_SVGSetElement **************
-var dom_SVGSetElement = {};
-// ********** Code for dom_SVGStopElement **************
-var dom_SVGStopElement = {};
-// ********** Code for dom_SVGStringList **************
-var dom_SVGStringList = {};
-$dynamic("get$dartObjectLocalStorage").SVGStringList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGStringList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGStylable **************
-var dom_SVGStylable = {};
-$dynamic("get$dartObjectLocalStorage").SVGStylable = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGStylable = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGStyleElement **************
-var dom_SVGStyleElement = {};
-// ********** Code for dom_SVGSwitchElement **************
-var dom_SVGSwitchElement = {};
-// ********** Code for dom_SVGSymbolElement **************
-var dom_SVGSymbolElement = {};
-// ********** Code for dom_SVGTRefElement **************
-var dom_SVGTRefElement = {};
-// ********** Code for dom_SVGTSpanElement **************
-var dom_SVGTSpanElement = {};
-// ********** Code for dom_SVGTests **************
-var dom_SVGTests = {};
-$dynamic("get$dartObjectLocalStorage").SVGTests = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGTests = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for SVGTextContentElement **************
-// ********** Code for dom_SVGTextElement **************
-var dom_SVGTextElement = {};
-// ********** Code for dom_SVGTextPathElement **************
-var dom_SVGTextPathElement = {};
-// ********** Code for SVGTextPositioningElement **************
-SVGTextPositioningElement.prototype.get$rotate = function() { return this.rotate; };
-SVGTextPositioningElement.prototype.set$rotate = function(value) { return this.rotate = value; };
-SVGTextPositioningElement.prototype.rotate$1 = function($0) {
-  return this.rotate($0);
-};
-// ********** Code for dom_SVGTitleElement **************
-var dom_SVGTitleElement = {};
-// ********** Code for dom_SVGTransform **************
-var dom_SVGTransform = {};
-$dynamic("get$dartObjectLocalStorage").SVGTransform = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGTransform = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGTransformList **************
-var dom_SVGTransformList = {};
-$dynamic("get$dartObjectLocalStorage").SVGTransformList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGTransformList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGTransformable **************
-var dom_SVGTransformable = {};
-// ********** Code for dom_SVGURIReference **************
-var dom_SVGURIReference = {};
-$dynamic("get$dartObjectLocalStorage").SVGURIReference = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGURIReference = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGUnitTypes **************
-var dom_SVGUnitTypes = {};
-$dynamic("get$dartObjectLocalStorage").SVGUnitTypes = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGUnitTypes = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGUseElement **************
-var dom_SVGUseElement = {};
-$dynamic("get$height").SVGUseElement = function() { return this.height; };
-$dynamic("set$height").SVGUseElement = function(value) { return this.height = value; };
-$dynamic("get$width").SVGUseElement = function() { return this.width; };
-$dynamic("set$width").SVGUseElement = function(value) { return this.width = value; };
-// ********** Code for dom_SVGVKernElement **************
-var dom_SVGVKernElement = {};
-// ********** Code for dom_SVGViewElement **************
-var dom_SVGViewElement = {};
-// ********** Code for dom_SVGViewSpec **************
-var dom_SVGViewSpec = {};
-// ********** Code for dom_SVGZoomAndPan **************
-var dom_SVGZoomAndPan = {};
-$dynamic("get$dartObjectLocalStorage").SVGZoomAndPan = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SVGZoomAndPan = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SVGZoomEvent **************
-var dom_SVGZoomEvent = {};
-// ********** Code for dom_Screen **************
-var dom_Screen = {};
-$dynamic("get$height").Screen = function() { return this.height; };
-$dynamic("set$height").Screen = function(value) { return this.height = value; };
-$dynamic("get$width").Screen = function() { return this.width; };
-$dynamic("set$width").Screen = function(value) { return this.width = value; };
-$dynamic("get$dartObjectLocalStorage").Screen = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Screen = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ScriptProfile **************
-var dom_ScriptProfile = {};
-$dynamic("get$dartObjectLocalStorage").ScriptProfile = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ScriptProfile = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_ScriptProfileNode **************
-var dom_ScriptProfileNode = {};
-$dynamic("get$dartObjectLocalStorage").ScriptProfileNode = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ScriptProfileNode = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SharedWorker **************
-var dom_SharedWorker = {};
-// ********** Code for dom_SharedWorkercontext **************
-var dom_SharedWorkercontext = {};
-// ********** Code for dom_SpeechInputEvent **************
-var dom_SpeechInputEvent = {};
-// ********** Code for dom_SpeechInputResult **************
-var dom_SpeechInputResult = {};
-$dynamic("get$dartObjectLocalStorage").SpeechInputResult = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SpeechInputResult = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_SpeechInputResultList **************
-var dom_SpeechInputResultList = {};
-$dynamic("get$dartObjectLocalStorage").SpeechInputResultList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").SpeechInputResultList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Storage **************
-var dom_Storage = {};
-$dynamic("get$dartObjectLocalStorage").Storage = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Storage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_StorageEvent **************
-var dom_StorageEvent = {};
-// ********** Code for dom_StorageInfo **************
-var dom_StorageInfo = {};
-$dynamic("get$dartObjectLocalStorage").StorageInfo = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").StorageInfo = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_StyleMedia **************
-var dom_StyleMedia = {};
-$dynamic("get$dartObjectLocalStorage").StyleMedia = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").StyleMedia = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for StyleSheet **************
-StyleSheet.prototype.get$dartObjectLocalStorage = function() { return this.dartObjectLocalStorage; };
-StyleSheet.prototype.set$dartObjectLocalStorage = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_StyleSheetList **************
-var dom_StyleSheetList = {};
-$dynamic("get$dartObjectLocalStorage").StyleSheetList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").StyleSheetList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for Text **************
-// ********** Code for dom_TextEvent **************
-var dom_TextEvent = {};
-// ********** Code for dom_TextMetrics **************
-var dom_TextMetrics = {};
-$dynamic("get$width").TextMetrics = function() { return this.width; };
-$dynamic("set$width").TextMetrics = function(value) { return this.width = value; };
-$dynamic("get$dartObjectLocalStorage").TextMetrics = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TextMetrics = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TextTrack **************
-var dom_TextTrack = {};
-$dynamic("get$dartObjectLocalStorage").TextTrack = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TextTrack = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TextTrackCue **************
-var dom_TextTrackCue = {};
-$dynamic("get$dartObjectLocalStorage").TextTrackCue = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TextTrackCue = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TextTrackCueList **************
-var dom_TextTrackCueList = {};
-$dynamic("get$dartObjectLocalStorage").TextTrackCueList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TextTrackCueList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TimeRanges **************
-var dom_TimeRanges = {};
-$dynamic("get$start").TimeRanges = function() {
-  return this.start.bind(this);
-}
-$dynamic("get$dartObjectLocalStorage").TimeRanges = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TimeRanges = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_Touch **************
-var dom_Touch = {};
-$dynamic("get$clientX").Touch = function() { return this.clientX; };
-$dynamic("set$clientX").Touch = function(value) { return this.clientX = value; };
-$dynamic("get$clientY").Touch = function() { return this.clientY; };
-$dynamic("set$clientY").Touch = function(value) { return this.clientY = value; };
-$dynamic("get$dartObjectLocalStorage").Touch = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").Touch = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TouchEvent **************
-var dom_TouchEvent = {};
-// ********** Code for dom_TouchList **************
-var dom_TouchList = {};
-$dynamic("get$dartObjectLocalStorage").TouchList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TouchList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_TreeWalker **************
-var dom_TreeWalker = {};
-$dynamic("get$parentNode").TreeWalker = function() {
-  return this.parentNode.bind(this);
-}
-$dynamic("get$dartObjectLocalStorage").TreeWalker = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").TreeWalker = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for UIEvent **************
-// ********** Code for dom_Uint16Array **************
-var dom_Uint16Array = {};
-$dynamic("get$length").Uint16Array = function() { return this.length; };
-$dynamic("set$length").Uint16Array = function(value) { return this.length = value; };
-// ********** Code for dom_Uint32Array **************
-var dom_Uint32Array = {};
-$dynamic("get$length").Uint32Array = function() { return this.length; };
-$dynamic("set$length").Uint32Array = function(value) { return this.length = value; };
-// ********** Code for dom_Uint8Array **************
-var dom_Uint8Array = {};
-$dynamic("get$length").Uint8Array = function() { return this.length; };
-$dynamic("set$length").Uint8Array = function(value) { return this.length = value; };
-// ********** Code for dom_ValidityState **************
-var dom_ValidityState = {};
-$dynamic("get$dartObjectLocalStorage").ValidityState = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").ValidityState = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WaveShaperNode **************
-var dom_WaveShaperNode = {};
-// ********** Code for dom_WebGLActiveInfo **************
-var dom_WebGLActiveInfo = {};
-$dynamic("get$dartObjectLocalStorage").WebGLActiveInfo = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLActiveInfo = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLBuffer **************
-var dom_WebGLBuffer = {};
-$dynamic("get$dartObjectLocalStorage").WebGLBuffer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLBuffer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLContextAttributes **************
-var dom_WebGLContextAttributes = {};
-$dynamic("get$dartObjectLocalStorage").WebGLContextAttributes = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLContextAttributes = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLContextEvent **************
-var dom_WebGLContextEvent = {};
-// ********** Code for dom_WebGLDebugRendererInfo **************
-var dom_WebGLDebugRendererInfo = {};
-$dynamic("get$dartObjectLocalStorage").WebGLDebugRendererInfo = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLDebugRendererInfo = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLDebugShaders **************
-var dom_WebGLDebugShaders = {};
-$dynamic("get$dartObjectLocalStorage").WebGLDebugShaders = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLDebugShaders = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLFramebuffer **************
-var dom_WebGLFramebuffer = {};
-$dynamic("get$dartObjectLocalStorage").WebGLFramebuffer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLFramebuffer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLProgram **************
-var dom_WebGLProgram = {};
-$dynamic("get$dartObjectLocalStorage").WebGLProgram = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLProgram = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLRenderbuffer **************
-var dom_WebGLRenderbuffer = {};
-$dynamic("get$dartObjectLocalStorage").WebGLRenderbuffer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLRenderbuffer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLRenderingContext **************
-var dom_WebGLRenderingContext = {};
-// ********** Code for dom_WebGLShader **************
-var dom_WebGLShader = {};
-$dynamic("get$dartObjectLocalStorage").WebGLShader = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLShader = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLTexture **************
-var dom_WebGLTexture = {};
-$dynamic("get$dartObjectLocalStorage").WebGLTexture = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLTexture = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLUniformLocation **************
-var dom_WebGLUniformLocation = {};
-$dynamic("get$dartObjectLocalStorage").WebGLUniformLocation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLUniformLocation = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebGLVertexArrayObjectOES **************
-var dom_WebGLVertexArrayObjectOES = {};
-$dynamic("get$dartObjectLocalStorage").WebGLVertexArrayObjectOES = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebGLVertexArrayObjectOES = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitAnimation **************
-var dom_WebKitAnimation = {};
-$dynamic("get$dartObjectLocalStorage").WebKitAnimation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitAnimation = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitAnimationEvent **************
-var dom_WebKitAnimationEvent = {};
-// ********** Code for dom_WebKitAnimationList **************
-var dom_WebKitAnimationList = {};
-$dynamic("get$dartObjectLocalStorage").WebKitAnimationList = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitAnimationList = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitBlobBuilder **************
-var dom_WebKitBlobBuilder = {};
-$dynamic("get$dartObjectLocalStorage").WebKitBlobBuilder = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitBlobBuilder = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitCSSFilterValue **************
-var dom_WebKitCSSFilterValue = {};
-// ********** Code for dom_WebKitCSSKeyframeRule **************
-var dom_WebKitCSSKeyframeRule = {};
-// ********** Code for dom_WebKitCSSKeyframesRule **************
-var dom_WebKitCSSKeyframesRule = {};
-// ********** Code for dom_WebKitCSSMatrix **************
-var dom_WebKitCSSMatrix = {};
-$dynamic("get$rotate").WebKitCSSMatrix = function() {
-  return this.rotate.bind(this);
-}
-$dynamic("get$dartObjectLocalStorage").WebKitCSSMatrix = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitCSSMatrix = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").WebKitCSSMatrix = function() {
-  return this.toString();
-};
-// ********** Code for dom_WebKitCSSTransformValue **************
-var dom_WebKitCSSTransformValue = {};
-// ********** Code for dom_WebKitFlags **************
-var dom_WebKitFlags = {};
-$dynamic("get$dartObjectLocalStorage").WebKitFlags = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitFlags = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitLoseContext **************
-var dom_WebKitLoseContext = {};
-$dynamic("get$dartObjectLocalStorage").WebKitLoseContext = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitLoseContext = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitMutationObserver **************
-var dom_WebKitMutationObserver = {};
-$dynamic("get$dartObjectLocalStorage").WebKitMutationObserver = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitMutationObserver = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitPoint **************
-var dom_WebKitPoint = {};
-$dynamic("get$dartObjectLocalStorage").WebKitPoint = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebKitPoint = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_WebKitTransitionEvent **************
-var dom_WebKitTransitionEvent = {};
-// ********** Code for dom_WebSocket **************
-var dom_WebSocket = {};
-$dynamic("get$dartObjectLocalStorage").WebSocket = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WebSocket = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").WebSocket = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_WheelEvent **************
-var dom_WheelEvent = {};
-$dynamic("get$clientX").WheelEvent = function() { return this.clientX; };
-$dynamic("set$clientX").WheelEvent = function(value) { return this.clientX = value; };
-$dynamic("get$clientY").WheelEvent = function() { return this.clientY; };
-$dynamic("set$clientY").WheelEvent = function(value) { return this.clientY = value; };
-// ********** Code for dom_Worker **************
-var dom_Worker = {};
-$dynamic("postMessage$1").Worker = function($0) {
-  return this.postMessage($0);
-};
-$dynamic("postMessage$2").Worker = function($0, $1) {
-  return this.postMessage($0, $1);
-};
-// ********** Code for dom_WorkerContext **************
-var dom_WorkerContext = {};
-$dynamic("get$dartObjectLocalStorage").WorkerContext = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WorkerContext = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").WorkerContext = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_WorkerLocation **************
-var dom_WorkerLocation = {};
-$dynamic("get$dartObjectLocalStorage").WorkerLocation = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WorkerLocation = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").WorkerLocation = function() {
-  return this.toString();
-};
-// ********** Code for dom_WorkerNavigator **************
-var dom_WorkerNavigator = {};
-$dynamic("get$dartObjectLocalStorage").WorkerNavigator = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").WorkerNavigator = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XMLHttpRequest **************
-var dom_XMLHttpRequest = {};
-$dynamic("get$dartObjectLocalStorage").XMLHttpRequest = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XMLHttpRequest = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").XMLHttpRequest = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_XMLHttpRequestException **************
-var dom_XMLHttpRequestException = {};
-$dynamic("get$dartObjectLocalStorage").XMLHttpRequestException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XMLHttpRequestException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").XMLHttpRequestException = function() {
-  return this.toString();
-};
-// ********** Code for dom_XMLHttpRequestProgressEvent **************
-var dom_XMLHttpRequestProgressEvent = {};
-// ********** Code for dom_XMLHttpRequestUpload **************
-var dom_XMLHttpRequestUpload = {};
-$dynamic("get$dartObjectLocalStorage").XMLHttpRequestUpload = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XMLHttpRequestUpload = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("addEventListener$3").XMLHttpRequestUpload = function($0, $1, $2) {
-  return this.addEventListener($0, $wrap_call$1(to$call$1($1)), $2);
-};
-// ********** Code for dom_XMLSerializer **************
-var dom_XMLSerializer = {};
-$dynamic("get$dartObjectLocalStorage").XMLSerializer = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XMLSerializer = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XPathEvaluator **************
-var dom_XPathEvaluator = {};
-$dynamic("get$dartObjectLocalStorage").XPathEvaluator = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XPathEvaluator = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XPathException **************
-var dom_XPathException = {};
-$dynamic("get$dartObjectLocalStorage").XPathException = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XPathException = function(value) { return this.dartObjectLocalStorage = value; };
-$dynamic("toString$0").XPathException = function() {
-  return this.toString();
-};
-// ********** Code for dom_XPathExpression **************
-var dom_XPathExpression = {};
-$dynamic("get$dartObjectLocalStorage").XPathExpression = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XPathExpression = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XPathNSResolver **************
-var dom_XPathNSResolver = {};
-$dynamic("get$dartObjectLocalStorage").XPathNSResolver = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XPathNSResolver = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XPathResult **************
-var dom_XPathResult = {};
-$dynamic("get$dartObjectLocalStorage").XPathResult = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XPathResult = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for dom_XSLTProcessor **************
-var dom_XSLTProcessor = {};
-$dynamic("get$dartObjectLocalStorage").XSLTProcessor = function() { return this.dartObjectLocalStorage; };
-$dynamic("set$dartObjectLocalStorage").XSLTProcessor = function(value) { return this.dartObjectLocalStorage = value; };
-// ********** Code for _Collections **************
-function _Collections() {}
-// ********** Code for _VariableSizeListIterator_T **************
-$inherits(_VariableSizeListIterator_T, _VariableSizeListIterator);
-function _VariableSizeListIterator_T() {}
-// ********** Code for _FixedSizeListIterator **************
-$inherits(_FixedSizeListIterator, _VariableSizeListIterator_T);
-function _FixedSizeListIterator() {}
-// ********** Code for _VariableSizeListIterator **************
-function _VariableSizeListIterator() {}
-// ********** Code for _Lists **************
-function _Lists() {}
-// ********** Code for top level **************
-function get$window() {
-  return window;
-}
-function get$document() {
-  return window.document;
-}
-//  ********** Library htmlimpl **************
-// ********** Code for DOMWrapperBase **************
-function DOMWrapperBase() {}
-DOMWrapperBase._wrap$ctor = function(_ptr) {
-  this._ptr = _ptr;
-  // Initializers done
-  this._ptr.set$dartObjectLocalStorage(this);
-}
-DOMWrapperBase._wrap$ctor.prototype = DOMWrapperBase.prototype;
-DOMWrapperBase.prototype.get$_ptr = function() { return this._ptr; };
-// ********** Code for EventTargetWrappingImplementation **************
-$inherits(EventTargetWrappingImplementation, DOMWrapperBase);
-function EventTargetWrappingImplementation() {}
-EventTargetWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-EventTargetWrappingImplementation._wrap$ctor.prototype = EventTargetWrappingImplementation.prototype;
-// ********** Code for NodeWrappingImplementation **************
-$inherits(NodeWrappingImplementation, EventTargetWrappingImplementation);
-function NodeWrappingImplementation() {}
-NodeWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventTargetWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-NodeWrappingImplementation._wrap$ctor.prototype = NodeWrappingImplementation.prototype;
-// ********** Code for ElementWrappingImplementation **************
-$inherits(ElementWrappingImplementation, NodeWrappingImplementation);
-function ElementWrappingImplementation() {}
-ElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  NodeWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ElementWrappingImplementation._wrap$ctor.prototype = ElementWrappingImplementation.prototype;
-ElementWrappingImplementation.ElementWrappingImplementation$tag$factory = function(tag) {
-  return LevelDom.wrapElement(get$document().createElement(tag));
-}
-ElementWrappingImplementation.prototype.query = function(selectors) {
-  return LevelDom.wrapElement(this._ptr.querySelector$1(selectors));
-}
-ElementWrappingImplementation.prototype.get$rect = function() {
-  var $this = this; // closure support
-  return _createMeasurementFuture((function () {
-    return new ElementRectWrappingImplementation($this._ptr);
-  })
-  , new CompleterImpl());
-}
-ElementWrappingImplementation.prototype.get$on = function() {
-  if (this._on == null) {
-    this._on = new ElementEventsImplementation._wrap$ctor(this._ptr);
-  }
-  return this._on;
-}
-// ********** Code for AnchorElementWrappingImplementation **************
-$inherits(AnchorElementWrappingImplementation, ElementWrappingImplementation);
-function AnchorElementWrappingImplementation() {}
-AnchorElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-AnchorElementWrappingImplementation._wrap$ctor.prototype = AnchorElementWrappingImplementation.prototype;
-AnchorElementWrappingImplementation.prototype.toString = function() {
-  return this._ptr.toString$0();
-}
-AnchorElementWrappingImplementation.prototype.toString$0 = AnchorElementWrappingImplementation.prototype.toString;
-// ********** Code for AreaElementWrappingImplementation **************
-$inherits(AreaElementWrappingImplementation, ElementWrappingImplementation);
-function AreaElementWrappingImplementation() {}
-AreaElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-AreaElementWrappingImplementation._wrap$ctor.prototype = AreaElementWrappingImplementation.prototype;
-// ********** Code for MediaElementWrappingImplementation **************
-$inherits(MediaElementWrappingImplementation, ElementWrappingImplementation);
-function MediaElementWrappingImplementation() {}
-MediaElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MediaElementWrappingImplementation._wrap$ctor.prototype = MediaElementWrappingImplementation.prototype;
-MediaElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-MediaElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-// ********** Code for AudioElementWrappingImplementation **************
-$inherits(AudioElementWrappingImplementation, MediaElementWrappingImplementation);
-function AudioElementWrappingImplementation() {}
-AudioElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  MediaElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-AudioElementWrappingImplementation._wrap$ctor.prototype = AudioElementWrappingImplementation.prototype;
-// ********** Code for EventWrappingImplementation **************
-$inherits(EventWrappingImplementation, DOMWrapperBase);
-function EventWrappingImplementation() {}
-EventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-EventWrappingImplementation._wrap$ctor.prototype = EventWrappingImplementation.prototype;
-// ********** Code for AudioProcessingEventWrappingImplementation **************
-$inherits(AudioProcessingEventWrappingImplementation, EventWrappingImplementation);
-function AudioProcessingEventWrappingImplementation() {}
-AudioProcessingEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-AudioProcessingEventWrappingImplementation._wrap$ctor.prototype = AudioProcessingEventWrappingImplementation.prototype;
-// ********** Code for BRElementWrappingImplementation **************
-$inherits(BRElementWrappingImplementation, ElementWrappingImplementation);
-function BRElementWrappingImplementation() {}
-BRElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-BRElementWrappingImplementation._wrap$ctor.prototype = BRElementWrappingImplementation.prototype;
-// ********** Code for BaseElementWrappingImplementation **************
-$inherits(BaseElementWrappingImplementation, ElementWrappingImplementation);
-function BaseElementWrappingImplementation() {}
-BaseElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-BaseElementWrappingImplementation._wrap$ctor.prototype = BaseElementWrappingImplementation.prototype;
-// ********** Code for ButtonElementWrappingImplementation **************
-$inherits(ButtonElementWrappingImplementation, ElementWrappingImplementation);
-function ButtonElementWrappingImplementation() {}
-ButtonElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ButtonElementWrappingImplementation._wrap$ctor.prototype = ButtonElementWrappingImplementation.prototype;
-ButtonElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for CanvasElementWrappingImplementation **************
-$inherits(CanvasElementWrappingImplementation, ElementWrappingImplementation);
-function CanvasElementWrappingImplementation() {}
-CanvasElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-CanvasElementWrappingImplementation._wrap$ctor.prototype = CanvasElementWrappingImplementation.prototype;
-CanvasElementWrappingImplementation.prototype.is$CanvasElement = function(){return true};
-CanvasElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-CanvasElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-CanvasElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-CanvasElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-CanvasElementWrappingImplementation.prototype.getContext = function(contextId) {
-  if (contextId == null) {
-    return LevelDom.wrapCanvasRenderingContext(this._ptr.getContext$0());
-  }
-  else {
-    return LevelDom.wrapCanvasRenderingContext(this._ptr.getContext$1(contextId));
-  }
-}
-CanvasElementWrappingImplementation.prototype.getContext$0 = CanvasElementWrappingImplementation.prototype.getContext;
-CanvasElementWrappingImplementation.prototype.getContext$1 = CanvasElementWrappingImplementation.prototype.getContext;
-// ********** Code for CanvasRenderingContextWrappingImplementation **************
-$inherits(CanvasRenderingContextWrappingImplementation, DOMWrapperBase);
-function CanvasRenderingContextWrappingImplementation() {}
-CanvasRenderingContextWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-CanvasRenderingContextWrappingImplementation._wrap$ctor.prototype = CanvasRenderingContextWrappingImplementation.prototype;
-CanvasRenderingContextWrappingImplementation.prototype.get$canvas = function() {
-  return LevelDom.wrapCanvasElement(this._ptr.get$canvas());
-}
-// ********** Code for CanvasRenderingContext2DWrappingImplementation **************
-$inherits(CanvasRenderingContext2DWrappingImplementation, CanvasRenderingContextWrappingImplementation);
-function CanvasRenderingContext2DWrappingImplementation() {}
-CanvasRenderingContext2DWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  CanvasRenderingContextWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-CanvasRenderingContext2DWrappingImplementation._wrap$ctor.prototype = CanvasRenderingContext2DWrappingImplementation.prototype;
-CanvasRenderingContext2DWrappingImplementation.prototype.set$fillStyle = function(value) {
-  this._ptr.set$fillStyle(LevelDom.unwrapMaybePrimitive(value));
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.set$font = function(value) {
-  this._ptr.set$font(value);
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.set$strokeStyle = function(value) {
-  this._ptr.set$strokeStyle(LevelDom.unwrapMaybePrimitive(value));
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.arc = function(x, y, radius, startAngle, endAngle, anticlockwise) {
-  this._ptr.arc$6(x, y, radius, startAngle, endAngle, anticlockwise);
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.beginPath = function() {
-  this._ptr.beginPath$0();
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.clearRect = function(x, y, width, height) {
-  this._ptr.clearRect$4(x, y, width, height);
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.closePath = function() {
-  this._ptr.closePath$0();
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.drawImage = function(canvas_OR_image, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
-  if (!!(canvas_OR_image && canvas_OR_image.is$ImageElement())) {
-    if (sw_OR_width == null) {
-      if (height_OR_sh == null) {
-        if (dx == null) {
-          if (dy == null) {
-            if (dw == null) {
-              if (dh == null) {
-                this._ptr.drawImage$3(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y);
-                return;
-              }
-            }
-          }
-        }
-      }
-    }
-    else {
-      if (dx == null) {
-        if (dy == null) {
-          if (dw == null) {
-            if (dh == null) {
-              this._ptr.drawImage$5(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
-              return;
-            }
-          }
-        }
-      }
-      else {
-        this._ptr.drawImage$9(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
-        return;
-      }
-    }
-  }
-  else {
-    if (!!(canvas_OR_image && canvas_OR_image.is$CanvasElement())) {
-      if (sw_OR_width == null) {
-        if (height_OR_sh == null) {
-          if (dx == null) {
-            if (dy == null) {
-              if (dw == null) {
-                if (dh == null) {
-                  this._ptr.drawImage$3(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y);
-                  return;
-                }
-              }
-            }
-          }
-        }
-      }
-      else {
-        if (dx == null) {
-          if (dy == null) {
-            if (dw == null) {
-              if (dh == null) {
-                this._ptr.drawImage$5(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh);
-                return;
-              }
-            }
-          }
-        }
-        else {
-          this._ptr.drawImage$9(LevelDom.unwrapMaybePrimitive(canvas_OR_image), sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh);
-          return;
-        }
-      }
-    }
-  }
-  $throw("Incorrect number or type of arguments");
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.fillText = function(text, x, y, maxWidth) {
-  if (maxWidth == null) {
-    this._ptr.fillText$3(text, x, y);
-    return;
-  }
-  else {
-    this._ptr.fillText$4(text, x, y, maxWidth);
-    return;
-  }
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.restore = function() {
-  this._ptr.restore$0();
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.rotate = function(angle) {
-  this._ptr.rotate$1(angle);
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.get$rotate = function() {
-  return this.rotate.bind(this);
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.save = function() {
-  this._ptr.save$0();
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.stroke = function() {
-  this._ptr.stroke$0();
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.translate = function(tx, ty) {
-  this._ptr.translate$2(tx, ty);
-  return;
-}
-CanvasRenderingContext2DWrappingImplementation.prototype.arc$6 = CanvasRenderingContext2DWrappingImplementation.prototype.arc;
-CanvasRenderingContext2DWrappingImplementation.prototype.beginPath$0 = CanvasRenderingContext2DWrappingImplementation.prototype.beginPath;
-CanvasRenderingContext2DWrappingImplementation.prototype.clearRect$4 = CanvasRenderingContext2DWrappingImplementation.prototype.clearRect;
-CanvasRenderingContext2DWrappingImplementation.prototype.closePath$0 = CanvasRenderingContext2DWrappingImplementation.prototype.closePath;
-CanvasRenderingContext2DWrappingImplementation.prototype.drawImage$3 = CanvasRenderingContext2DWrappingImplementation.prototype.drawImage;
-CanvasRenderingContext2DWrappingImplementation.prototype.drawImage$5 = CanvasRenderingContext2DWrappingImplementation.prototype.drawImage;
-CanvasRenderingContext2DWrappingImplementation.prototype.drawImage$9 = CanvasRenderingContext2DWrappingImplementation.prototype.drawImage;
-CanvasRenderingContext2DWrappingImplementation.prototype.fillText$3 = CanvasRenderingContext2DWrappingImplementation.prototype.fillText;
-CanvasRenderingContext2DWrappingImplementation.prototype.fillText$4 = CanvasRenderingContext2DWrappingImplementation.prototype.fillText;
-CanvasRenderingContext2DWrappingImplementation.prototype.restore$0 = CanvasRenderingContext2DWrappingImplementation.prototype.restore;
-CanvasRenderingContext2DWrappingImplementation.prototype.rotate$1 = CanvasRenderingContext2DWrappingImplementation.prototype.rotate;
-CanvasRenderingContext2DWrappingImplementation.prototype.save$0 = CanvasRenderingContext2DWrappingImplementation.prototype.save;
-CanvasRenderingContext2DWrappingImplementation.prototype.stroke$0 = CanvasRenderingContext2DWrappingImplementation.prototype.stroke;
-CanvasRenderingContext2DWrappingImplementation.prototype.translate$2 = CanvasRenderingContext2DWrappingImplementation.prototype.translate;
-// ********** Code for ClientRectWrappingImplementation **************
-$inherits(ClientRectWrappingImplementation, DOMWrapperBase);
-function ClientRectWrappingImplementation() {}
-ClientRectWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-ClientRectWrappingImplementation._wrap$ctor.prototype = ClientRectWrappingImplementation.prototype;
-ClientRectWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-ClientRectWrappingImplementation.prototype.get$left = function() {
-  return this._ptr.get$left();
-}
-ClientRectWrappingImplementation.prototype.get$top = function() {
-  return this._ptr.get$top();
-}
-ClientRectWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-// ********** Code for DListElementWrappingImplementation **************
-$inherits(DListElementWrappingImplementation, ElementWrappingImplementation);
-function DListElementWrappingImplementation() {}
-DListElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DListElementWrappingImplementation._wrap$ctor.prototype = DListElementWrappingImplementation.prototype;
-// ********** Code for DataListElementWrappingImplementation **************
-$inherits(DataListElementWrappingImplementation, ElementWrappingImplementation);
-function DataListElementWrappingImplementation() {}
-DataListElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DataListElementWrappingImplementation._wrap$ctor.prototype = DataListElementWrappingImplementation.prototype;
-// ********** Code for DetailsElementWrappingImplementation **************
-$inherits(DetailsElementWrappingImplementation, ElementWrappingImplementation);
-function DetailsElementWrappingImplementation() {}
-DetailsElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DetailsElementWrappingImplementation._wrap$ctor.prototype = DetailsElementWrappingImplementation.prototype;
-// ********** Code for DivElementWrappingImplementation **************
-$inherits(DivElementWrappingImplementation, ElementWrappingImplementation);
-function DivElementWrappingImplementation() {}
-DivElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DivElementWrappingImplementation._wrap$ctor.prototype = DivElementWrappingImplementation.prototype;
-// ********** Code for EmbedElementWrappingImplementation **************
-$inherits(EmbedElementWrappingImplementation, ElementWrappingImplementation);
-function EmbedElementWrappingImplementation() {}
-EmbedElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-EmbedElementWrappingImplementation._wrap$ctor.prototype = EmbedElementWrappingImplementation.prototype;
-EmbedElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-EmbedElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-EmbedElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-EmbedElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-EmbedElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-EmbedElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for FieldSetElementWrappingImplementation **************
-$inherits(FieldSetElementWrappingImplementation, ElementWrappingImplementation);
-function FieldSetElementWrappingImplementation() {}
-FieldSetElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-FieldSetElementWrappingImplementation._wrap$ctor.prototype = FieldSetElementWrappingImplementation.prototype;
-// ********** Code for FontElementWrappingImplementation **************
-$inherits(FontElementWrappingImplementation, ElementWrappingImplementation);
-function FontElementWrappingImplementation() {}
-FontElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-FontElementWrappingImplementation._wrap$ctor.prototype = FontElementWrappingImplementation.prototype;
-// ********** Code for FormElementWrappingImplementation **************
-$inherits(FormElementWrappingImplementation, ElementWrappingImplementation);
-function FormElementWrappingImplementation() {}
-FormElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-FormElementWrappingImplementation._wrap$ctor.prototype = FormElementWrappingImplementation.prototype;
-// ********** Code for HRElementWrappingImplementation **************
-$inherits(HRElementWrappingImplementation, ElementWrappingImplementation);
-function HRElementWrappingImplementation() {}
-HRElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-HRElementWrappingImplementation._wrap$ctor.prototype = HRElementWrappingImplementation.prototype;
-HRElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-HRElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for HeadElementWrappingImplementation **************
-$inherits(HeadElementWrappingImplementation, ElementWrappingImplementation);
-function HeadElementWrappingImplementation() {}
-HeadElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-HeadElementWrappingImplementation._wrap$ctor.prototype = HeadElementWrappingImplementation.prototype;
-// ********** Code for HeadingElementWrappingImplementation **************
-$inherits(HeadingElementWrappingImplementation, ElementWrappingImplementation);
-function HeadingElementWrappingImplementation() {}
-HeadingElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-HeadingElementWrappingImplementation._wrap$ctor.prototype = HeadingElementWrappingImplementation.prototype;
-// ********** Code for IDBVersionChangeEventWrappingImplementation **************
-$inherits(IDBVersionChangeEventWrappingImplementation, EventWrappingImplementation);
-function IDBVersionChangeEventWrappingImplementation() {}
-IDBVersionChangeEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-IDBVersionChangeEventWrappingImplementation._wrap$ctor.prototype = IDBVersionChangeEventWrappingImplementation.prototype;
-// ********** Code for IFrameElementWrappingImplementation **************
-$inherits(IFrameElementWrappingImplementation, ElementWrappingImplementation);
-function IFrameElementWrappingImplementation() {}
-IFrameElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-IFrameElementWrappingImplementation._wrap$ctor.prototype = IFrameElementWrappingImplementation.prototype;
-IFrameElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-IFrameElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-IFrameElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-IFrameElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-IFrameElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-IFrameElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for ImageElementWrappingImplementation **************
-$inherits(ImageElementWrappingImplementation, ElementWrappingImplementation);
-function ImageElementWrappingImplementation() {}
-ImageElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ImageElementWrappingImplementation._wrap$ctor.prototype = ImageElementWrappingImplementation.prototype;
-ImageElementWrappingImplementation.prototype.is$ImageElement = function(){return true};
-ImageElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-ImageElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-ImageElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-ImageElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-ImageElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-ImageElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for InputElementWrappingImplementation **************
-$inherits(InputElementWrappingImplementation, ElementWrappingImplementation);
-function InputElementWrappingImplementation() {}
-InputElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-InputElementWrappingImplementation._wrap$ctor.prototype = InputElementWrappingImplementation.prototype;
-InputElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-InputElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-InputElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for KeygenElementWrappingImplementation **************
-$inherits(KeygenElementWrappingImplementation, ElementWrappingImplementation);
-function KeygenElementWrappingImplementation() {}
-KeygenElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-KeygenElementWrappingImplementation._wrap$ctor.prototype = KeygenElementWrappingImplementation.prototype;
-// ********** Code for LIElementWrappingImplementation **************
-$inherits(LIElementWrappingImplementation, ElementWrappingImplementation);
-function LIElementWrappingImplementation() {}
-LIElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-LIElementWrappingImplementation._wrap$ctor.prototype = LIElementWrappingImplementation.prototype;
-LIElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for LabelElementWrappingImplementation **************
-$inherits(LabelElementWrappingImplementation, ElementWrappingImplementation);
-function LabelElementWrappingImplementation() {}
-LabelElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-LabelElementWrappingImplementation._wrap$ctor.prototype = LabelElementWrappingImplementation.prototype;
-// ********** Code for LegendElementWrappingImplementation **************
-$inherits(LegendElementWrappingImplementation, ElementWrappingImplementation);
-function LegendElementWrappingImplementation() {}
-LegendElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-LegendElementWrappingImplementation._wrap$ctor.prototype = LegendElementWrappingImplementation.prototype;
-// ********** Code for LinkElementWrappingImplementation **************
-$inherits(LinkElementWrappingImplementation, ElementWrappingImplementation);
-function LinkElementWrappingImplementation() {}
-LinkElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-LinkElementWrappingImplementation._wrap$ctor.prototype = LinkElementWrappingImplementation.prototype;
-// ********** Code for MapElementWrappingImplementation **************
-$inherits(MapElementWrappingImplementation, ElementWrappingImplementation);
-function MapElementWrappingImplementation() {}
-MapElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MapElementWrappingImplementation._wrap$ctor.prototype = MapElementWrappingImplementation.prototype;
-// ********** Code for MarqueeElementWrappingImplementation **************
-$inherits(MarqueeElementWrappingImplementation, ElementWrappingImplementation);
-function MarqueeElementWrappingImplementation() {}
-MarqueeElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MarqueeElementWrappingImplementation._wrap$ctor.prototype = MarqueeElementWrappingImplementation.prototype;
-MarqueeElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-MarqueeElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-MarqueeElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-MarqueeElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-MarqueeElementWrappingImplementation.prototype.start = function() {
-  this._ptr.start$0();
-  return;
-}
-MarqueeElementWrappingImplementation.prototype.get$start = function() {
-  return this.start.bind(this);
-}
-MarqueeElementWrappingImplementation.prototype.start$0 = MarqueeElementWrappingImplementation.prototype.start;
-// ********** Code for MenuElementWrappingImplementation **************
-$inherits(MenuElementWrappingImplementation, ElementWrappingImplementation);
-function MenuElementWrappingImplementation() {}
-MenuElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MenuElementWrappingImplementation._wrap$ctor.prototype = MenuElementWrappingImplementation.prototype;
-// ********** Code for MetaElementWrappingImplementation **************
-$inherits(MetaElementWrappingImplementation, ElementWrappingImplementation);
-function MetaElementWrappingImplementation() {}
-MetaElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MetaElementWrappingImplementation._wrap$ctor.prototype = MetaElementWrappingImplementation.prototype;
-// ********** Code for MeterElementWrappingImplementation **************
-$inherits(MeterElementWrappingImplementation, ElementWrappingImplementation);
-function MeterElementWrappingImplementation() {}
-MeterElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MeterElementWrappingImplementation._wrap$ctor.prototype = MeterElementWrappingImplementation.prototype;
-MeterElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for ModElementWrappingImplementation **************
-$inherits(ModElementWrappingImplementation, ElementWrappingImplementation);
-function ModElementWrappingImplementation() {}
-ModElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ModElementWrappingImplementation._wrap$ctor.prototype = ModElementWrappingImplementation.prototype;
-// ********** Code for OListElementWrappingImplementation **************
-$inherits(OListElementWrappingImplementation, ElementWrappingImplementation);
-function OListElementWrappingImplementation() {}
-OListElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OListElementWrappingImplementation._wrap$ctor.prototype = OListElementWrappingImplementation.prototype;
-OListElementWrappingImplementation.prototype.get$start = function() {
-  return this._ptr.get$start();
-}
-OListElementWrappingImplementation.prototype.start$0 = function() {
-  return this.get$start()();
-};
-// ********** Code for OfflineAudioCompletionEventWrappingImplementation **************
-$inherits(OfflineAudioCompletionEventWrappingImplementation, EventWrappingImplementation);
-function OfflineAudioCompletionEventWrappingImplementation() {}
-OfflineAudioCompletionEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OfflineAudioCompletionEventWrappingImplementation._wrap$ctor.prototype = OfflineAudioCompletionEventWrappingImplementation.prototype;
-// ********** Code for OptGroupElementWrappingImplementation **************
-$inherits(OptGroupElementWrappingImplementation, ElementWrappingImplementation);
-function OptGroupElementWrappingImplementation() {}
-OptGroupElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OptGroupElementWrappingImplementation._wrap$ctor.prototype = OptGroupElementWrappingImplementation.prototype;
-// ********** Code for OptionElementWrappingImplementation **************
-$inherits(OptionElementWrappingImplementation, ElementWrappingImplementation);
-function OptionElementWrappingImplementation() {}
-OptionElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OptionElementWrappingImplementation._wrap$ctor.prototype = OptionElementWrappingImplementation.prototype;
-OptionElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for OutputElementWrappingImplementation **************
-$inherits(OutputElementWrappingImplementation, ElementWrappingImplementation);
-function OutputElementWrappingImplementation() {}
-OutputElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OutputElementWrappingImplementation._wrap$ctor.prototype = OutputElementWrappingImplementation.prototype;
-OutputElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for ParagraphElementWrappingImplementation **************
-$inherits(ParagraphElementWrappingImplementation, ElementWrappingImplementation);
-function ParagraphElementWrappingImplementation() {}
-ParagraphElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ParagraphElementWrappingImplementation._wrap$ctor.prototype = ParagraphElementWrappingImplementation.prototype;
-// ********** Code for ParamElementWrappingImplementation **************
-$inherits(ParamElementWrappingImplementation, ElementWrappingImplementation);
-function ParamElementWrappingImplementation() {}
-ParamElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ParamElementWrappingImplementation._wrap$ctor.prototype = ParamElementWrappingImplementation.prototype;
-ParamElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for PreElementWrappingImplementation **************
-$inherits(PreElementWrappingImplementation, ElementWrappingImplementation);
-function PreElementWrappingImplementation() {}
-PreElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-PreElementWrappingImplementation._wrap$ctor.prototype = PreElementWrappingImplementation.prototype;
-PreElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-PreElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for ProgressElementWrappingImplementation **************
-$inherits(ProgressElementWrappingImplementation, ElementWrappingImplementation);
-function ProgressElementWrappingImplementation() {}
-ProgressElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ProgressElementWrappingImplementation._wrap$ctor.prototype = ProgressElementWrappingImplementation.prototype;
-ProgressElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for QuoteElementWrappingImplementation **************
-$inherits(QuoteElementWrappingImplementation, ElementWrappingImplementation);
-function QuoteElementWrappingImplementation() {}
-QuoteElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-QuoteElementWrappingImplementation._wrap$ctor.prototype = QuoteElementWrappingImplementation.prototype;
-// ********** Code for SVGElementWrappingImplementation **************
-$inherits(SVGElementWrappingImplementation, ElementWrappingImplementation);
-function SVGElementWrappingImplementation() {}
-SVGElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGElementWrappingImplementation._wrap$ctor.prototype = SVGElementWrappingImplementation.prototype;
-// ********** Code for SVGAElementWrappingImplementation **************
-$inherits(SVGAElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGAElementWrappingImplementation() {}
-SVGAElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAElementWrappingImplementation._wrap$ctor.prototype = SVGAElementWrappingImplementation.prototype;
-// ********** Code for SVGAltGlyphDefElementWrappingImplementation **************
-$inherits(SVGAltGlyphDefElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGAltGlyphDefElementWrappingImplementation() {}
-SVGAltGlyphDefElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAltGlyphDefElementWrappingImplementation._wrap$ctor.prototype = SVGAltGlyphDefElementWrappingImplementation.prototype;
-// ********** Code for SVGTextContentElementWrappingImplementation **************
-$inherits(SVGTextContentElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGTextContentElementWrappingImplementation() {}
-SVGTextContentElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTextContentElementWrappingImplementation._wrap$ctor.prototype = SVGTextContentElementWrappingImplementation.prototype;
-// ********** Code for SVGTextPositioningElementWrappingImplementation **************
-$inherits(SVGTextPositioningElementWrappingImplementation, SVGTextContentElementWrappingImplementation);
-function SVGTextPositioningElementWrappingImplementation() {}
-SVGTextPositioningElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextContentElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTextPositioningElementWrappingImplementation._wrap$ctor.prototype = SVGTextPositioningElementWrappingImplementation.prototype;
-SVGTextPositioningElementWrappingImplementation.prototype.get$rotate = function() {
-  return LevelDom.wrapSVGAnimatedNumberList(this._ptr.get$rotate());
-}
-SVGTextPositioningElementWrappingImplementation.prototype.rotate$1 = function($0) {
-  return this.get$rotate()($0);
-};
-// ********** Code for SVGAltGlyphElementWrappingImplementation **************
-$inherits(SVGAltGlyphElementWrappingImplementation, SVGTextPositioningElementWrappingImplementation);
-function SVGAltGlyphElementWrappingImplementation() {}
-SVGAltGlyphElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextPositioningElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAltGlyphElementWrappingImplementation._wrap$ctor.prototype = SVGAltGlyphElementWrappingImplementation.prototype;
-// ********** Code for SVGAltGlyphItemElementWrappingImplementation **************
-$inherits(SVGAltGlyphItemElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGAltGlyphItemElementWrappingImplementation() {}
-SVGAltGlyphItemElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAltGlyphItemElementWrappingImplementation._wrap$ctor.prototype = SVGAltGlyphItemElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimationElementWrappingImplementation **************
-$inherits(SVGAnimationElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGAnimationElementWrappingImplementation() {}
-SVGAnimationElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAnimationElementWrappingImplementation._wrap$ctor.prototype = SVGAnimationElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimateColorElementWrappingImplementation **************
-$inherits(SVGAnimateColorElementWrappingImplementation, SVGAnimationElementWrappingImplementation);
-function SVGAnimateColorElementWrappingImplementation() {}
-SVGAnimateColorElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGAnimationElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAnimateColorElementWrappingImplementation._wrap$ctor.prototype = SVGAnimateColorElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimateElementWrappingImplementation **************
-$inherits(SVGAnimateElementWrappingImplementation, SVGAnimationElementWrappingImplementation);
-function SVGAnimateElementWrappingImplementation() {}
-SVGAnimateElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGAnimationElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAnimateElementWrappingImplementation._wrap$ctor.prototype = SVGAnimateElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimateMotionElementWrappingImplementation **************
-$inherits(SVGAnimateMotionElementWrappingImplementation, SVGAnimationElementWrappingImplementation);
-function SVGAnimateMotionElementWrappingImplementation() {}
-SVGAnimateMotionElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGAnimationElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAnimateMotionElementWrappingImplementation._wrap$ctor.prototype = SVGAnimateMotionElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimateTransformElementWrappingImplementation **************
-$inherits(SVGAnimateTransformElementWrappingImplementation, SVGAnimationElementWrappingImplementation);
-function SVGAnimateTransformElementWrappingImplementation() {}
-SVGAnimateTransformElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGAnimationElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGAnimateTransformElementWrappingImplementation._wrap$ctor.prototype = SVGAnimateTransformElementWrappingImplementation.prototype;
-// ********** Code for SVGAnimatedLengthWrappingImplementation **************
-$inherits(SVGAnimatedLengthWrappingImplementation, DOMWrapperBase);
-function SVGAnimatedLengthWrappingImplementation() {}
-SVGAnimatedLengthWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-SVGAnimatedLengthWrappingImplementation._wrap$ctor.prototype = SVGAnimatedLengthWrappingImplementation.prototype;
-// ********** Code for SVGAnimatedNumberListWrappingImplementation **************
-$inherits(SVGAnimatedNumberListWrappingImplementation, DOMWrapperBase);
-function SVGAnimatedNumberListWrappingImplementation() {}
-SVGAnimatedNumberListWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DOMWrapperBase._wrap$ctor.call(this, ptr);
-}
-SVGAnimatedNumberListWrappingImplementation._wrap$ctor.prototype = SVGAnimatedNumberListWrappingImplementation.prototype;
-// ********** Code for SVGCircleElementWrappingImplementation **************
-$inherits(SVGCircleElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGCircleElementWrappingImplementation() {}
-SVGCircleElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGCircleElementWrappingImplementation._wrap$ctor.prototype = SVGCircleElementWrappingImplementation.prototype;
-// ********** Code for SVGClipPathElementWrappingImplementation **************
-$inherits(SVGClipPathElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGClipPathElementWrappingImplementation() {}
-SVGClipPathElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGClipPathElementWrappingImplementation._wrap$ctor.prototype = SVGClipPathElementWrappingImplementation.prototype;
-// ********** Code for SVGComponentTransferFunctionElementWrappingImplementation **************
-$inherits(SVGComponentTransferFunctionElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGComponentTransferFunctionElementWrappingImplementation() {}
-SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor.prototype = SVGComponentTransferFunctionElementWrappingImplementation.prototype;
-// ********** Code for SVGCursorElementWrappingImplementation **************
-$inherits(SVGCursorElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGCursorElementWrappingImplementation() {}
-SVGCursorElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGCursorElementWrappingImplementation._wrap$ctor.prototype = SVGCursorElementWrappingImplementation.prototype;
-// ********** Code for SVGDefsElementWrappingImplementation **************
-$inherits(SVGDefsElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGDefsElementWrappingImplementation() {}
-SVGDefsElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGDefsElementWrappingImplementation._wrap$ctor.prototype = SVGDefsElementWrappingImplementation.prototype;
-// ********** Code for SVGDescElementWrappingImplementation **************
-$inherits(SVGDescElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGDescElementWrappingImplementation() {}
-SVGDescElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGDescElementWrappingImplementation._wrap$ctor.prototype = SVGDescElementWrappingImplementation.prototype;
-// ********** Code for SVGEllipseElementWrappingImplementation **************
-$inherits(SVGEllipseElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGEllipseElementWrappingImplementation() {}
-SVGEllipseElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGEllipseElementWrappingImplementation._wrap$ctor.prototype = SVGEllipseElementWrappingImplementation.prototype;
-// ********** Code for SVGFEBlendElementWrappingImplementation **************
-$inherits(SVGFEBlendElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEBlendElementWrappingImplementation() {}
-SVGFEBlendElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEBlendElementWrappingImplementation._wrap$ctor.prototype = SVGFEBlendElementWrappingImplementation.prototype;
-SVGFEBlendElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEBlendElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEColorMatrixElementWrappingImplementation **************
-$inherits(SVGFEColorMatrixElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEColorMatrixElementWrappingImplementation() {}
-SVGFEColorMatrixElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEColorMatrixElementWrappingImplementation._wrap$ctor.prototype = SVGFEColorMatrixElementWrappingImplementation.prototype;
-SVGFEColorMatrixElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEColorMatrixElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEComponentTransferElementWrappingImplementation **************
-$inherits(SVGFEComponentTransferElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEComponentTransferElementWrappingImplementation() {}
-SVGFEComponentTransferElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEComponentTransferElementWrappingImplementation._wrap$ctor.prototype = SVGFEComponentTransferElementWrappingImplementation.prototype;
-SVGFEComponentTransferElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEComponentTransferElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEConvolveMatrixElementWrappingImplementation **************
-$inherits(SVGFEConvolveMatrixElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEConvolveMatrixElementWrappingImplementation() {}
-SVGFEConvolveMatrixElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEConvolveMatrixElementWrappingImplementation._wrap$ctor.prototype = SVGFEConvolveMatrixElementWrappingImplementation.prototype;
-SVGFEConvolveMatrixElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEConvolveMatrixElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEDiffuseLightingElementWrappingImplementation **************
-$inherits(SVGFEDiffuseLightingElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEDiffuseLightingElementWrappingImplementation() {}
-SVGFEDiffuseLightingElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEDiffuseLightingElementWrappingImplementation._wrap$ctor.prototype = SVGFEDiffuseLightingElementWrappingImplementation.prototype;
-SVGFEDiffuseLightingElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEDiffuseLightingElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEDisplacementMapElementWrappingImplementation **************
-$inherits(SVGFEDisplacementMapElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEDisplacementMapElementWrappingImplementation() {}
-SVGFEDisplacementMapElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEDisplacementMapElementWrappingImplementation._wrap$ctor.prototype = SVGFEDisplacementMapElementWrappingImplementation.prototype;
-SVGFEDisplacementMapElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEDisplacementMapElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEDistantLightElementWrappingImplementation **************
-$inherits(SVGFEDistantLightElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEDistantLightElementWrappingImplementation() {}
-SVGFEDistantLightElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEDistantLightElementWrappingImplementation._wrap$ctor.prototype = SVGFEDistantLightElementWrappingImplementation.prototype;
-// ********** Code for SVGFEDropShadowElementWrappingImplementation **************
-$inherits(SVGFEDropShadowElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEDropShadowElementWrappingImplementation() {}
-SVGFEDropShadowElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEDropShadowElementWrappingImplementation._wrap$ctor.prototype = SVGFEDropShadowElementWrappingImplementation.prototype;
-SVGFEDropShadowElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEDropShadowElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEFloodElementWrappingImplementation **************
-$inherits(SVGFEFloodElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEFloodElementWrappingImplementation() {}
-SVGFEFloodElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEFloodElementWrappingImplementation._wrap$ctor.prototype = SVGFEFloodElementWrappingImplementation.prototype;
-SVGFEFloodElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEFloodElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEFuncAElementWrappingImplementation **************
-$inherits(SVGFEFuncAElementWrappingImplementation, SVGComponentTransferFunctionElementWrappingImplementation);
-function SVGFEFuncAElementWrappingImplementation() {}
-SVGFEFuncAElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEFuncAElementWrappingImplementation._wrap$ctor.prototype = SVGFEFuncAElementWrappingImplementation.prototype;
-// ********** Code for SVGFEFuncBElementWrappingImplementation **************
-$inherits(SVGFEFuncBElementWrappingImplementation, SVGComponentTransferFunctionElementWrappingImplementation);
-function SVGFEFuncBElementWrappingImplementation() {}
-SVGFEFuncBElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEFuncBElementWrappingImplementation._wrap$ctor.prototype = SVGFEFuncBElementWrappingImplementation.prototype;
-// ********** Code for SVGFEFuncGElementWrappingImplementation **************
-$inherits(SVGFEFuncGElementWrappingImplementation, SVGComponentTransferFunctionElementWrappingImplementation);
-function SVGFEFuncGElementWrappingImplementation() {}
-SVGFEFuncGElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEFuncGElementWrappingImplementation._wrap$ctor.prototype = SVGFEFuncGElementWrappingImplementation.prototype;
-// ********** Code for SVGFEFuncRElementWrappingImplementation **************
-$inherits(SVGFEFuncRElementWrappingImplementation, SVGComponentTransferFunctionElementWrappingImplementation);
-function SVGFEFuncRElementWrappingImplementation() {}
-SVGFEFuncRElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEFuncRElementWrappingImplementation._wrap$ctor.prototype = SVGFEFuncRElementWrappingImplementation.prototype;
-// ********** Code for SVGFEGaussianBlurElementWrappingImplementation **************
-$inherits(SVGFEGaussianBlurElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEGaussianBlurElementWrappingImplementation() {}
-SVGFEGaussianBlurElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEGaussianBlurElementWrappingImplementation._wrap$ctor.prototype = SVGFEGaussianBlurElementWrappingImplementation.prototype;
-SVGFEGaussianBlurElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEGaussianBlurElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEImageElementWrappingImplementation **************
-$inherits(SVGFEImageElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEImageElementWrappingImplementation() {}
-SVGFEImageElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEImageElementWrappingImplementation._wrap$ctor.prototype = SVGFEImageElementWrappingImplementation.prototype;
-SVGFEImageElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEImageElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEMergeElementWrappingImplementation **************
-$inherits(SVGFEMergeElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEMergeElementWrappingImplementation() {}
-SVGFEMergeElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEMergeElementWrappingImplementation._wrap$ctor.prototype = SVGFEMergeElementWrappingImplementation.prototype;
-SVGFEMergeElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEMergeElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEMergeNodeElementWrappingImplementation **************
-$inherits(SVGFEMergeNodeElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEMergeNodeElementWrappingImplementation() {}
-SVGFEMergeNodeElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEMergeNodeElementWrappingImplementation._wrap$ctor.prototype = SVGFEMergeNodeElementWrappingImplementation.prototype;
-// ********** Code for SVGFEOffsetElementWrappingImplementation **************
-$inherits(SVGFEOffsetElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEOffsetElementWrappingImplementation() {}
-SVGFEOffsetElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEOffsetElementWrappingImplementation._wrap$ctor.prototype = SVGFEOffsetElementWrappingImplementation.prototype;
-SVGFEOffsetElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFEOffsetElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFEPointLightElementWrappingImplementation **************
-$inherits(SVGFEPointLightElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFEPointLightElementWrappingImplementation() {}
-SVGFEPointLightElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFEPointLightElementWrappingImplementation._wrap$ctor.prototype = SVGFEPointLightElementWrappingImplementation.prototype;
-// ********** Code for SVGFESpecularLightingElementWrappingImplementation **************
-$inherits(SVGFESpecularLightingElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFESpecularLightingElementWrappingImplementation() {}
-SVGFESpecularLightingElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFESpecularLightingElementWrappingImplementation._wrap$ctor.prototype = SVGFESpecularLightingElementWrappingImplementation.prototype;
-SVGFESpecularLightingElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFESpecularLightingElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFESpotLightElementWrappingImplementation **************
-$inherits(SVGFESpotLightElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFESpotLightElementWrappingImplementation() {}
-SVGFESpotLightElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFESpotLightElementWrappingImplementation._wrap$ctor.prototype = SVGFESpotLightElementWrappingImplementation.prototype;
-// ********** Code for SVGFETileElementWrappingImplementation **************
-$inherits(SVGFETileElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFETileElementWrappingImplementation() {}
-SVGFETileElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFETileElementWrappingImplementation._wrap$ctor.prototype = SVGFETileElementWrappingImplementation.prototype;
-SVGFETileElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFETileElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFETurbulenceElementWrappingImplementation **************
-$inherits(SVGFETurbulenceElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFETurbulenceElementWrappingImplementation() {}
-SVGFETurbulenceElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFETurbulenceElementWrappingImplementation._wrap$ctor.prototype = SVGFETurbulenceElementWrappingImplementation.prototype;
-SVGFETurbulenceElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFETurbulenceElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFilterElementWrappingImplementation **************
-$inherits(SVGFilterElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFilterElementWrappingImplementation() {}
-SVGFilterElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFilterElementWrappingImplementation._wrap$ctor.prototype = SVGFilterElementWrappingImplementation.prototype;
-SVGFilterElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGFilterElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGFontElementWrappingImplementation **************
-$inherits(SVGFontElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontElementWrappingImplementation() {}
-SVGFontElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontElementWrappingImplementation._wrap$ctor.prototype = SVGFontElementWrappingImplementation.prototype;
-// ********** Code for SVGFontFaceElementWrappingImplementation **************
-$inherits(SVGFontFaceElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontFaceElementWrappingImplementation() {}
-SVGFontFaceElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontFaceElementWrappingImplementation._wrap$ctor.prototype = SVGFontFaceElementWrappingImplementation.prototype;
-// ********** Code for SVGFontFaceFormatElementWrappingImplementation **************
-$inherits(SVGFontFaceFormatElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontFaceFormatElementWrappingImplementation() {}
-SVGFontFaceFormatElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontFaceFormatElementWrappingImplementation._wrap$ctor.prototype = SVGFontFaceFormatElementWrappingImplementation.prototype;
-// ********** Code for SVGFontFaceNameElementWrappingImplementation **************
-$inherits(SVGFontFaceNameElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontFaceNameElementWrappingImplementation() {}
-SVGFontFaceNameElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontFaceNameElementWrappingImplementation._wrap$ctor.prototype = SVGFontFaceNameElementWrappingImplementation.prototype;
-// ********** Code for SVGFontFaceSrcElementWrappingImplementation **************
-$inherits(SVGFontFaceSrcElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontFaceSrcElementWrappingImplementation() {}
-SVGFontFaceSrcElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontFaceSrcElementWrappingImplementation._wrap$ctor.prototype = SVGFontFaceSrcElementWrappingImplementation.prototype;
-// ********** Code for SVGFontFaceUriElementWrappingImplementation **************
-$inherits(SVGFontFaceUriElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGFontFaceUriElementWrappingImplementation() {}
-SVGFontFaceUriElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGFontFaceUriElementWrappingImplementation._wrap$ctor.prototype = SVGFontFaceUriElementWrappingImplementation.prototype;
-// ********** Code for SVGForeignObjectElementWrappingImplementation **************
-$inherits(SVGForeignObjectElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGForeignObjectElementWrappingImplementation() {}
-SVGForeignObjectElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGForeignObjectElementWrappingImplementation._wrap$ctor.prototype = SVGForeignObjectElementWrappingImplementation.prototype;
-SVGForeignObjectElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGForeignObjectElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGGElementWrappingImplementation **************
-$inherits(SVGGElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGGElementWrappingImplementation() {}
-SVGGElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGGElementWrappingImplementation._wrap$ctor.prototype = SVGGElementWrappingImplementation.prototype;
-// ********** Code for SVGGlyphElementWrappingImplementation **************
-$inherits(SVGGlyphElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGGlyphElementWrappingImplementation() {}
-SVGGlyphElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGGlyphElementWrappingImplementation._wrap$ctor.prototype = SVGGlyphElementWrappingImplementation.prototype;
-// ********** Code for SVGGlyphRefElementWrappingImplementation **************
-$inherits(SVGGlyphRefElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGGlyphRefElementWrappingImplementation() {}
-SVGGlyphRefElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGGlyphRefElementWrappingImplementation._wrap$ctor.prototype = SVGGlyphRefElementWrappingImplementation.prototype;
-// ********** Code for SVGGradientElementWrappingImplementation **************
-$inherits(SVGGradientElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGGradientElementWrappingImplementation() {}
-SVGGradientElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGGradientElementWrappingImplementation._wrap$ctor.prototype = SVGGradientElementWrappingImplementation.prototype;
-// ********** Code for SVGHKernElementWrappingImplementation **************
-$inherits(SVGHKernElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGHKernElementWrappingImplementation() {}
-SVGHKernElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGHKernElementWrappingImplementation._wrap$ctor.prototype = SVGHKernElementWrappingImplementation.prototype;
-// ********** Code for SVGImageElementWrappingImplementation **************
-$inherits(SVGImageElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGImageElementWrappingImplementation() {}
-SVGImageElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGImageElementWrappingImplementation._wrap$ctor.prototype = SVGImageElementWrappingImplementation.prototype;
-SVGImageElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGImageElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGLineElementWrappingImplementation **************
-$inherits(SVGLineElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGLineElementWrappingImplementation() {}
-SVGLineElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGLineElementWrappingImplementation._wrap$ctor.prototype = SVGLineElementWrappingImplementation.prototype;
-// ********** Code for SVGLinearGradientElementWrappingImplementation **************
-$inherits(SVGLinearGradientElementWrappingImplementation, SVGGradientElementWrappingImplementation);
-function SVGLinearGradientElementWrappingImplementation() {}
-SVGLinearGradientElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGGradientElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGLinearGradientElementWrappingImplementation._wrap$ctor.prototype = SVGLinearGradientElementWrappingImplementation.prototype;
-// ********** Code for SVGMPathElementWrappingImplementation **************
-$inherits(SVGMPathElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGMPathElementWrappingImplementation() {}
-SVGMPathElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGMPathElementWrappingImplementation._wrap$ctor.prototype = SVGMPathElementWrappingImplementation.prototype;
-// ********** Code for SVGMarkerElementWrappingImplementation **************
-$inherits(SVGMarkerElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGMarkerElementWrappingImplementation() {}
-SVGMarkerElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGMarkerElementWrappingImplementation._wrap$ctor.prototype = SVGMarkerElementWrappingImplementation.prototype;
-// ********** Code for SVGMaskElementWrappingImplementation **************
-$inherits(SVGMaskElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGMaskElementWrappingImplementation() {}
-SVGMaskElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGMaskElementWrappingImplementation._wrap$ctor.prototype = SVGMaskElementWrappingImplementation.prototype;
-SVGMaskElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGMaskElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGMetadataElementWrappingImplementation **************
-$inherits(SVGMetadataElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGMetadataElementWrappingImplementation() {}
-SVGMetadataElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGMetadataElementWrappingImplementation._wrap$ctor.prototype = SVGMetadataElementWrappingImplementation.prototype;
-// ********** Code for SVGMissingGlyphElementWrappingImplementation **************
-$inherits(SVGMissingGlyphElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGMissingGlyphElementWrappingImplementation() {}
-SVGMissingGlyphElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGMissingGlyphElementWrappingImplementation._wrap$ctor.prototype = SVGMissingGlyphElementWrappingImplementation.prototype;
-// ********** Code for SVGPathElementWrappingImplementation **************
-$inherits(SVGPathElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGPathElementWrappingImplementation() {}
-SVGPathElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGPathElementWrappingImplementation._wrap$ctor.prototype = SVGPathElementWrappingImplementation.prototype;
-// ********** Code for SVGPatternElementWrappingImplementation **************
-$inherits(SVGPatternElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGPatternElementWrappingImplementation() {}
-SVGPatternElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGPatternElementWrappingImplementation._wrap$ctor.prototype = SVGPatternElementWrappingImplementation.prototype;
-SVGPatternElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGPatternElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGPolygonElementWrappingImplementation **************
-$inherits(SVGPolygonElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGPolygonElementWrappingImplementation() {}
-SVGPolygonElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGPolygonElementWrappingImplementation._wrap$ctor.prototype = SVGPolygonElementWrappingImplementation.prototype;
-// ********** Code for SVGPolylineElementWrappingImplementation **************
-$inherits(SVGPolylineElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGPolylineElementWrappingImplementation() {}
-SVGPolylineElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGPolylineElementWrappingImplementation._wrap$ctor.prototype = SVGPolylineElementWrappingImplementation.prototype;
-// ********** Code for SVGRadialGradientElementWrappingImplementation **************
-$inherits(SVGRadialGradientElementWrappingImplementation, SVGGradientElementWrappingImplementation);
-function SVGRadialGradientElementWrappingImplementation() {}
-SVGRadialGradientElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGGradientElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGRadialGradientElementWrappingImplementation._wrap$ctor.prototype = SVGRadialGradientElementWrappingImplementation.prototype;
-// ********** Code for SVGRectElementWrappingImplementation **************
-$inherits(SVGRectElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGRectElementWrappingImplementation() {}
-SVGRectElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGRectElementWrappingImplementation._wrap$ctor.prototype = SVGRectElementWrappingImplementation.prototype;
-SVGRectElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGRectElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGScriptElementWrappingImplementation **************
-$inherits(SVGScriptElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGScriptElementWrappingImplementation() {}
-SVGScriptElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGScriptElementWrappingImplementation._wrap$ctor.prototype = SVGScriptElementWrappingImplementation.prototype;
-// ********** Code for SVGSetElementWrappingImplementation **************
-$inherits(SVGSetElementWrappingImplementation, SVGAnimationElementWrappingImplementation);
-function SVGSetElementWrappingImplementation() {}
-SVGSetElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGAnimationElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGSetElementWrappingImplementation._wrap$ctor.prototype = SVGSetElementWrappingImplementation.prototype;
-// ********** Code for SVGStopElementWrappingImplementation **************
-$inherits(SVGStopElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGStopElementWrappingImplementation() {}
-SVGStopElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGStopElementWrappingImplementation._wrap$ctor.prototype = SVGStopElementWrappingImplementation.prototype;
-// ********** Code for SVGStyleElementWrappingImplementation **************
-$inherits(SVGStyleElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGStyleElementWrappingImplementation() {}
-SVGStyleElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGStyleElementWrappingImplementation._wrap$ctor.prototype = SVGStyleElementWrappingImplementation.prototype;
-// ********** Code for SVGSwitchElementWrappingImplementation **************
-$inherits(SVGSwitchElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGSwitchElementWrappingImplementation() {}
-SVGSwitchElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGSwitchElementWrappingImplementation._wrap$ctor.prototype = SVGSwitchElementWrappingImplementation.prototype;
-// ********** Code for SVGSymbolElementWrappingImplementation **************
-$inherits(SVGSymbolElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGSymbolElementWrappingImplementation() {}
-SVGSymbolElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGSymbolElementWrappingImplementation._wrap$ctor.prototype = SVGSymbolElementWrappingImplementation.prototype;
-// ********** Code for SVGTRefElementWrappingImplementation **************
-$inherits(SVGTRefElementWrappingImplementation, SVGTextPositioningElementWrappingImplementation);
-function SVGTRefElementWrappingImplementation() {}
-SVGTRefElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextPositioningElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTRefElementWrappingImplementation._wrap$ctor.prototype = SVGTRefElementWrappingImplementation.prototype;
-// ********** Code for SVGTSpanElementWrappingImplementation **************
-$inherits(SVGTSpanElementWrappingImplementation, SVGTextPositioningElementWrappingImplementation);
-function SVGTSpanElementWrappingImplementation() {}
-SVGTSpanElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextPositioningElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTSpanElementWrappingImplementation._wrap$ctor.prototype = SVGTSpanElementWrappingImplementation.prototype;
-// ********** Code for SVGTextElementWrappingImplementation **************
-$inherits(SVGTextElementWrappingImplementation, SVGTextPositioningElementWrappingImplementation);
-function SVGTextElementWrappingImplementation() {}
-SVGTextElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextPositioningElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTextElementWrappingImplementation._wrap$ctor.prototype = SVGTextElementWrappingImplementation.prototype;
-// ********** Code for SVGTextPathElementWrappingImplementation **************
-$inherits(SVGTextPathElementWrappingImplementation, SVGTextContentElementWrappingImplementation);
-function SVGTextPathElementWrappingImplementation() {}
-SVGTextPathElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGTextContentElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTextPathElementWrappingImplementation._wrap$ctor.prototype = SVGTextPathElementWrappingImplementation.prototype;
-// ********** Code for SVGTitleElementWrappingImplementation **************
-$inherits(SVGTitleElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGTitleElementWrappingImplementation() {}
-SVGTitleElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGTitleElementWrappingImplementation._wrap$ctor.prototype = SVGTitleElementWrappingImplementation.prototype;
-// ********** Code for SVGUseElementWrappingImplementation **************
-$inherits(SVGUseElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGUseElementWrappingImplementation() {}
-SVGUseElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGUseElementWrappingImplementation._wrap$ctor.prototype = SVGUseElementWrappingImplementation.prototype;
-SVGUseElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGUseElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for SVGVKernElementWrappingImplementation **************
-$inherits(SVGVKernElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGVKernElementWrappingImplementation() {}
-SVGVKernElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGVKernElementWrappingImplementation._wrap$ctor.prototype = SVGVKernElementWrappingImplementation.prototype;
-// ********** Code for SVGViewElementWrappingImplementation **************
-$inherits(SVGViewElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGViewElementWrappingImplementation() {}
-SVGViewElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGViewElementWrappingImplementation._wrap$ctor.prototype = SVGViewElementWrappingImplementation.prototype;
-// ********** Code for UIEventWrappingImplementation **************
-$inherits(UIEventWrappingImplementation, EventWrappingImplementation);
-function UIEventWrappingImplementation() {}
-UIEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-UIEventWrappingImplementation._wrap$ctor.prototype = UIEventWrappingImplementation.prototype;
-// ********** Code for SVGZoomEventWrappingImplementation **************
-$inherits(SVGZoomEventWrappingImplementation, UIEventWrappingImplementation);
-function SVGZoomEventWrappingImplementation() {}
-SVGZoomEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGZoomEventWrappingImplementation._wrap$ctor.prototype = SVGZoomEventWrappingImplementation.prototype;
-// ********** Code for ScriptElementWrappingImplementation **************
-$inherits(ScriptElementWrappingImplementation, ElementWrappingImplementation);
-function ScriptElementWrappingImplementation() {}
-ScriptElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ScriptElementWrappingImplementation._wrap$ctor.prototype = ScriptElementWrappingImplementation.prototype;
-ScriptElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-ScriptElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-// ********** Code for SelectElementWrappingImplementation **************
-$inherits(SelectElementWrappingImplementation, ElementWrappingImplementation);
-function SelectElementWrappingImplementation() {}
-SelectElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SelectElementWrappingImplementation._wrap$ctor.prototype = SelectElementWrappingImplementation.prototype;
-SelectElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for SourceElementWrappingImplementation **************
-$inherits(SourceElementWrappingImplementation, ElementWrappingImplementation);
-function SourceElementWrappingImplementation() {}
-SourceElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SourceElementWrappingImplementation._wrap$ctor.prototype = SourceElementWrappingImplementation.prototype;
-SourceElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-SourceElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-// ********** Code for SpanElementWrappingImplementation **************
-$inherits(SpanElementWrappingImplementation, ElementWrappingImplementation);
-function SpanElementWrappingImplementation() {}
-SpanElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SpanElementWrappingImplementation._wrap$ctor.prototype = SpanElementWrappingImplementation.prototype;
-// ********** Code for SpeechInputEventWrappingImplementation **************
-$inherits(SpeechInputEventWrappingImplementation, EventWrappingImplementation);
-function SpeechInputEventWrappingImplementation() {}
-SpeechInputEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SpeechInputEventWrappingImplementation._wrap$ctor.prototype = SpeechInputEventWrappingImplementation.prototype;
-// ********** Code for StyleElementWrappingImplementation **************
-$inherits(StyleElementWrappingImplementation, ElementWrappingImplementation);
-function StyleElementWrappingImplementation() {}
-StyleElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-StyleElementWrappingImplementation._wrap$ctor.prototype = StyleElementWrappingImplementation.prototype;
-// ********** Code for TableCaptionElementWrappingImplementation **************
-$inherits(TableCaptionElementWrappingImplementation, ElementWrappingImplementation);
-function TableCaptionElementWrappingImplementation() {}
-TableCaptionElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableCaptionElementWrappingImplementation._wrap$ctor.prototype = TableCaptionElementWrappingImplementation.prototype;
-// ********** Code for TableCellElementWrappingImplementation **************
-$inherits(TableCellElementWrappingImplementation, ElementWrappingImplementation);
-function TableCellElementWrappingImplementation() {}
-TableCellElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableCellElementWrappingImplementation._wrap$ctor.prototype = TableCellElementWrappingImplementation.prototype;
-TableCellElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-TableCellElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-TableCellElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-TableCellElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for TableColElementWrappingImplementation **************
-$inherits(TableColElementWrappingImplementation, ElementWrappingImplementation);
-function TableColElementWrappingImplementation() {}
-TableColElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableColElementWrappingImplementation._wrap$ctor.prototype = TableColElementWrappingImplementation.prototype;
-TableColElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-TableColElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for TableElementWrappingImplementation **************
-$inherits(TableElementWrappingImplementation, ElementWrappingImplementation);
-function TableElementWrappingImplementation() {}
-TableElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableElementWrappingImplementation._wrap$ctor.prototype = TableElementWrappingImplementation.prototype;
-TableElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-TableElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for TableRowElementWrappingImplementation **************
-$inherits(TableRowElementWrappingImplementation, ElementWrappingImplementation);
-function TableRowElementWrappingImplementation() {}
-TableRowElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableRowElementWrappingImplementation._wrap$ctor.prototype = TableRowElementWrappingImplementation.prototype;
-// ********** Code for TableSectionElementWrappingImplementation **************
-$inherits(TableSectionElementWrappingImplementation, ElementWrappingImplementation);
-function TableSectionElementWrappingImplementation() {}
-TableSectionElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TableSectionElementWrappingImplementation._wrap$ctor.prototype = TableSectionElementWrappingImplementation.prototype;
-// ********** Code for TextAreaElementWrappingImplementation **************
-$inherits(TextAreaElementWrappingImplementation, ElementWrappingImplementation);
-function TextAreaElementWrappingImplementation() {}
-TextAreaElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TextAreaElementWrappingImplementation._wrap$ctor.prototype = TextAreaElementWrappingImplementation.prototype;
-TextAreaElementWrappingImplementation.prototype.get$value = function() {
-  return this._ptr.get$value();
-}
-// ********** Code for TitleElementWrappingImplementation **************
-$inherits(TitleElementWrappingImplementation, ElementWrappingImplementation);
-function TitleElementWrappingImplementation() {}
-TitleElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TitleElementWrappingImplementation._wrap$ctor.prototype = TitleElementWrappingImplementation.prototype;
-// ********** Code for TrackElementWrappingImplementation **************
-$inherits(TrackElementWrappingImplementation, ElementWrappingImplementation);
-function TrackElementWrappingImplementation() {}
-TrackElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TrackElementWrappingImplementation._wrap$ctor.prototype = TrackElementWrappingImplementation.prototype;
-TrackElementWrappingImplementation.prototype.get$src = function() {
-  return this._ptr.get$src();
-}
-TrackElementWrappingImplementation.prototype.set$src = function(value) {
-  this._ptr.set$src(value);
-}
-// ********** Code for UListElementWrappingImplementation **************
-$inherits(UListElementWrappingImplementation, ElementWrappingImplementation);
-function UListElementWrappingImplementation() {}
-UListElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-UListElementWrappingImplementation._wrap$ctor.prototype = UListElementWrappingImplementation.prototype;
-// ********** Code for UnknownElementWrappingImplementation **************
-$inherits(UnknownElementWrappingImplementation, ElementWrappingImplementation);
-function UnknownElementWrappingImplementation() {}
-UnknownElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-UnknownElementWrappingImplementation._wrap$ctor.prototype = UnknownElementWrappingImplementation.prototype;
-// ********** Code for VideoElementWrappingImplementation **************
-$inherits(VideoElementWrappingImplementation, MediaElementWrappingImplementation);
-function VideoElementWrappingImplementation() {}
-VideoElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  MediaElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-VideoElementWrappingImplementation._wrap$ctor.prototype = VideoElementWrappingImplementation.prototype;
-VideoElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-VideoElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-VideoElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-VideoElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for WebGLContextEventWrappingImplementation **************
-$inherits(WebGLContextEventWrappingImplementation, EventWrappingImplementation);
-function WebGLContextEventWrappingImplementation() {}
-WebGLContextEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-WebGLContextEventWrappingImplementation._wrap$ctor.prototype = WebGLContextEventWrappingImplementation.prototype;
-// ********** Code for WebGLRenderingContextWrappingImplementation **************
-$inherits(WebGLRenderingContextWrappingImplementation, CanvasRenderingContextWrappingImplementation);
-function WebGLRenderingContextWrappingImplementation() {}
-WebGLRenderingContextWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  CanvasRenderingContextWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-WebGLRenderingContextWrappingImplementation._wrap$ctor.prototype = WebGLRenderingContextWrappingImplementation.prototype;
-// ********** Code for LevelDom **************
-function LevelDom() {}
-LevelDom.wrapCanvasElement = function(raw) {
-  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new CanvasElementWrappingImplementation._wrap$ctor(raw);
-}
-LevelDom.wrapCanvasRenderingContext = function(raw) {
-  if (raw == null) {
-    return null;
-  }
-  if (raw.get$dartObjectLocalStorage() != null) {
-    return raw.get$dartObjectLocalStorage();
-  }
-  switch (raw.get$typeName()) {
-    case "CanvasRenderingContext":
-
-      return new CanvasRenderingContextWrappingImplementation._wrap$ctor(raw);
-
-    case "CanvasRenderingContext2D":
-
-      return new CanvasRenderingContext2DWrappingImplementation._wrap$ctor(raw);
-
-    case "WebGLRenderingContext":
-
-      return new WebGLRenderingContextWrappingImplementation._wrap$ctor(raw);
-
-    default:
-
-      $throw(new UnsupportedOperationException("Unknown type:" + raw.toString$0()));
-
-  }
-}
-LevelDom.wrapClientRect = function(raw) {
-  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new ClientRectWrappingImplementation._wrap$ctor(raw);
-}
-LevelDom.wrapDocument = function(raw) {
-  if (raw == null) {
-    return null;
-  }
-  if (raw.get$dartObjectLocalStorage() != null) {
-    return raw.get$dartObjectLocalStorage();
-  }
-  switch (raw.get$typeName()) {
-    case "HTMLDocument":
-
-      return new DocumentWrappingImplementation._wrap$ctor(raw, raw.get$documentElement());
-
-    case "SVGDocument":
-
-      return new SVGDocumentWrappingImplementation._wrap$ctor(raw);
-
-    default:
-
-      $throw(new UnsupportedOperationException("Unknown type:" + raw.toString$0()));
-
-  }
-}
-LevelDom.wrapElement = function(raw) {
-  if (raw == null) {
-    return null;
-  }
-  if (raw.get$dartObjectLocalStorage() != null) {
-    return raw.get$dartObjectLocalStorage();
-  }
-  switch (raw.get$typeName()) {
-    case "HTMLAnchorElement":
-
-      return new AnchorElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLAreaElement":
-
-      return new AreaElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLAudioElement":
-
-      return new AudioElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLBRElement":
-
-      return new BRElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLBaseElement":
-
-      return new BaseElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLBodyElement":
-
-      return new BodyElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLButtonElement":
-
-      return new ButtonElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLCanvasElement":
-
-      return new CanvasElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLDListElement":
-
-      return new DListElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLDataListElement":
-
-      return new DataListElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLDetailsElement":
-
-      return new DetailsElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLDivElement":
-
-      return new DivElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLElement":
-
-      return new ElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLEmbedElement":
-
-      return new EmbedElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLFieldSetElement":
-
-      return new FieldSetElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLFontElement":
-
-      return new FontElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLFormElement":
-
-      return new FormElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLHRElement":
-
-      return new HRElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLHeadElement":
-
-      return new HeadElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLHeadingElement":
-
-      return new HeadingElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLHtmlElement":
-
-      return new DocumentWrappingImplementation._wrap$ctor(raw.get$parentNode(), raw);
-
-    case "HTMLIFrameElement":
-
-      return new IFrameElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLImageElement":
-
-      return new ImageElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLInputElement":
-
-      return new InputElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLKeygenElement":
-
-      return new KeygenElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLLIElement":
-
-      return new LIElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLLabelElement":
-
-      return new LabelElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLLegendElement":
-
-      return new LegendElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLLinkElement":
-
-      return new LinkElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMapElement":
-
-      return new MapElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMarqueeElement":
-
-      return new MarqueeElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMediaElement":
-
-      return new MediaElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMenuElement":
-
-      return new MenuElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMetaElement":
-
-      return new MetaElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLMeterElement":
-
-      return new MeterElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLModElement":
-
-      return new ModElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLOListElement":
-
-      return new OListElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLObjectElement":
-
-      return new ObjectElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLOptGroupElement":
-
-      return new OptGroupElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLOptionElement":
-
-      return new OptionElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLOutputElement":
-
-      return new OutputElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLParagraphElement":
-
-      return new ParagraphElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLParamElement":
-
-      return new ParamElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLPreElement":
-
-      return new PreElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLProgressElement":
-
-      return new ProgressElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLQuoteElement":
-
-      return new QuoteElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAElement":
-
-      return new SVGAElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAltGlyphDefElement":
-
-      return new SVGAltGlyphDefElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAltGlyphElement":
-
-      return new SVGAltGlyphElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAltGlyphItemElement":
-
-      return new SVGAltGlyphItemElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAnimateColorElement":
-
-      return new SVGAnimateColorElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAnimateElement":
-
-      return new SVGAnimateElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAnimateMotionElement":
-
-      return new SVGAnimateMotionElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAnimateTransformElement":
-
-      return new SVGAnimateTransformElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGAnimationElement":
-
-      return new SVGAnimationElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGCircleElement":
-
-      return new SVGCircleElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGClipPathElement":
-
-      return new SVGClipPathElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGComponentTransferFunctionElement":
-
-      return new SVGComponentTransferFunctionElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGCursorElement":
-
-      return new SVGCursorElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGDefsElement":
-
-      return new SVGDefsElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGDescElement":
-
-      return new SVGDescElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGElement":
-
-      return new SVGElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGEllipseElement":
-
-      return new SVGEllipseElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEBlendElement":
-
-      return new SVGFEBlendElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEColorMatrixElement":
-
-      return new SVGFEColorMatrixElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEComponentTransferElement":
-
-      return new SVGFEComponentTransferElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEConvolveMatrixElement":
-
-      return new SVGFEConvolveMatrixElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEDiffuseLightingElement":
-
-      return new SVGFEDiffuseLightingElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEDisplacementMapElement":
-
-      return new SVGFEDisplacementMapElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEDistantLightElement":
-
-      return new SVGFEDistantLightElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEDropShadowElement":
-
-      return new SVGFEDropShadowElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEFloodElement":
-
-      return new SVGFEFloodElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEFuncAElement":
-
-      return new SVGFEFuncAElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEFuncBElement":
-
-      return new SVGFEFuncBElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEFuncGElement":
-
-      return new SVGFEFuncGElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEFuncRElement":
-
-      return new SVGFEFuncRElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEGaussianBlurElement":
-
-      return new SVGFEGaussianBlurElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEImageElement":
-
-      return new SVGFEImageElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEMergeElement":
-
-      return new SVGFEMergeElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEMergeNodeElement":
-
-      return new SVGFEMergeNodeElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEOffsetElement":
-
-      return new SVGFEOffsetElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFEPointLightElement":
-
-      return new SVGFEPointLightElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFESpecularLightingElement":
-
-      return new SVGFESpecularLightingElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFESpotLightElement":
-
-      return new SVGFESpotLightElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFETileElement":
-
-      return new SVGFETileElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFETurbulenceElement":
-
-      return new SVGFETurbulenceElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFilterElement":
-
-      return new SVGFilterElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontElement":
-
-      return new SVGFontElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontFaceElement":
-
-      return new SVGFontFaceElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontFaceFormatElement":
-
-      return new SVGFontFaceFormatElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontFaceNameElement":
-
-      return new SVGFontFaceNameElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontFaceSrcElement":
-
-      return new SVGFontFaceSrcElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGFontFaceUriElement":
-
-      return new SVGFontFaceUriElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGForeignObjectElement":
-
-      return new SVGForeignObjectElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGGElement":
-
-      return new SVGGElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGGlyphElement":
-
-      return new SVGGlyphElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGGlyphRefElement":
-
-      return new SVGGlyphRefElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGGradientElement":
-
-      return new SVGGradientElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGHKernElement":
-
-      return new SVGHKernElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGImageElement":
-
-      return new SVGImageElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGLineElement":
-
-      return new SVGLineElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGLinearGradientElement":
-
-      return new SVGLinearGradientElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGMPathElement":
-
-      return new SVGMPathElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGMarkerElement":
-
-      return new SVGMarkerElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGMaskElement":
-
-      return new SVGMaskElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGMetadataElement":
-
-      return new SVGMetadataElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGMissingGlyphElement":
-
-      return new SVGMissingGlyphElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGPathElement":
-
-      return new SVGPathElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGPatternElement":
-
-      return new SVGPatternElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGPolygonElement":
-
-      return new SVGPolygonElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGPolylineElement":
-
-      return new SVGPolylineElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGRadialGradientElement":
-
-      return new SVGRadialGradientElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGRectElement":
-
-      return new SVGRectElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGSVGElement":
-
-      return new SVGSVGElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGScriptElement":
-
-      return new SVGScriptElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGSetElement":
-
-      return new SVGSetElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGStopElement":
-
-      return new SVGStopElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGStyleElement":
-
-      return new SVGStyleElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGSwitchElement":
-
-      return new SVGSwitchElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGSymbolElement":
-
-      return new SVGSymbolElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTRefElement":
-
-      return new SVGTRefElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTSpanElement":
-
-      return new SVGTSpanElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTextContentElement":
-
-      return new SVGTextContentElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTextElement":
-
-      return new SVGTextElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTextPathElement":
-
-      return new SVGTextPathElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTextPositioningElement":
-
-      return new SVGTextPositioningElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGTitleElement":
-
-      return new SVGTitleElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGUseElement":
-
-      return new SVGUseElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGVKernElement":
-
-      return new SVGVKernElementWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGViewElement":
-
-      return new SVGViewElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLScriptElement":
-
-      return new ScriptElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLSelectElement":
-
-      return new SelectElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLSourceElement":
-
-      return new SourceElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLSpanElement":
-
-      return new SpanElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLStyleElement":
-
-      return new StyleElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableCaptionElement":
-
-      return new TableCaptionElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableCellElement":
-
-      return new TableCellElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableColElement":
-
-      return new TableColElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableElement":
-
-      return new TableElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableRowElement":
-
-      return new TableRowElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTableSectionElement":
-
-      return new TableSectionElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTextAreaElement":
-
-      return new TextAreaElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTitleElement":
-
-      return new TitleElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLTrackElement":
-
-      return new TrackElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLUListElement":
-
-      return new UListElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLUnknownElement":
-
-      return new UnknownElementWrappingImplementation._wrap$ctor(raw);
-
-    case "HTMLVideoElement":
-
-      return new VideoElementWrappingImplementation._wrap$ctor(raw);
-
-    default:
-
-      $throw(new UnsupportedOperationException("Unknown type:" + raw.toString$0()));
-
-  }
-}
-LevelDom.wrapEvent = function(raw) {
-  if (raw == null) {
-    return null;
-  }
-  if (raw.get$dartObjectLocalStorage() != null) {
-    return raw.get$dartObjectLocalStorage();
-  }
-  switch (raw.get$typeName()) {
-    case "WebKitAnimationEvent":
-
-      return new AnimationEventWrappingImplementation._wrap$ctor(raw);
-
-    case "AudioProcessingEvent":
-
-      return new AudioProcessingEventWrappingImplementation._wrap$ctor(raw);
-
-    case "BeforeLoadEvent":
-
-      return new BeforeLoadEventWrappingImplementation._wrap$ctor(raw);
-
-    case "CloseEvent":
-
-      return new CloseEventWrappingImplementation._wrap$ctor(raw);
-
-    case "CompositionEvent":
-
-      return new CompositionEventWrappingImplementation._wrap$ctor(raw);
-
-    case "CustomEvent":
-
-      return new CustomEventWrappingImplementation._wrap$ctor(raw);
-
-    case "DeviceMotionEvent":
-
-      return new DeviceMotionEventWrappingImplementation._wrap$ctor(raw);
-
-    case "DeviceOrientationEvent":
-
-      return new DeviceOrientationEventWrappingImplementation._wrap$ctor(raw);
-
-    case "ErrorEvent":
-
-      return new ErrorEventWrappingImplementation._wrap$ctor(raw);
-
-    case "Event":
-
-      return new EventWrappingImplementation._wrap$ctor(raw);
-
-    case "HashChangeEvent":
-
-      return new HashChangeEventWrappingImplementation._wrap$ctor(raw);
-
-    case "IDBVersionChangeEvent":
-
-      return new IDBVersionChangeEventWrappingImplementation._wrap$ctor(raw);
-
-    case "KeyboardEvent":
-
-      return new KeyboardEventWrappingImplementation._wrap$ctor(raw);
-
-    case "MessageEvent":
-
-      return new MessageEventWrappingImplementation._wrap$ctor(raw);
-
-    case "MouseEvent":
-
-      return new MouseEventWrappingImplementation._wrap$ctor(raw);
-
-    case "MutationEvent":
-
-      return new MutationEventWrappingImplementation._wrap$ctor(raw);
-
-    case "OfflineAudioCompletionEvent":
-
-      return new OfflineAudioCompletionEventWrappingImplementation._wrap$ctor(raw);
-
-    case "OverflowEvent":
-
-      return new OverflowEventWrappingImplementation._wrap$ctor(raw);
-
-    case "PageTransitionEvent":
-
-      return new PageTransitionEventWrappingImplementation._wrap$ctor(raw);
-
-    case "PopStateEvent":
-
-      return new PopStateEventWrappingImplementation._wrap$ctor(raw);
-
-    case "ProgressEvent":
-
-      return new ProgressEventWrappingImplementation._wrap$ctor(raw);
-
-    case "SVGZoomEvent":
-
-      return new SVGZoomEventWrappingImplementation._wrap$ctor(raw);
-
-    case "SpeechInputEvent":
-
-      return new SpeechInputEventWrappingImplementation._wrap$ctor(raw);
-
-    case "StorageEvent":
-
-      return new StorageEventWrappingImplementation._wrap$ctor(raw);
-
-    case "TextEvent":
-
-      return new TextEventWrappingImplementation._wrap$ctor(raw);
-
-    case "TouchEvent":
-
-      return new TouchEventWrappingImplementation._wrap$ctor(raw);
-
-    case "WebKitTransitionEvent":
-
-      return new TransitionEventWrappingImplementation._wrap$ctor(raw);
-
-    case "UIEvent":
-
-      return new UIEventWrappingImplementation._wrap$ctor(raw);
-
-    case "WebGLContextEvent":
-
-      return new WebGLContextEventWrappingImplementation._wrap$ctor(raw);
-
-    case "WheelEvent":
-
-      return new WheelEventWrappingImplementation._wrap$ctor(raw);
-
-    case "XMLHttpRequestProgressEvent":
-
-      return new XMLHttpRequestProgressEventWrappingImplementation._wrap$ctor(raw);
-
-    default:
-
-      $throw(new UnsupportedOperationException("Unknown type:" + raw.toString$0()));
-
-  }
-}
-LevelDom.wrapSVGAnimatedLength = function(raw) {
-  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new SVGAnimatedLengthWrappingImplementation._wrap$ctor(raw);
-}
-LevelDom.wrapSVGAnimatedNumberList = function(raw) {
-  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new SVGAnimatedNumberListWrappingImplementation._wrap$ctor(raw);
-}
-LevelDom.wrapWindow = function(raw) {
-  return raw == null ? null : raw.get$dartObjectLocalStorage() != null ? raw.get$dartObjectLocalStorage() : new WindowWrappingImplementation._wrap$ctor(raw);
-}
-LevelDom.unwrapMaybePrimitive = function(raw) {
-  return (raw == null || (typeof(raw) == 'string') || (typeof(raw) == 'number') || (typeof(raw) == 'boolean')) ? raw : raw.get$_ptr();
-}
-LevelDom.unwrap = function(raw) {
-  return raw == null ? null : raw.get$_ptr();
-}
-LevelDom.initialize = function() {
-  $globals.secretWindow = LevelDom.wrapWindow(get$window());
-  $globals.secretDocument = LevelDom.wrapDocument(get$document());
-}
-// ********** Code for AnimationEventWrappingImplementation **************
-$inherits(AnimationEventWrappingImplementation, EventWrappingImplementation);
-function AnimationEventWrappingImplementation() {}
-AnimationEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-AnimationEventWrappingImplementation._wrap$ctor.prototype = AnimationEventWrappingImplementation.prototype;
-// ********** Code for BeforeLoadEventWrappingImplementation **************
-$inherits(BeforeLoadEventWrappingImplementation, EventWrappingImplementation);
-function BeforeLoadEventWrappingImplementation() {}
-BeforeLoadEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-BeforeLoadEventWrappingImplementation._wrap$ctor.prototype = BeforeLoadEventWrappingImplementation.prototype;
-// ********** Code for BodyElementWrappingImplementation **************
-$inherits(BodyElementWrappingImplementation, ElementWrappingImplementation);
-function BodyElementWrappingImplementation() {}
-BodyElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-BodyElementWrappingImplementation._wrap$ctor.prototype = BodyElementWrappingImplementation.prototype;
-// ********** Code for CloseEventWrappingImplementation **************
-$inherits(CloseEventWrappingImplementation, EventWrappingImplementation);
-function CloseEventWrappingImplementation() {}
-CloseEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-CloseEventWrappingImplementation._wrap$ctor.prototype = CloseEventWrappingImplementation.prototype;
-// ********** Code for CompositionEventWrappingImplementation **************
-$inherits(CompositionEventWrappingImplementation, UIEventWrappingImplementation);
-function CompositionEventWrappingImplementation() {}
-CompositionEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-CompositionEventWrappingImplementation._wrap$ctor.prototype = CompositionEventWrappingImplementation.prototype;
-// ********** Code for CustomEventWrappingImplementation **************
-$inherits(CustomEventWrappingImplementation, EventWrappingImplementation);
-function CustomEventWrappingImplementation() {}
-CustomEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-CustomEventWrappingImplementation._wrap$ctor.prototype = CustomEventWrappingImplementation.prototype;
-// ********** Code for DeviceMotionEventWrappingImplementation **************
-$inherits(DeviceMotionEventWrappingImplementation, EventWrappingImplementation);
-function DeviceMotionEventWrappingImplementation() {}
-DeviceMotionEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DeviceMotionEventWrappingImplementation._wrap$ctor.prototype = DeviceMotionEventWrappingImplementation.prototype;
-// ********** Code for DeviceOrientationEventWrappingImplementation **************
-$inherits(DeviceOrientationEventWrappingImplementation, EventWrappingImplementation);
-function DeviceOrientationEventWrappingImplementation() {}
-DeviceOrientationEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-DeviceOrientationEventWrappingImplementation._wrap$ctor.prototype = DeviceOrientationEventWrappingImplementation.prototype;
-// ********** Code for DocumentWrappingImplementation **************
-$inherits(DocumentWrappingImplementation, ElementWrappingImplementation);
-function DocumentWrappingImplementation() {}
-DocumentWrappingImplementation._wrap$ctor = function(_documentPtr, ptr) {
-  this._documentPtr = _documentPtr;
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-  this._documentPtr.get$dynamic().set$dartObjectLocalStorage(this);
-}
-DocumentWrappingImplementation._wrap$ctor.prototype = DocumentWrappingImplementation.prototype;
-// ********** Code for EventsImplementation **************
-function EventsImplementation() {}
-EventsImplementation._wrap$ctor = function(_ptr) {
-  this._ptr = _ptr;
-  // Initializers done
-  this._listenerMap = new HashMapImplementation();
-}
-EventsImplementation._wrap$ctor.prototype = EventsImplementation.prototype;
-EventsImplementation.prototype.get$_ptr = function() { return this._ptr; };
-EventsImplementation.prototype.set$_ptr = function(value) { return this._ptr = value; };
-EventsImplementation.prototype._get = function(type) {
-  var $this = this; // closure support
-  return this._listenerMap.putIfAbsent(type, (function () {
-    return new EventListenerListImplementation($this._ptr, type);
-  })
-  );
-}
-// ********** Code for ElementEventsImplementation **************
-$inherits(ElementEventsImplementation, EventsImplementation);
-function ElementEventsImplementation() {}
-ElementEventsImplementation._wrap$ctor = function(_ptr) {
-  // Initializers done
-  EventsImplementation._wrap$ctor.call(this, _ptr);
-}
-ElementEventsImplementation._wrap$ctor.prototype = ElementEventsImplementation.prototype;
-ElementEventsImplementation.prototype.get$click = function() {
-  return this._get("click");
-}
-ElementEventsImplementation.prototype.get$error = function() {
-  return this._get("error");
-}
-ElementEventsImplementation.prototype.get$load = function() {
-  return this._get("load");
-}
-ElementEventsImplementation.prototype.get$mouseMove = function() {
-  return this._get("mousemove");
-}
-// ********** Code for SimpleClientRect **************
-function SimpleClientRect(left, top, width, height) {
-  this.left = left;
-  this.top = top;
-  this.width = width;
-  this.height = height;
-  // Initializers done
-}
-SimpleClientRect.prototype.get$left = function() { return this.left; };
-SimpleClientRect.prototype.get$top = function() { return this.top; };
-SimpleClientRect.prototype.get$width = function() { return this.width; };
-SimpleClientRect.prototype.get$height = function() { return this.height; };
-SimpleClientRect.prototype.$eq = function(other) {
-  return other != null && this.left == other.get$left() && this.top == other.get$top() && this.width == other.get$width() && this.height == other.get$height();
-}
-SimpleClientRect.prototype.toString = function() {
-  return ("(" + this.left + ", " + this.top + ", " + this.width + ", " + this.height + ")");
-}
-SimpleClientRect.prototype.toString$0 = SimpleClientRect.prototype.toString;
-// ********** Code for ElementRectWrappingImplementation **************
-function ElementRectWrappingImplementation(element) {
-  this.client = new SimpleClientRect(element.clientLeft, element.clientTop, element.clientWidth, element.clientHeight);
-  this.offset = new SimpleClientRect(element.offsetLeft, element.offsetTop, element.offsetWidth, element.offsetHeight);
-  this.scroll = new SimpleClientRect(element.scrollLeft, element.scrollTop, element.scrollWidth, element.scrollHeight);
-  this._boundingClientRect = element.getBoundingClientRect();
-  this._clientRects = element.getClientRects();
-  // Initializers done
-}
-ElementRectWrappingImplementation.prototype.get$bounding = function() {
-  return LevelDom.wrapClientRect(this._boundingClientRect);
-}
-// ********** Code for ErrorEventWrappingImplementation **************
-$inherits(ErrorEventWrappingImplementation, EventWrappingImplementation);
-function ErrorEventWrappingImplementation() {}
-ErrorEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ErrorEventWrappingImplementation._wrap$ctor.prototype = ErrorEventWrappingImplementation.prototype;
-// ********** Code for _EventListenerWrapper **************
-function _EventListenerWrapper(raw, wrapped, useCapture) {
-  this.raw = raw;
-  this.wrapped = wrapped;
-  this.useCapture = useCapture;
-  // Initializers done
-}
-// ********** Code for EventListenerListImplementation **************
-function EventListenerListImplementation(_ptr, _type) {
-  this._ptr = _ptr;
-  this._type = _type;
-  this._wrappers = new Array();
-  // Initializers done
-}
-EventListenerListImplementation.prototype.get$_ptr = function() { return this._ptr; };
-EventListenerListImplementation.prototype.add = function(listener, useCapture) {
-  this._add(listener, useCapture);
+ },
+ add$1: function(obj) {
+  var str = $.toString(obj);
+  if (str === (void 0) || $.isEmpty(str) === true) return this;
+  $.add$1(this._buffer, str);
+  var t1 = this._length;
+  if (typeof t1 !== 'number') return this.add$1$bailout(1, str, t1);
+  var t2 = $.get$length(str);
+  if (typeof t2 !== 'number') return this.add$1$bailout(2, t1, t2);
+  this._length = t1 + t2;
   return this;
-}
-EventListenerListImplementation.prototype._add = function(listener, useCapture) {
-  this._ptr.addEventListener$3(this._type, this._findOrAddWrapper(listener, useCapture), useCapture);
-}
-EventListenerListImplementation.prototype._findOrAddWrapper = function(listener, useCapture) {
-  if (this._wrappers == null) {
-    this._wrappers = [];
+ },
+ add$1$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      str = env0;
+      t1 = env1;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
   }
-  else {
-    var $$list = this._wrappers;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var wrapper = $$list.$index($$i);
-      if (wrapper.raw === listener && $eq(wrapper.useCapture, useCapture)) {
-        return wrapper.wrapped;
-      }
-    }
+  switch (state) {
+    case 0:
+      var str = $.toString(obj);
+      if (str === (void 0) || $.isEmpty(str) === true) return this;
+      $.add$1(this._buffer, str);
+      var t1 = this._length;
+    case 1:
+      state = 0;
+      var t2 = $.get$length(str);
+    case 2:
+      state = 0;
+      this._length = $.add(t1, t2);
+      return this;
   }
-  var wrapped = (function (e) {
-    listener(LevelDom.wrapEvent(e));
-  })
-  ;
-  this._wrappers.add(new _EventListenerWrapper(listener, wrapped, useCapture));
-  return wrapped;
-}
-EventListenerListImplementation.prototype.add$1 = function($0) {
-  return this.add(to$call$1($0), false);
+ },
+ isEmpty$0: function() {
+  return this._length === 0;
+ },
+ get$length: function() {
+  return this._length;
+ },
+ StringBufferImpl$1: function(content$) {
+  this.clear$0();
+  this.add$1(content$);
+ }
 };
-// ********** Code for HashChangeEventWrappingImplementation **************
-$inherits(HashChangeEventWrappingImplementation, EventWrappingImplementation);
-function HashChangeEventWrappingImplementation() {}
-HashChangeEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-HashChangeEventWrappingImplementation._wrap$ctor.prototype = HashChangeEventWrappingImplementation.prototype;
-// ********** Code for KeyboardEventWrappingImplementation **************
-$inherits(KeyboardEventWrappingImplementation, UIEventWrappingImplementation);
-function KeyboardEventWrappingImplementation() {}
-KeyboardEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-KeyboardEventWrappingImplementation._wrap$ctor.prototype = KeyboardEventWrappingImplementation.prototype;
-// ********** Code for _MeasurementRequest **************
-function _MeasurementRequest(computeValue, completer) {
-  this.exception = false
-  this.computeValue = computeValue;
-  this.completer = completer;
-  // Initializers done
-}
-_MeasurementRequest.prototype.get$value = function() { return this.value; };
-_MeasurementRequest.prototype.set$value = function(value) { return this.value = value; };
-// ********** Code for MessageEventWrappingImplementation **************
-$inherits(MessageEventWrappingImplementation, EventWrappingImplementation);
-function MessageEventWrappingImplementation() {}
-MessageEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MessageEventWrappingImplementation._wrap$ctor.prototype = MessageEventWrappingImplementation.prototype;
-// ********** Code for MouseEventWrappingImplementation **************
-$inherits(MouseEventWrappingImplementation, UIEventWrappingImplementation);
-function MouseEventWrappingImplementation() {}
-MouseEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MouseEventWrappingImplementation._wrap$ctor.prototype = MouseEventWrappingImplementation.prototype;
-MouseEventWrappingImplementation.prototype.get$clientX = function() {
-  return this._ptr.get$clientX();
-}
-MouseEventWrappingImplementation.prototype.get$clientY = function() {
-  return this._ptr.get$clientY();
-}
-// ********** Code for MutationEventWrappingImplementation **************
-$inherits(MutationEventWrappingImplementation, EventWrappingImplementation);
-function MutationEventWrappingImplementation() {}
-MutationEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-MutationEventWrappingImplementation._wrap$ctor.prototype = MutationEventWrappingImplementation.prototype;
-// ********** Code for ObjectElementWrappingImplementation **************
-$inherits(ObjectElementWrappingImplementation, ElementWrappingImplementation);
-function ObjectElementWrappingImplementation() {}
-ObjectElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ObjectElementWrappingImplementation._wrap$ctor.prototype = ObjectElementWrappingImplementation.prototype;
-ObjectElementWrappingImplementation.prototype.get$height = function() {
-  return this._ptr.get$height();
-}
-ObjectElementWrappingImplementation.prototype.set$height = function(value) {
-  this._ptr.set$height(value);
-}
-ObjectElementWrappingImplementation.prototype.get$width = function() {
-  return this._ptr.get$width();
-}
-ObjectElementWrappingImplementation.prototype.set$width = function(value) {
-  this._ptr.set$width(value);
-}
-// ********** Code for OverflowEventWrappingImplementation **************
-$inherits(OverflowEventWrappingImplementation, EventWrappingImplementation);
-function OverflowEventWrappingImplementation() {}
-OverflowEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-OverflowEventWrappingImplementation._wrap$ctor.prototype = OverflowEventWrappingImplementation.prototype;
-// ********** Code for PageTransitionEventWrappingImplementation **************
-$inherits(PageTransitionEventWrappingImplementation, EventWrappingImplementation);
-function PageTransitionEventWrappingImplementation() {}
-PageTransitionEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-PageTransitionEventWrappingImplementation._wrap$ctor.prototype = PageTransitionEventWrappingImplementation.prototype;
-// ********** Code for PopStateEventWrappingImplementation **************
-$inherits(PopStateEventWrappingImplementation, EventWrappingImplementation);
-function PopStateEventWrappingImplementation() {}
-PopStateEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-PopStateEventWrappingImplementation._wrap$ctor.prototype = PopStateEventWrappingImplementation.prototype;
-// ********** Code for ProgressEventWrappingImplementation **************
-$inherits(ProgressEventWrappingImplementation, EventWrappingImplementation);
-function ProgressEventWrappingImplementation() {}
-ProgressEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-ProgressEventWrappingImplementation._wrap$ctor.prototype = ProgressEventWrappingImplementation.prototype;
-// ********** Code for StorageEventWrappingImplementation **************
-$inherits(StorageEventWrappingImplementation, EventWrappingImplementation);
-function StorageEventWrappingImplementation() {}
-StorageEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-StorageEventWrappingImplementation._wrap$ctor.prototype = StorageEventWrappingImplementation.prototype;
-// ********** Code for SVGDocumentWrappingImplementation **************
-$inherits(SVGDocumentWrappingImplementation, DocumentWrappingImplementation);
-function SVGDocumentWrappingImplementation() {}
-SVGDocumentWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  DocumentWrappingImplementation._wrap$ctor.call(this, ptr, ptr.rootElement);
-}
-SVGDocumentWrappingImplementation._wrap$ctor.prototype = SVGDocumentWrappingImplementation.prototype;
-// ********** Code for SVGSVGElementWrappingImplementation **************
-$inherits(SVGSVGElementWrappingImplementation, SVGElementWrappingImplementation);
-function SVGSVGElementWrappingImplementation() {}
-SVGSVGElementWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  SVGElementWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-SVGSVGElementWrappingImplementation._wrap$ctor.prototype = SVGSVGElementWrappingImplementation.prototype;
-SVGSVGElementWrappingImplementation.prototype.get$height = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$height());
-}
-SVGSVGElementWrappingImplementation.prototype.get$width = function() {
-  return LevelDom.wrapSVGAnimatedLength(this._ptr.get$width());
-}
-// ********** Code for TextEventWrappingImplementation **************
-$inherits(TextEventWrappingImplementation, UIEventWrappingImplementation);
-function TextEventWrappingImplementation() {}
-TextEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TextEventWrappingImplementation._wrap$ctor.prototype = TextEventWrappingImplementation.prototype;
-// ********** Code for TouchEventWrappingImplementation **************
-$inherits(TouchEventWrappingImplementation, UIEventWrappingImplementation);
-function TouchEventWrappingImplementation() {}
-TouchEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TouchEventWrappingImplementation._wrap$ctor.prototype = TouchEventWrappingImplementation.prototype;
-// ********** Code for TransitionEventWrappingImplementation **************
-$inherits(TransitionEventWrappingImplementation, EventWrappingImplementation);
-function TransitionEventWrappingImplementation() {}
-TransitionEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-TransitionEventWrappingImplementation._wrap$ctor.prototype = TransitionEventWrappingImplementation.prototype;
-// ********** Code for WheelEventWrappingImplementation **************
-$inherits(WheelEventWrappingImplementation, UIEventWrappingImplementation);
-function WheelEventWrappingImplementation() {}
-WheelEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  UIEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-WheelEventWrappingImplementation._wrap$ctor.prototype = WheelEventWrappingImplementation.prototype;
-WheelEventWrappingImplementation.prototype.get$clientX = function() {
-  return this._ptr.get$clientX();
-}
-WheelEventWrappingImplementation.prototype.get$clientY = function() {
-  return this._ptr.get$clientY();
-}
-// ********** Code for WindowEventsImplementation **************
-$inherits(WindowEventsImplementation, EventsImplementation);
-function WindowEventsImplementation() {}
-WindowEventsImplementation._wrap$ctor = function(_ptr) {
-  // Initializers done
-  EventsImplementation._wrap$ctor.call(this, _ptr);
-}
-WindowEventsImplementation._wrap$ctor.prototype = WindowEventsImplementation.prototype;
-WindowEventsImplementation.prototype.get$message = function() {
-  return this._get('message');
-}
-// ********** Code for WindowWrappingImplementation **************
-$inherits(WindowWrappingImplementation, EventTargetWrappingImplementation);
-function WindowWrappingImplementation() {}
-WindowWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  EventTargetWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-WindowWrappingImplementation._wrap$ctor.prototype = WindowWrappingImplementation.prototype;
-WindowWrappingImplementation.prototype.get$top = function() {
-  return LevelDom.wrapWindow(this._ptr.get$top());
-}
-WindowWrappingImplementation.prototype.postMessage = function(message, messagePort, targetOrigin) {
-  if (targetOrigin == null) {
-    if (messagePort == null) {
-      this._ptr.postMessage$1(message);
-      return;
-    }
-    else {
-      this._ptr.postMessage$2(message, messagePort);
-      return;
-    }
-  }
-  else {
-    this._ptr.postMessage$3(message, LevelDom.unwrap(messagePort), targetOrigin);
-    return;
-  }
-  $throw("Incorrect number or type of arguments");
-}
-WindowWrappingImplementation.prototype.webkitRequestAnimationFrame = function(callback, element) {
-  return this._ptr.webkitRequestAnimationFrame$2(callback, LevelDom.unwrap(element));
-}
-WindowWrappingImplementation.prototype.get$on = function() {
-  if (this._on == null) {
-    this._on = new WindowEventsImplementation._wrap$ctor(this._ptr);
-  }
-  return this._on;
-}
-WindowWrappingImplementation.prototype.postMessage$1 = WindowWrappingImplementation.prototype.postMessage;
-WindowWrappingImplementation.prototype.postMessage$2 = WindowWrappingImplementation.prototype.postMessage;
-WindowWrappingImplementation.prototype.postMessage$3 = WindowWrappingImplementation.prototype.postMessage;
-WindowWrappingImplementation.prototype.webkitRequestAnimationFrame$2 = function($0, $1) {
-  return this.webkitRequestAnimationFrame(to$call$1($0), $1);
-};
-// ********** Code for XMLHttpRequestProgressEventWrappingImplementation **************
-$inherits(XMLHttpRequestProgressEventWrappingImplementation, ProgressEventWrappingImplementation);
-function XMLHttpRequestProgressEventWrappingImplementation() {}
-XMLHttpRequestProgressEventWrappingImplementation._wrap$ctor = function(ptr) {
-  // Initializers done
-  ProgressEventWrappingImplementation._wrap$ctor.call(this, ptr);
-}
-XMLHttpRequestProgressEventWrappingImplementation._wrap$ctor.prototype = XMLHttpRequestProgressEventWrappingImplementation.prototype;
-// ********** Code for top level **************
-var _pendingRequests;
-var _pendingMeasurementFrameCallbacks;
-function _maybeScheduleMeasurementFrame() {
-  if ($globals._nextMeasurementFrameScheduled) return;
-  $globals._nextMeasurementFrameScheduled = true;
-  if ($globals._firstMeasurementRequest) {
-    html_get$window().get$on().get$message().add$1((function (e) {
-      return _completeMeasurementFutures();
-    })
-    );
-    $globals._firstMeasurementRequest = false;
-  }
-  html_get$window().postMessage("DART-MEASURE"/*null._MEASUREMENT_MESSAGE*/, "*");
-}
-function _createMeasurementFuture(computeValue, completer) {
-  if ($globals._pendingRequests == null) {
-    $globals._pendingRequests = [];
-    _maybeScheduleMeasurementFrame();
-  }
-  $globals._pendingRequests.add(new _MeasurementRequest(computeValue, completer));
-  return completer.get$future();
-}
-function _completeMeasurementFutures() {
-  if ($eq($globals._nextMeasurementFrameScheduled, false)) {
-    return;
-  }
-  $globals._nextMeasurementFrameScheduled = false;
-  if ($globals._pendingRequests != null) {
-    var $$list = $globals._pendingRequests;
-    for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-      var request = $$list.$index($$i);
-      try {
-        request.value = request.computeValue();
-      } catch (e) {
-        e = _toDartException(e);
-        request.value = e;
-        request.exception = true;
-      }
-    }
-  }
-  var completedRequests = $globals._pendingRequests;
-  var readyMeasurementFrameCallbacks = $globals._pendingMeasurementFrameCallbacks;
-  $globals._pendingRequests = null;
-  $globals._pendingMeasurementFrameCallbacks = null;
-  if (completedRequests != null) {
-    for (var $$i = 0;$$i < completedRequests.get$length(); $$i++) {
-      var request = completedRequests.$index($$i);
-      if (request.exception) {
-        request.completer.completeException(request.value);
-      }
-      else {
-        request.completer.complete(request.value);
-      }
-    }
-  }
-  if (readyMeasurementFrameCallbacks != null) {
-    for (var $$i = 0;$$i < readyMeasurementFrameCallbacks.get$length(); $$i++) {
-      var handler = readyMeasurementFrameCallbacks.$index($$i);
-      handler();
-    }
-  }
-}
-//  ********** Library html **************
-// ********** Code for top level **************
-var secretWindow;
-var secretDocument;
-function html_get$window() {
-  if ($globals.secretWindow == null) {
-    LevelDom.initialize();
-  }
-  return $globals.secretWindow;
-}
-function html_get$document() {
-  if ($globals.secretWindow == null) {
-    LevelDom.initialize();
-  }
-  return $globals.secretDocument;
-}
-//  ********** Library BadAliensDart **************
-// ********** Code for AssetManager **************
-function AssetManager() {
-  this.successCount = 0
-  this.errorCount = 0
-  // Initializers done
-  this.downloadQueue = [];
-  this.cache = new HashMapImplementation();
-}
-AssetManager.prototype.queueDownload = function(path) {
-  this.downloadQueue.add(path);
-}
-AssetManager.prototype.downloadAll = function(downloadCallback) {
-  var $this = this; // closure support
-  if (this.downloadQueue.get$length() == 0) {
-    downloadCallback.call$0();
-  }
-  var $$list = this.downloadQueue;
-  for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-    var path = $$list.$index($$i);
-    var img = ElementWrappingImplementation.ElementWrappingImplementation$tag$factory("img");
-    img.get$on().get$load().add$1((function (img, event) {
-      dart_core_print(img.get$src() + ' is loaded');
-      $this.successCount = $this.successCount + 1;
-      if ($this.isDone()) {
-        downloadCallback.call$0();
-      }
-    }).bind(null, img)
-    );
-    img.get$on().get$error().add$1((function (event) {
-      $this.errorCount = $this.errorCount + 1;
-      if ($this.isDone()) {
-        downloadCallback.call$0();
-      }
-    })
-    );
-    img.set$src(path);
-    this.cache.$setindex(path, img);
-  }
-}
-AssetManager.prototype.getAsset = function(path) {
-  return this.cache.$index(path);
-}
-AssetManager.prototype.isDone = function() {
-  return (this.downloadQueue.get$length() == this.successCount + this.errorCount);
-}
-// ********** Code for Animation **************
-function Animation(spriteSheet, frameWidth, frameDuration, loop) {
-  this.elapsedTime = 0
-  this.spriteSheet = spriteSheet;
-  this.frameWidth = frameWidth;
-  this.frameDuration = frameDuration;
-  this.loop = loop;
-  // Initializers done
-  this.frameHeight = this.spriteSheet.get$height();
-  this.totalTime = (this.spriteSheet.get$width() / this.frameWidth) * this.frameDuration;
-}
-Animation.prototype.drawFrame = function(tick, ctx, x, y, scaleBy) {
-  this.elapsedTime = this.elapsedTime + tick;
-  if (this.loop) {
-    if (this.isDone()) {
-      this.elapsedTime = 0;
-    }
-  }
-  else if (this.isDone()) {
-    return;
-  }
-  var index = this.currentFrame();
-  var locX = x - (this.frameWidth / 2) * scaleBy;
-  var locY = y - (this.frameHeight / 2) * scaleBy;
-  ctx.drawImage$9(this.spriteSheet, index * this.frameWidth, 0, this.frameWidth, this.frameHeight, locX, locY, this.frameWidth * scaleBy, this.frameHeight * scaleBy);
-}
-Animation.prototype.isDone = function() {
-  return (this.elapsedTime >= this.totalTime);
-}
-Animation.prototype.currentFrame = function() {
-  return (this.elapsedTime / this.frameDuration).floor();
-}
-// ********** Code for Timer **************
-function Timer() {
-  this.gameTime = 0
-  this.wallLastTimestamp = 0
-  // Initializers done
-}
-Timer.prototype.tick = function() {
-  var wallCurrent = new DateImplementation.now$ctor().value;
-  var wallDelta = (wallCurrent - this.wallLastTimestamp) / 1000;
-  this.wallLastTimestamp = wallCurrent;
-  var gameDelta = Math.min(wallDelta, 0.05/*Timer.MAX_STEP*/);
-  this.gameTime += gameDelta;
-  return gameDelta;
-}
-// ********** Code for GameEntity **************
-function GameEntity(game) {
-  this.removeFromWorld = false
-  this.game = game;
-  // Initializers done
-}
-GameEntity.withPosition$ctor = function(game, x, y) {
-  this.removeFromWorld = false
-  this.game = game;
-  this.x = x;
-  this.y = y;
-  // Initializers done
-}
-GameEntity.withPosition$ctor.prototype = GameEntity.prototype;
-GameEntity.prototype.get$removeFromWorld = function() { return this.removeFromWorld; };
-GameEntity.prototype.set$removeFromWorld = function(value) { return this.removeFromWorld = value; };
-GameEntity.prototype.update = function() {
 
-}
-GameEntity.prototype.draw = function(ctx) {
-  if (this.game.showOutlines) {
-    ctx.beginPath$0();
-    ctx.set$strokeStyle("green");
-    ctx.arc$6(this.x, this.y, this.radius, 0, 6.283185/*Math.PI*2*/, false);
-    ctx.stroke$0();
-    ctx.closePath$0();
+$$.JSSyntaxRegExp = {"":
+ ["ignoreCase?", "multiLine?", "pattern?"],
+ super: "Object",
+ allMatches$1: function(str) {
+  $.checkString(str);
+  return $._AllMatchesIterable$2(this, str);
+ },
+ hasMatch$1: function(str) {
+  return $.regExpTest(this, $.checkString(str));
+ },
+ firstMatch$1: function(str) {
+  var m = $.regExpExec(this, $.checkString(str));
+  if (m === (void 0)) return;
+  var matchStart = $.regExpMatchStart(m);
+  var matchEnd = $.add(matchStart, $.get$length($.index(m, 0)));
+  return $.MatchImplementation$5(this.pattern, str, matchStart, matchEnd, m);
+ },
+ JSSyntaxRegExp$_globalVersionOf$1: function(other) {
+  $.regExpAttachGlobalNative(this);
+ },
+ is$JSSyntaxRegExp: true
+};
+
+$$.MatchImplementation = {"":
+ ["_groups", "_end", "_lib0_start", "str", "pattern?"],
+ super: "Object",
+ operator$index$1: function(index) {
+  return this.group$1(index);
+ },
+ group$1: function(index) {
+  return $.index(this._groups, index);
+ },
+ start$0: function() {
+  return this._lib0_start;
+ }
+};
+
+$$._AllMatchesIterable = {"":
+ ["_str", "_re"],
+ super: "Object",
+ iterator$0: function() {
+  return $._AllMatchesIterator$2(this._re, this._str);
+ }
+};
+
+$$._AllMatchesIterator = {"":
+ ["_done", "_next=", "_str", "_re"],
+ super: "Object",
+ hasNext$0: function() {
+  if (this._done === true) return false;
+  if (!$.eqNullB(this._next)) return true;
+  this._next = this._re.firstMatch$1(this._str);
+  if ($.eqNullB(this._next)) {
+    this._done = true;
+    return false;
   }
-}
-GameEntity.prototype.drawSpriteCentered = function(ctx) {
-  var x = this.x - this.sprite.get$width() / 2;
-  var y = this.y - this.sprite.get$height() / 2;
-  ctx.drawImage$3(this.sprite, x, y);
-}
-GameEntity.prototype.outsideScreen = function() {
-  return (this.x > this.game.halfSurfaceWidth || this.x < -(this.game.halfSurfaceWidth) || this.y > this.game.halfSurfaceHeight || this.y < -(this.game.halfSurfaceHeight));
-}
-GameEntity.prototype.rotateAndCache = function(image, angle) {
-  var offscreenCanvas = ElementWrappingImplementation.ElementWrappingImplementation$tag$factory("canvas");
-  var size = Math.max(image.get$width(), image.get$height());
+  return true;
+ },
+ next$0: function() {
+  if (this.hasNext$0() !== true) throw $.captureStackTrace($.CTC0);
+  var next = this._next;
+  this._next = (void 0);
+  return next;
+ }
+};
+
+$$.DateImplementation = {"":
+ ["isUtc?", "millisecondsSinceEpoch?"],
+ super: "Object",
+ _asJs$0: function() {
+  return $.lazyAsJsDate(this);
+ },
+ add$1: function(duration) {
+  return $.DateImplementation$fromMillisecondsSinceEpoch$2($.add(this.millisecondsSinceEpoch, duration.get$inMilliseconds()), this.isUtc);
+ },
+ toString$0: function() {
+  var t1 = new $.Closure8();
+  var t2 = new $.Closure9();
+  var t3 = new $.Closure10();
+  var y = t1.$call$1(this.get$year());
+  var m = t3.$call$1(this.get$month());
+  var d = t3.$call$1(this.get$day());
+  var h = t3.$call$1(this.get$hour());
+  var min = t3.$call$1(this.get$minute());
+  var sec = t3.$call$1(this.get$second());
+  var ms = t2.$call$1(this.get$millisecond());
+  if (this.isUtc === true) return $.S(y) + '-' + $.S(m) + '-' + $.S(d) + ' ' + $.S(h) + ':' + $.S(min) + ':' + $.S(sec) + '.' + $.S(ms) + 'Z';
+  return $.S(y) + '-' + $.S(m) + '-' + $.S(d) + ' ' + $.S(h) + ':' + $.S(min) + ':' + $.S(sec) + '.' + $.S(ms);
+ },
+ get$millisecond: function() {
+  return $.getMilliseconds(this);
+ },
+ get$second: function() {
+  return $.getSeconds(this);
+ },
+ get$minute: function() {
+  return $.getMinutes(this);
+ },
+ get$hour: function() {
+  return $.getHours(this);
+ },
+ get$day: function() {
+  return $.getDay(this);
+ },
+ get$month: function() {
+  return $.getMonth(this);
+ },
+ get$year: function() {
+  return $.getYear(this);
+ },
+ hashCode$0: function() {
+  return this.millisecondsSinceEpoch;
+ },
+ compareTo$1: function(other) {
+  return $.compareTo(this.millisecondsSinceEpoch, other.get$millisecondsSinceEpoch());
+ },
+ operator$ge$1: function(other) {
+  return $.ge(this.millisecondsSinceEpoch, other.get$millisecondsSinceEpoch());
+ },
+ operator$gt$1: function(other) {
+  return $.gt(this.millisecondsSinceEpoch, other.get$millisecondsSinceEpoch());
+ },
+ operator$le$1: function(other) {
+  return $.le(this.millisecondsSinceEpoch, other.get$millisecondsSinceEpoch());
+ },
+ operator$lt$1: function(other) {
+  return $.lt(this.millisecondsSinceEpoch, other.get$millisecondsSinceEpoch());
+ },
+ operator$eq$1: function(other) {
+  if (!((typeof other === 'object') && !!other.is$DateImplementation)) return false;
+  return $.eq(this.millisecondsSinceEpoch, other.millisecondsSinceEpoch);
+ },
+ DateImplementation$fromMillisecondsSinceEpoch$2: function(millisecondsSinceEpoch, isUtc) {
+  var t1 = this.millisecondsSinceEpoch;
+  if ($.gtB($.abs(t1), 8640000000000000)) throw $.captureStackTrace($.IllegalArgumentException$1(t1));
+ },
+ DateImplementation$now$0: function() {
+  this._asJs$0();
+ },
+ is$DateImplementation: true
+};
+
+$$.ListIterator = {"":
+ ["list", "i"],
+ super: "Object",
+ next$0: function() {
+  if (this.hasNext$0() !== true) throw $.captureStackTrace($.NoMoreElementsException$0());
+  var value = (this.list[this.i]);
+  var t1 = this.i;
+  if (typeof t1 !== 'number') return this.next$0$bailout(1, t1, value);
+  this.i = t1 + 1;
+  return value;
+ },
+ next$0$bailout: function(state, t1, value) {
+  this.i = $.add(t1, 1);
+  return value;
+ },
+ hasNext$0: function() {
+  var t1 = this.i;
+  if (typeof t1 !== 'number') return this.hasNext$0$bailout(1, t1);
+  return t1 < (this.list.length);
+ },
+ hasNext$0$bailout: function(state, t1) {
+  return $.lt(t1, (this.list.length));
+ }
+};
+
+$$.Closure19 = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Closure';
+ }
+};
+
+$$.MetaInfo = {"":
+ ["set?", "tags", "tag?"],
+ super: "Object"
+};
+
+$$.StringMatch = {"":
+ ["pattern?", "str", "_start"],
+ super: "Object",
+ group$1: function(group_) {
+  if (!$.eqB(group_, 0)) throw $.captureStackTrace($.IndexOutOfRangeException$1(group_));
+  return this.pattern;
+ },
+ operator$index$1: function(g) {
+  return this.group$1(g);
+ },
+ start$0: function() {
+  return this._start;
+ }
+};
+
+$$.Object = {"":
+ [],
+ super: "",
+ toString$0: function() {
+  return $.objectToString(this);
+ }
+};
+
+$$.IndexOutOfRangeException = {"":
+ ["_index"],
+ super: "Object",
+ toString$0: function() {
+  return 'IndexOutOfRangeException: ' + $.S(this._index);
+ }
+};
+
+$$.NoSuchMethodException = {"":
+ ["_existingArgumentNames", "_arguments", "_functionName", "_receiver"],
+ super: "Object",
+ toString$0: function() {
+  var sb = $.StringBufferImpl$1('');
+  var t1 = this._arguments;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.toString$0$bailout(1, sb, t1);
+  var i = 0;
+  for (; i < t1.length; ++i) {
+    i > 0 && sb.add$1(', ');
+    var t2 = t1.length;
+    if (i < 0 || i >= t2) throw $.ioore(i);
+    sb.add$1(t1[i]);
+  }
+  t1 = this._existingArgumentNames;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.toString$0$bailout(2, t1, sb);
+  var actualParameters = sb.toString$0();
+  sb = $.StringBufferImpl$1('');
+  for (i = 0; i < t1.length; ++i) {
+    i > 0 && sb.add$1(', ');
+    t2 = t1.length;
+    if (i < 0 || i >= t2) throw $.ioore(i);
+    sb.add$1(t1[i]);
+  }
+  var formalParameters = sb.toString$0();
+  t1 = this._functionName;
+  return 'NoSuchMethodException: incorrect number of arguments passed to method named \'' + $.S(t1) + '\'\nReceiver: ' + $.S(this._receiver) + '\n' + 'Tried calling: ' + $.S(t1) + '(' + $.S(actualParameters) + ')\n' + 'Found: ' + $.S(t1) + '(' + $.S(formalParameters) + ')';
+ },
+ toString$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      sb = env0;
+      t1 = env1;
+      break;
+    case 2:
+      t1 = env0;
+      sb = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var sb = $.StringBufferImpl$1('');
+      var t1 = this._arguments;
+    case 1:
+      state = 0;
+      var i = 0;
+      for (; $.ltB(i, $.get$length(t1)); ++i) {
+        i > 0 && sb.add$1(', ');
+        sb.add$1($.index(t1, i));
+      }
+      t1 = this._existingArgumentNames;
+    case 2:
+      state = 0;
+      if (t1 === (void 0)) return 'NoSuchMethodException : method not found: \'' + $.S(this._functionName) + '\'\n' + 'Receiver: ' + $.S(this._receiver) + '\n' + 'Arguments: [' + $.S(sb) + ']';
+      var actualParameters = sb.toString$0();
+      sb = $.StringBufferImpl$1('');
+      for (i = 0; $.ltB(i, $.get$length(t1)); ++i) {
+        i > 0 && sb.add$1(', ');
+        sb.add$1($.index(t1, i));
+      }
+      var formalParameters = sb.toString$0();
+      t1 = this._functionName;
+      return 'NoSuchMethodException: incorrect number of arguments passed to method named \'' + $.S(t1) + '\'\nReceiver: ' + $.S(this._receiver) + '\n' + 'Tried calling: ' + $.S(t1) + '(' + $.S(actualParameters) + ')\n' + 'Found: ' + $.S(t1) + '(' + $.S(formalParameters) + ')';
+  }
+ }
+};
+
+$$.ObjectNotClosureException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Object is not closure';
+ }
+};
+
+$$.IllegalArgumentException = {"":
+ ["_arg"],
+ super: "Object",
+ toString$0: function() {
+  return 'Illegal argument(s): ' + $.S(this._arg);
+ }
+};
+
+$$.StackOverflowException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Stack Overflow';
+ }
+};
+
+$$.NullPointerException = {"":
+ ["arguments", "functionName"],
+ super: "Object",
+ get$exceptionName: function() {
+  return 'NullPointerException';
+ },
+ toString$0: function() {
+  var t1 = this.functionName;
+  if ($.eqNullB(t1)) return this.get$exceptionName();
+  return $.S(this.get$exceptionName()) + ' : method: \'' + $.S(t1) + '\'\n' + 'Receiver: null\n' + 'Arguments: ' + $.S(this.arguments);
+ }
+};
+
+$$.NoMoreElementsException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'NoMoreElementsException';
+ }
+};
+
+$$.EmptyQueueException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'EmptyQueueException';
+ }
+};
+
+$$.UnsupportedOperationException = {"":
+ ["_message"],
+ super: "Object",
+ toString$0: function() {
+  return 'UnsupportedOperationException: ' + $.S(this._message);
+ }
+};
+
+$$.IllegalJSRegExpException = {"":
+ ["_errmsg", "_pattern"],
+ super: "Object",
+ toString$0: function() {
+  return 'IllegalJSRegExpException: \'' + $.S(this._pattern) + '\' \'' + $.S(this._errmsg) + '\'';
+ }
+};
+
+$$.FutureNotCompleteException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Exception: future has not been completed';
+ }
+};
+
+$$.FutureAlreadyCompleteException = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Exception: future already completed';
+ }
+};
+
+$$.AssetManager = {"":
+ ["downloadQueue", "cache", "errorCount=", "successCount="],
+ super: "Object",
+ isDone$0: function() {
+  return $.eq($.get$length(this.downloadQueue), $.add(this.successCount, this.errorCount));
+ },
+ getAsset$1: function(path) {
+  return $.index(this.cache, path);
+ },
+ downloadAll$1: function(downloadCallback) {
+  var t1 = ({});
+  t1.downloadCallback_3 = downloadCallback;
+  $.eqB($.get$length(this.downloadQueue), 0) && t1.downloadCallback_3.$call$0();
+  for (var t2 = $.iterator(this.downloadQueue); t2.hasNext$0() === true; ) {
+    var t3 = ({});
+    var t4 = t2.next$0();
+    t3.img_1 = $.Element$tag('img');
+    $.add$1(t3.img_1.get$on().get$load(), new $.Closure0(this, t3, t1));
+    $.add$1(t3.img_1.get$on().get$error(), new $.Closure1(this, t1));
+    t3.img_1.set$src(t4);
+    $.indexSet(this.cache, t4, t3.img_1);
+  }
+ },
+ queueDownload$1: function(path) {
+  $.add$1(this.downloadQueue, path);
+ },
+ AssetManager$0: function() {
+  this.downloadQueue = [];
+  this.cache = $.makeLiteralMap([]);
+ }
+};
+
+$$.Animation = {"":
+ ["elapsedTime", "loop", "totalTime", "frameDuration", "frameHeight", "frameWidth?", "spriteSheet"],
+ super: "Object",
+ currentFrame$0: function() {
+  return $.floor($.div(this.elapsedTime, this.frameDuration));
+ },
+ isDone$0: function() {
+  return $.ge(this.elapsedTime, this.totalTime);
+ },
+ drawFrame$5: function(tick, ctx, x, y, scaleBy) {
+  this.elapsedTime = $.add(this.elapsedTime, tick);
+  if (this.loop === true) {
+    if (this.isDone$0() === true) this.elapsedTime = 0;
+  } else {
+    if (this.isDone$0() === true) return;
+  }
+  var index = this.currentFrame$0();
+  var t1 = this.frameWidth;
+  var locX = $.sub(x, $.mul($.div(t1, 2), scaleBy));
+  var locY = $.sub(y, $.mul($.div(this.frameHeight, 2), scaleBy));
+  ctx.drawImage$9(this.spriteSheet, $.mul(index, t1), 0, t1, this.frameHeight, locX, locY, $.mul(t1, scaleBy), $.mul(this.frameHeight, scaleBy));
+ },
+ drawFrame$4: function(tick,ctx,x,y) {
+  return this.drawFrame$5(tick,ctx,x,y,1)
+},
+ Animation$4: function(spriteSheet, frameWidth, frameDuration, loop) {
+  var t1 = this.spriteSheet;
+  this.frameHeight = t1.get$height();
+  this.totalTime = $.mul($.div(t1.get$width(), this.frameWidth), this.frameDuration);
+ }
+};
+
+$$.Timer = {"":
+ ["wallLastTimestamp", "gameTime?"],
+ super: "Object",
+ tick$0: function() {
+  var wallCurrent = $.DateImplementation$now$0().millisecondsSinceEpoch;
+  var wallDelta = $.div($.sub(wallCurrent, this.wallLastTimestamp), 1000);
+  this.wallLastTimestamp = wallCurrent;
+  var gameDelta = $.min(wallDelta, 0.05);
+  this.gameTime = $.add(this.gameTime, gameDelta);
+  return gameDelta;
+ }
+};
+
+$$.GameEntity = {"":
+ ["radius?", "removeFromWorld?", "y?", "x?"],
+ super: "Object",
+ rotateAndCache$2: function(image, angle) {
+  var offscreenCanvas = $.Element$tag('canvas');
+  var size = $.max(image.get$width(), image.get$height());
   offscreenCanvas.set$width(size);
   offscreenCanvas.set$height(size);
   var offscreenCtx = offscreenCanvas.getContext$1('2d');
   offscreenCtx.save$0();
-  offscreenCtx.translate$2(size / 2, size / 2);
-  offscreenCtx.rotate$1(angle + 1.570796/*Math.PI/2*/);
+  offscreenCtx.translate$2($.div(size, 2), $.div(size, 2));
+  offscreenCtx.rotate$1($.add(angle, 1.5707963267948966));
   offscreenCtx.translate$2(0, 0);
-  offscreenCtx.drawImage$3(image, -(image.get$width() / 2), -(image.get$height() / 2));
+  offscreenCtx.drawImage$3(image, $.neg($.div(image.get$width(), 2)), $.neg($.div(image.get$height(), 2)));
   offscreenCtx.restore$0();
   return offscreenCanvas;
-}
-GameEntity.prototype.update$0 = GameEntity.prototype.update;
-// ********** Code for Game **************
-function Game(assetManager) {
-  this.showOutlines = false
-  this.assetManager = assetManager;
-  // Initializers done
-  this.timer = new Timer();
-  this.entities = [];
-}
-Game.prototype.init = function(ctx) {
-  var $this = this; // closure support
-  this.ctx = ctx;
-  this.surfaceWidth = ctx.get$canvas().get$width();
-  this.surfaceHeight = ctx.get$canvas().get$height();
-  this.halfSurfaceWidth = this.surfaceWidth / 2;
-  this.halfSurfaceHeight = this.surfaceHeight / 2;
-  var futureRect = ctx.get$canvas().get$rect();
-  futureRect.then((function (rect) {
-    $this.clientBoundingRect = new Point(rect.get$bounding().get$left(), rect.get$bounding().get$top());
-  })
-  );
-  this.startInput();
-  dart_core_print('game initialized');
-}
-Game.prototype.start = function() {
-  dart_core_print("starting game");
-  html_get$window().webkitRequestAnimationFrame(this.get$loop(), this.ctx.get$canvas());
-}
-Game.prototype.get$start = function() {
-  return this.start.bind(this);
-}
-Game.prototype.loop = function(time) {
-  this.clockTick = this.timer.tick();
-  this.update();
-  this.draw();
-  this.click = null;
-  html_get$window().webkitRequestAnimationFrame(this.get$loop(), this.ctx.get$canvas());
-}
-Game.prototype.get$loop = function() {
-  return this.loop.bind(this);
-}
-Game.prototype.startInput = function() {
-  var $this = this; // closure support
-  dart_core_print('Starting input');
-  function getXandY(e) {
-    var x = e.get$clientX() - $this.clientBoundingRect.x - ($this.ctx.get$canvas().get$width() / 2);
-    var y = e.get$clientY() - $this.clientBoundingRect.y - ($this.ctx.get$canvas().get$height() / 2);
-    return new Point(x, y);
+ },
+ outsideScreen$0: function() {
+  var t1 = this.x;
+  var t2 = this.game;
+  return $.gtB(t1, t2.get$halfSurfaceWidth()) || $.ltB(this.x, $.neg(t2.get$halfSurfaceWidth())) || $.gtB(this.y, t2.get$halfSurfaceHeight()) || $.ltB(this.y, $.neg(t2.get$halfSurfaceHeight()));
+ },
+ drawSpriteCentered$1: function(ctx) {
+  var _x = $.sub(this.x, $.div(this.sprite.get$width(), 2));
+  var _y = $.sub(this.y, $.div(this.sprite.get$height(), 2));
+  ctx.drawImage$3(this.sprite, _x, _y);
+ },
+ draw$1: function(ctx) {
+  if (this.game.get$showOutlines() === true) {
+    ctx.beginPath$0();
+    ctx.set$strokeStyle('green');
+    ctx.arc$6(this.x, this.y, this.radius, 0, 6.283185307179586, false);
+    ctx.stroke$0();
+    ctx.closePath$0();
   }
-  this.ctx.get$canvas().get$on().get$click().add$1((function (e) {
-    $this.click = getXandY(e);
-  })
-  );
-  this.ctx.get$canvas().get$on().get$mouseMove().add$1((function (e) {
-    $this.mouse = getXandY(e);
-  })
-  );
-  dart_core_print('Input started');
-}
-Game.prototype.addEntity = function(entity) {
-  this.entities.add(entity);
-}
-Game.prototype.draw = function() {
-  this.ctx.clearRect(0, 0, this.ctx.get$canvas().get$width(), this.ctx.get$canvas().get$height());
-  this.ctx.save();
-  this.ctx.translate(this.ctx.get$canvas().get$width() / 2, this.ctx.get$canvas().get$height() / 2);
-  var $$list = this.entities;
-  for (var $$i = 0;$$i < $$list.get$length(); $$i++) {
-    var entity = $$list.$index($$i);
-    entity.draw(this.ctx);
-  }
-  this.drawBeforeCtxRestore();
-  this.ctx.restore();
-}
-Game.prototype.drawBeforeCtxRestore = function() {
+ },
+ update$0: function() {
+ }
+};
 
-}
-Game.prototype.update = function() {
-  var entitiesCount = this.entities.get$length();
-  for (var i = 0;
-   i < entitiesCount; i = i + 1) {
-    var entity = this.entities.$index(i);
-    if (!entity.get$removeFromWorld()) {
-      entity.update$0();
-    }
+$$.Game = {"":
+ ["showOutlines?", "assetManager?", "clientBoundingRect=", "halfSurfaceHeight?", "halfSurfaceWidth?", "clockTick?", "mouse=", "click=", "ctx?", "entities?"],
+ super: "Object",
+ update$0: function() {
+  var entitiesCount = $.get$length(this.entities);
+  if (typeof entitiesCount !== 'number') return this.update$0$bailout(1, entitiesCount);
+  for (var i = 0; i < entitiesCount; ++i) {
+    var entity = $.index(this.entities, i);
+    entity.get$removeFromWorld() !== true && entity.update$0();
   }
-  for (var i = this.entities.get$length() - 1;
-   i >= 0; (i = i - 1)) {
-    if (this.entities.$index(i).get$removeFromWorld()) {
-      this.entities.removeRange(i, 1);
-    }
+  i = $.sub($.get$length(this.entities), 1);
+  if (typeof i !== 'number') return this.update$0$bailout(2, i);
+  for (; i >= 0; --i) {
+    $.index(this.entities, i).get$removeFromWorld() === true && $.removeRange(this.entities, i, 1);
   }
-}
-Game.prototype.init$1 = Game.prototype.init;
-Game.prototype.start$0 = Game.prototype.start;
-Game.prototype.update$0 = Game.prototype.update;
-// ********** Code for Point **************
-function Point(x, y) {
-  this.x = x;
-  this.y = y;
-  // Initializers done
-}
-// ********** Code for Alien **************
-$inherits(Alien, GameEntity);
-function Alien(game, radialDistance, angle) {
-  this.speed = 100
-  this.radialDistance = radialDistance;
-  this.angle = angle;
-  // Initializers done
-  GameEntity.call(this, game);
-  this.sprite = this.rotateAndCache(game.assetManager.getAsset('img/alien.png'), this.angle);
-  this.radius = this.sprite.get$height() / 2;
-  this.setCoords();
-}
-Alien.prototype.setCoords = function() {
-  this.x = this.radialDistance * Math.cos(this.angle);
-  this.y = this.radialDistance * Math.sin(this.angle);
-}
-Alien.prototype.update = function() {
-  var $0;
-  this.setCoords();
-  this.radialDistance -= (this.speed * this.game.clockTick);
-  if (this.hitPlanet()) {
-    this.removeFromWorld = true;
-    ($0 = this.game).set$lives($0.get$lives() - 1);
+ },
+ update$0$bailout: function(state, env0) {
+  switch (state) {
+    case 1:
+      entitiesCount = env0;
+      break;
+    case 2:
+      i = env0;
+      break;
   }
-}
-Alien.prototype.draw = function(ctx) {
-  this.drawSpriteCentered(ctx);
-  GameEntity.prototype.draw.call(this, ctx);
-}
-Alien.prototype.hitPlanet = function() {
-  var distance_squared = ((this.x * this.x) + (this.y * this.y));
-  var radii_squared = (this.radius + 67/*Earth.RADIUS*/) * (this.radius + 67/*Earth.RADIUS*/);
-  return distance_squared < radii_squared;
-}
-Alien.prototype.explode = function() {
+  switch (state) {
+    case 0:
+      var entitiesCount = $.get$length(this.entities);
+    case 1:
+      state = 0;
+      for (var i = 0; $.ltB(i, entitiesCount); ++i) {
+        var entity = $.index(this.entities, i);
+        entity.get$removeFromWorld() !== true && entity.update$0();
+      }
+      i = $.sub($.get$length(this.entities), 1);
+    case 2:
+      state = 0;
+      for (; $.geB(i, 0); i = $.sub(i, 1)) {
+        $.index(this.entities, i).get$removeFromWorld() === true && $.removeRange(this.entities, i, 1);
+      }
+  }
+ },
+ drawBeforeCtxRestore$0: function() {
+ },
+ draw$0: function() {
+  var t1 = this.ctx;
+  t1.clearRect$4(0, 0, t1.get$canvas().get$width(), this.ctx.get$canvas().get$height());
+  this.ctx.save$0();
+  t1 = this.ctx;
+  t1.translate$2($.div(t1.get$canvas().get$width(), 2), $.div(this.ctx.get$canvas().get$height(), 2));
+  for (t1 = $.iterator(this.entities); t1.hasNext$0() === true; ) {
+    t1.next$0().draw$1(this.ctx);
+  }
+  this.drawBeforeCtxRestore$0();
+  this.ctx.restore$0();
+ },
+ addEntity$1: function(entity) {
+  $.add$1(this.entities, entity);
+ },
+ startInput$0: function() {
+  $.print('Starting input');
+  var t1 = new $.Closure12(this);
+  $.add$1(this.ctx.get$canvas().get$on().get$click(), new $.Closure13(this, t1));
+  $.add$1(this.ctx.get$canvas().get$on().get$mouseMove(), new $.Closure14(this, t1));
+  $.print('Input started');
+ },
+ loop$1: function(time) {
+  this.clockTick = this.timer.tick$0();
+  this.update$0();
+  this.draw$0();
+  this.click = (void 0);
+  $.window().requestAnimationFrame$1(this.get$loop());
+  return false;
+ },
+ get$loop: function() { return new $.Closure20(this, 'loop$1'); },
+ start$0: function() {
+  $.print('starting game');
+  $.window().requestAnimationFrame$1(this.get$loop());
+ },
+ init$1: function(_ctx) {
+  this.ctx = _ctx;
+  this.surfaceWidth = this.ctx.get$canvas().get$width();
+  this.surfaceHeight = this.ctx.get$canvas().get$height();
+  this.halfSurfaceWidth = $.div(this.surfaceWidth, 2);
+  this.halfSurfaceHeight = $.div(this.surfaceHeight, 2);
+  this.ctx.get$canvas().get$rect().then$1(new $.Closure11(this));
+  this.startInput$0();
+  $.print('game initialized');
+ },
+ Game$1: function(assetManager) {
+  this.timer = $.Timer$0();
+  this.entities = [];
+ }
+};
+
+$$.Point = {"":
+ ["y?", "x?"],
+ super: "Object"
+};
+
+$$.Alien = {"":
+ ["speed", "angle", "radialDistance", "radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ explode$0: function() {
   this.removeFromWorld = true;
-  this.game.addEntity(new AlienExplosion(this.game, this.x, this.y));
-}
-Alien.prototype.explode$0 = Alien.prototype.explode;
-Alien.prototype.update$0 = Alien.prototype.update;
-// ********** Code for AlienExplosion **************
-$inherits(AlienExplosion, GameEntity);
-function AlienExplosion(game, x, y) {
-  // Initializers done
-  GameEntity.withPosition$ctor.call(this, game, x, y);
-  this.animation = new Animation(game.assetManager.getAsset('img/alien-explosion.png'), 69, 0.05, false);
-  this.radius = this.animation.frameWidth / 2;
-}
-AlienExplosion.prototype.update = function() {
-  if (this.animation.isDone()) {
+  var t1 = this.game;
+  t1.addEntity$1($.AlienExplosion$3(t1, this.x, this.y));
+ },
+ hitPlanet$0: function() {
+  var t1 = this.x;
+  t1 = $.mul(t1, t1);
+  var t2 = this.y;
+  return $.lt($.add(t1, $.mul(t2, t2)), $.mul($.add(this.radius, 67), $.add(this.radius, 67)));
+ },
+ draw$1: function(ctx) {
+  this.drawSpriteCentered$1(ctx);
+  $.GameEntity.prototype.draw$1.call(this, ctx);
+ },
+ update$0: function() {
+  this.setCoords$0();
+  var t1 = this.radialDistance;
+  if (typeof t1 !== 'number') return this.update$0$bailout(1, t1, 0, 0, 0);
+  var t2 = this.speed;
+  if (typeof t2 !== 'number') return this.update$0$bailout(2, t1, t2, 0, 0);
+  var t3 = this.game;
+  var t4 = t3.get$clockTick();
+  if (typeof t4 !== 'number') return this.update$0$bailout(3, t1, t2, t3, t4);
+  this.radialDistance = t1 - t2 * t4;
+  if (this.hitPlanet$0() === true) {
     this.removeFromWorld = true;
+    t1 = t3.get$lives();
+    if (typeof t1 !== 'number') return this.update$0$bailout(4, t1, t3, 0, 0);
+    t3.set$lives(t1 - 1);
   }
-}
-AlienExplosion.prototype.draw = function(ctx) {
-  GameEntity.prototype.draw.call(this, ctx);
-  this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y, 1);
-}
-AlienExplosion.prototype.update$0 = AlienExplosion.prototype.update;
-// ********** Code for Sentry **************
-$inherits(Sentry, GameEntity);
-function Sentry(game) {
-  this.angle = 0;
-  // Initializers done
-  GameEntity.withPosition$ctor.call(this, game, 0, 85/*Sentry.distanceFromEarthCenter*/);
-  this.sprite = game.assetManager.getAsset('img/sentry.png');
-  this.radius = this.sprite.get$width() / 2;
-}
-Sentry.prototype.update = function() {
-  if (this.game.mouse != null) {
-    this.angle = Math.atan2(this.game.mouse.y, this.game.mouse.x);
-    if (this.angle < 0) {
-      this.angle += (6.283185)/*Math.PI * 2*/;
-    }
-    this.x = (Math.cos(this.angle) * 85/*Sentry.distanceFromEarthCenter*/);
-    this.y = (Math.sin(this.angle) * 85/*Sentry.distanceFromEarthCenter*/);
+ },
+ update$0$bailout: function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 3:
+      t1 = env0;
+      t2 = env1;
+      t3 = env2;
+      t4 = env3;
+      break;
+    case 4:
+      t1 = env0;
+      t3 = env1;
+      break;
   }
-  if (this.game.click != null) {
-    this.shoot();
+  switch (state) {
+    case 0:
+      this.setCoords$0();
+      var t1 = this.radialDistance;
+    case 1:
+      state = 0;
+      var t2 = this.speed;
+    case 2:
+      state = 0;
+      var t3 = this.game;
+      var t4 = t3.get$clockTick();
+    case 3:
+      state = 0;
+      this.radialDistance = $.sub(t1, $.mul(t2, t4));
+    case 4:
+      if (state == 4 || (state == 0 && this.hitPlanet$0() === true)) {
+        switch (state) {
+          case 0:
+            this.removeFromWorld = true;
+            t1 = t3.get$lives();
+          case 4:
+            state = 0;
+            t3.set$lives($.sub(t1, 1));
+        }
+      }
   }
-}
-Sentry.prototype.draw = function(ctx) {
+ },
+ setCoords$0: function() {
+  var t1 = this.radialDistance;
+  var t2 = this.angle;
+  this.x = $.mul(t1, $.cos(t2));
+  this.y = $.mul(this.radialDistance, $.sin(t2));
+ },
+ Alien$3: function(game, radialDistance, angle) {
+  this.sprite = this.rotateAndCache$2(game.get$assetManager().getAsset$1('img/alien.png'), this.angle);
+  this.radius = $.div(this.sprite.get$height(), 2);
+  this.setCoords$0();
+ },
+ is$Alien: true
+};
+
+$$.AlienExplosion = {"":
+ ["animation", "radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ draw$1: function(ctx) {
+  $.GameEntity.prototype.draw$1.call(this, ctx);
+  this.animation.drawFrame$4(this.game.get$clockTick(), ctx, this.x, this.y);
+ },
+ update$0: function() {
+  if (this.animation.isDone$0() === true) this.removeFromWorld = true;
+ },
+ AlienExplosion$3: function(game, x, y) {
+  this.animation = $.Animation$4(game.get$assetManager().getAsset$1('img/alien-explosion.png'), 69, 0.05, false);
+  this.radius = $.div(this.animation.get$frameWidth(), 2);
+ }
+};
+
+$$.Sentry = {"":
+ ["angle", "radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ shoot$0: function() {
+  var t1 = this.game;
+  t1.addEntity$1($.Bullet$5(t1, this.x, this.y, this.angle, t1.get$click()));
+ },
+ draw$1: function(ctx) {
   ctx.save$0();
   ctx.translate$2(this.x, this.y);
-  ctx.rotate$1(this.angle + 1.570796/*Math.PI/2*/);
-  ctx.drawImage$3(this.sprite, -this.sprite.get$width() / 2, -this.sprite.get$height() / 2);
+  var t1 = this.angle;
+  if (typeof t1 !== 'number') return this.draw$1$bailout(1, ctx, t1, 0, 0);
+  ctx.rotate$1(t1 + 1.5707963267948966);
+  t1 = this.sprite;
+  var t2 = t1.get$width();
+  if (typeof t2 !== 'number') return this.draw$1$bailout(2, ctx, t2, t1, 0);
+  t2 = -t2 / 2;
+  var t3 = this.sprite.get$height();
+  if (typeof t3 !== 'number') return this.draw$1$bailout(3, ctx, t2, t1, t3);
+  ctx.drawImage$3(t1, t2, -t3 / 2);
   ctx.restore$0();
-  GameEntity.prototype.draw.call(this, ctx);
-}
-Sentry.prototype.shoot = function() {
-  var bullet = new Bullet(this.game, this.x, this.y, this.angle, this.game.click);
-  this.game.addEntity(bullet);
-}
-Sentry.prototype.update$0 = Sentry.prototype.update;
-// ********** Code for Bullet **************
-$inherits(Bullet, GameEntity);
-function Bullet(game, x, y, angle, explodesAt) {
-  this.radialDistance = 95
-  this.angle = angle;
-  this.explodesAt = explodesAt;
-  // Initializers done
-  GameEntity.withPosition$ctor.call(this, game, x, y);
-  this.sprite = game.assetManager.getAsset('img/bullet.png');
-  this.animation = new Animation(this.sprite, 7, 0.05, true);
-}
-Bullet.prototype.update = function() {
-  if (this.outsideScreen()) {
-    this.removeFromWorld = true;
+  $.GameEntity.prototype.draw$1.call(this, ctx);
+ },
+ draw$1$bailout: function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      var ctx = env0;
+      t1 = env1;
+      break;
+    case 2:
+      ctx = env0;
+      t2 = env1;
+      t1 = env2;
+      break;
+    case 3:
+      ctx = env0;
+      t2 = env1;
+      t1 = env2;
+      t3 = env3;
+      break;
   }
-  else if (this.x.abs() >= this.explodesAt.x.abs() || this.y.abs() >= this.explodesAt.y.abs()) {
-    this.game.addEntity(new BulletExplosion(this.game, this.explodesAt.x, this.explodesAt.y));
-    this.removeFromWorld = true;
+  switch (state) {
+    case 0:
+      ctx.save$0();
+      ctx.translate$2(this.x, this.y);
+      var t1 = this.angle;
+    case 1:
+      state = 0;
+      ctx.rotate$1($.add(t1, 1.5707963267948966));
+      t1 = this.sprite;
+      var t2 = t1.get$width();
+    case 2:
+      state = 0;
+      t2 = $.div($.neg(t2), 2);
+      var t3 = this.sprite.get$height();
+    case 3:
+      state = 0;
+      ctx.drawImage$3(t1, t2, $.div($.neg(t3), 2));
+      ctx.restore$0();
+      $.GameEntity.prototype.draw$1.call(this, ctx);
   }
+ },
+ update$0: function() {
+  var t1 = this.game;
+  if (!$.eqNullB(t1.get$mouse())) {
+    this.angle = $.atan2(t1.get$mouse().get$y(), t1.get$mouse().get$x());
+    var t2 = this.angle;
+    if (typeof t2 !== 'number') return this.update$0$bailout(1, t1, t2);
+    if (t2 < 0) this.angle = t2 + 6.283185307179586;
+    t2 = $.cos(this.angle);
+    if (typeof t2 !== 'number') return this.update$0$bailout(3, t2, t1);
+    this.x = t2 * 85;
+    t2 = $.sin(this.angle);
+    if (typeof t2 !== 'number') return this.update$0$bailout(4, t1, t2);
+    this.y = t2 * 85;
+  }
+  !$.eqNullB(t1.get$click()) && this.shoot$0();
+ },
+ update$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 3:
+      t2 = env0;
+      t1 = env1;
+      break;
+    case 4:
+      t1 = env0;
+      t2 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = this.game;
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+      if (state == 1 || state == 2 || state == 3 || state == 4 || (state == 0 && !$.eqNullB(t1.get$mouse()))) {
+        switch (state) {
+          case 0:
+            this.angle = $.atan2(t1.get$mouse().get$y(), t1.get$mouse().get$x());
+            var t2 = this.angle;
+          case 1:
+            state = 0;
+          case 2:
+            if (state == 2 || (state == 0 && $.ltB(t2, 0))) {
+              switch (state) {
+                case 0:
+                  t2 = this.angle;
+                case 2:
+                  state = 0;
+                  this.angle = $.add(t2, 6.283185307179586);
+              }
+            }
+            t2 = $.cos(this.angle);
+          case 3:
+            state = 0;
+            this.x = $.mul(t2, 85);
+            t2 = $.sin(this.angle);
+          case 4:
+            state = 0;
+            this.y = $.mul(t2, 85);
+        }
+      }
+      !$.eqNullB(t1.get$click()) && this.shoot$0();
+  }
+ },
+ Sentry$1: function(game) {
+  this.sprite = game.get$assetManager().getAsset$1('img/sentry.png');
+  this.radius = $.div(this.sprite.get$width(), 2);
+ }
+};
+
+$$.Bullet = {"":
+ ["animation", "radialDistance", "explodesAt", "angle", "radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ draw$1: function(ctx) {
+  ctx.save$0();
+  ctx.translate$2(this.x, this.y);
+  var t1 = this.angle;
+  if (typeof t1 !== 'number') return this.draw$1$bailout(1, ctx, t1, 0);
+  ctx.rotate$1(t1 + 1.5707963267948966);
+  t1 = this.x;
+  if (typeof t1 !== 'number') return this.draw$1$bailout(2, ctx, t1, 0);
+  t1 = -t1;
+  var t2 = this.y;
+  if (typeof t2 !== 'number') return this.draw$1$bailout(3, ctx, t1, t2);
+  ctx.translate$2(t1, -t2);
+  this.animation.drawFrame$4(this.game.get$clockTick(), ctx, this.x, this.y);
+  ctx.restore$0();
+  $.GameEntity.prototype.draw$1.call(this, ctx);
+ },
+ draw$1$bailout: function(state, env0, env1, env2) {
+  switch (state) {
+    case 1:
+      var ctx = env0;
+      t1 = env1;
+      break;
+    case 2:
+      ctx = env0;
+      t1 = env1;
+      break;
+    case 3:
+      ctx = env0;
+      t1 = env1;
+      t2 = env2;
+      break;
+  }
+  switch (state) {
+    case 0:
+      ctx.save$0();
+      ctx.translate$2(this.x, this.y);
+      var t1 = this.angle;
+    case 1:
+      state = 0;
+      ctx.rotate$1($.add(t1, 1.5707963267948966));
+      t1 = this.x;
+    case 2:
+      state = 0;
+      t1 = $.neg(t1);
+      var t2 = this.y;
+    case 3:
+      state = 0;
+      ctx.translate$2(t1, $.neg(t2));
+      this.animation.drawFrame$4(this.game.get$clockTick(), ctx, this.x, this.y);
+      ctx.restore$0();
+      $.GameEntity.prototype.draw$1.call(this, ctx);
+  }
+ },
+ update$0: function() {
+  if (this.outsideScreen$0() === true) this.removeFromWorld = true;
   else {
-    this.x = this.radialDistance * Math.cos(this.angle);
-    this.y = this.radialDistance * Math.sin(this.angle);
-    this.radialDistance += (250/*Bullet.speed*/ * this.game.clockTick);
+    var t1 = $.abs(this.x);
+    if (typeof t1 !== 'number') return this.update$0$bailout(1, t1, 0, 0, 0);
+    var t2 = this.explodesAt;
+    var t3 = $.abs(t2.get$x());
+    if (typeof t3 !== 'number') return this.update$0$bailout(2, t3, t2, t1, 0);
+    if (!(t1 >= t3)) {
+      t1 = $.abs(this.y);
+      if (typeof t1 !== 'number') return this.update$0$bailout(3, t1, t2, 0, 0);
+      t3 = $.abs(t2.get$y());
+      if (typeof t3 !== 'number') return this.update$0$bailout(4, t1, t2, t3, 0);
+      t3 = t1 >= t3;
+      t1 = t3;
+    } else t1 = true;
+    t3 = this.game;
+    if (t1) {
+      t3.addEntity$1($.BulletExplosion$3(t3, t2.get$x(), t2.get$y()));
+      this.removeFromWorld = true;
+    } else {
+      t1 = this.radialDistance;
+      if (typeof t1 !== 'number') return this.update$0$bailout(5, t1, t3, 0, 0);
+      t2 = this.angle;
+      var t4 = $.cos(t2);
+      if (typeof t4 !== 'number') return this.update$0$bailout(6, t1, t2, t4, t3);
+      this.x = t1 * t4;
+      t4 = this.radialDistance;
+      if (typeof t4 !== 'number') return this.update$0$bailout(7, t2, t3, t4, 0);
+      t2 = $.sin(t2);
+      if (typeof t2 !== 'number') return this.update$0$bailout(8, t2, t3, t4, 0);
+      this.y = t4 * t2;
+      t2 = this.radialDistance;
+      if (typeof t2 !== 'number') return this.update$0$bailout(9, t2, t3, 0, 0);
+      t3 = t3.get$clockTick();
+      if (typeof t3 !== 'number') throw $.iae(t3);
+      this.radialDistance = t2 + 250 * t3;
+    }
   }
-}
-Bullet.prototype.draw = function(ctx) {
-  ctx.save$0();
-  ctx.translate$2(this.x, this.y);
-  ctx.rotate$1(this.angle + 1.570796/*Math.PI/2*/);
-  ctx.translate$2(-this.x, -this.y);
-  this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y, 1);
-  ctx.restore$0();
-  GameEntity.prototype.draw.call(this, ctx);
-}
-Bullet.prototype.update$0 = Bullet.prototype.update;
-// ********** Code for BulletExplosion **************
-$inherits(BulletExplosion, GameEntity);
-function BulletExplosion(game, x, y) {
-  // Initializers done
-  GameEntity.withPosition$ctor.call(this, game, x, y);
-  this.sprite = game.assetManager.getAsset('img/explosion.png');
-  this.animation = new Animation(this.sprite, 34, 0.05, false);
-  this.radius = this.animation.frameWidth / 2;
-}
-BulletExplosion.prototype.update = function() {
-  var $0;
-  if (this.animation.isDone()) {
+ },
+ update$0$bailout: function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t3 = env0;
+      t2 = env1;
+      t1 = env2;
+      break;
+    case 3:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 4:
+      t1 = env0;
+      t2 = env1;
+      t3 = env2;
+      break;
+    case 5:
+      t1 = env0;
+      t3 = env1;
+      break;
+    case 6:
+      t1 = env0;
+      t2 = env1;
+      t4 = env2;
+      t3 = env3;
+      break;
+    case 7:
+      t2 = env0;
+      t3 = env1;
+      t4 = env2;
+      break;
+    case 8:
+      t2 = env0;
+      t3 = env1;
+      t4 = env2;
+      break;
+    case 9:
+      t2 = env0;
+      t3 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+      if ((state == 0 && this.outsideScreen$0() === true)) {
+        this.removeFromWorld = true;
+      } else {
+        switch (state) {
+          case 0:
+            var t1 = $.abs(this.x);
+          case 1:
+            state = 0;
+            var t2 = this.explodesAt;
+            var t3 = $.abs(t2.get$x());
+          case 2:
+            state = 0;
+          case 3:
+          case 4:
+            if (state == 3 || state == 4 || (state == 0 && !$.geB(t1, t3))) {
+              switch (state) {
+                case 0:
+                  t1 = $.abs(this.y);
+                case 3:
+                  state = 0;
+                  t3 = $.abs(t2.get$y());
+                case 4:
+                  state = 0;
+                  t3 = $.geB(t1, t3);
+                  t1 = t3;
+              }
+            } else {
+              t1 = true;
+            }
+            t3 = this.game;
+          case 5:
+          case 6:
+          case 7:
+          case 8:
+          case 9:
+            if ((state == 0 && t1)) {
+              t3.addEntity$1($.BulletExplosion$3(t3, t2.get$x(), t2.get$y()));
+              this.removeFromWorld = true;
+            } else {
+              switch (state) {
+                case 0:
+                  t1 = this.radialDistance;
+                case 5:
+                  state = 0;
+                  t2 = this.angle;
+                  var t4 = $.cos(t2);
+                case 6:
+                  state = 0;
+                  this.x = $.mul(t1, t4);
+                  t4 = this.radialDistance;
+                case 7:
+                  state = 0;
+                  t2 = $.sin(t2);
+                case 8:
+                  state = 0;
+                  this.y = $.mul(t4, t2);
+                  t2 = this.radialDistance;
+                case 9:
+                  state = 0;
+                  t3 = t3.get$clockTick();
+                  if (typeof t3 !== 'number') throw $.iae(t3);
+                  this.radialDistance = $.add(t2, 250 * t3);
+              }
+            }
+        }
+      }
+  }
+ },
+ Bullet$5: function(game, x, y, angle, explodesAt) {
+  this.sprite = game.get$assetManager().getAsset$1('img/bullet.png');
+  this.animation = $.Animation$4(this.sprite, 7, 0.05, true);
+ }
+};
+
+$$.BulletExplosion = {"":
+ ["animation", "radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ draw$1: function(ctx) {
+  this.animation.drawFrame$5(this.game.get$clockTick(), ctx, this.x, this.y, this.scaleFactor$0());
+  $.GameEntity.prototype.draw$1.call(this, ctx);
+ },
+ scaleFactor$0: function() {
+  var t1 = $.div(this.animation.currentFrame$0(), 3);
+  if (typeof t1 !== 'number') throw $.iae(t1);
+  return 1 + t1;
+ },
+ isCaughtInExplosion$1: function(alien) {
+  var t1 = this.x;
+  if (typeof t1 !== 'number') return this.isCaughtInExplosion$1$bailout(1, alien, t1, 0, 0, 0);
+  var t2 = alien.get$x();
+  if (typeof t2 !== 'number') return this.isCaughtInExplosion$1$bailout(2, alien, t2, t1, 0, 0);
+  t2 = t1 - t2;
+  t1 = this.x;
+  if (typeof t1 !== 'number') return this.isCaughtInExplosion$1$bailout(3, alien, t1, t2, 0, 0);
+  var t3 = alien.get$x();
+  if (typeof t3 !== 'number') return this.isCaughtInExplosion$1$bailout(4, alien, t1, t3, t2, 0);
+  t2 *= t1 - t3;
+  t3 = this.y;
+  if (typeof t3 !== 'number') return this.isCaughtInExplosion$1$bailout(5, alien, t3, t2, 0, 0);
+  t1 = alien.get$y();
+  if (typeof t1 !== 'number') return this.isCaughtInExplosion$1$bailout(6, alien, t3, t2, t1, 0);
+  t1 = t3 - t1;
+  t3 = this.y;
+  if (typeof t3 !== 'number') return this.isCaughtInExplosion$1$bailout(7, alien, t1, t3, t2, 0);
+  var t4 = alien.get$y();
+  if (typeof t4 !== 'number') return this.isCaughtInExplosion$1$bailout(8, alien, t1, t4, t3, t2);
+  var distance_squared = t2 + t1 * (t3 - t4);
+  t2 = this.radius;
+  if (typeof t2 !== 'number') return this.isCaughtInExplosion$1$bailout(9, distance_squared, alien, t2, 0, 0);
+  t1 = alien.get$radius();
+  if (typeof t1 !== 'number') return this.isCaughtInExplosion$1$bailout(10, distance_squared, alien, t1, t2, 0);
+  t1 += t2;
+  t2 = this.radius;
+  if (typeof t2 !== 'number') return this.isCaughtInExplosion$1$bailout(11, distance_squared, alien, t1, t2, 0);
+  t4 = alien.get$radius();
+  if (typeof t4 !== 'number') return this.isCaughtInExplosion$1$bailout(12, distance_squared, t1, t2, t4, 0);
+  return distance_squared < t1 * (t2 + t4);
+ },
+ isCaughtInExplosion$1$bailout: function(state, env0, env1, env2, env3, env4) {
+  switch (state) {
+    case 1:
+      var alien = env0;
+      t1 = env1;
+      break;
+    case 2:
+      alien = env0;
+      t2 = env1;
+      t1 = env2;
+      break;
+    case 3:
+      alien = env0;
+      t1 = env1;
+      t2 = env2;
+      break;
+    case 4:
+      alien = env0;
+      t1 = env1;
+      t3 = env2;
+      t2 = env3;
+      break;
+    case 5:
+      alien = env0;
+      t3 = env1;
+      t2 = env2;
+      break;
+    case 6:
+      alien = env0;
+      t3 = env1;
+      t2 = env2;
+      t1 = env3;
+      break;
+    case 7:
+      alien = env0;
+      t1 = env1;
+      t3 = env2;
+      t2 = env3;
+      break;
+    case 8:
+      alien = env0;
+      t1 = env1;
+      t4 = env2;
+      t3 = env3;
+      t2 = env4;
+      break;
+    case 9:
+      distance_squared = env0;
+      alien = env1;
+      t2 = env2;
+      break;
+    case 10:
+      distance_squared = env0;
+      alien = env1;
+      t1 = env2;
+      t2 = env3;
+      break;
+    case 11:
+      distance_squared = env0;
+      alien = env1;
+      t1 = env2;
+      t2 = env3;
+      break;
+    case 12:
+      distance_squared = env0;
+      t1 = env1;
+      t2 = env2;
+      t4 = env3;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = this.x;
+    case 1:
+      state = 0;
+      var t2 = alien.get$x();
+    case 2:
+      state = 0;
+      t2 = $.sub(t1, t2);
+      t1 = this.x;
+    case 3:
+      state = 0;
+      var t3 = alien.get$x();
+    case 4:
+      state = 0;
+      t2 = $.mul(t2, $.sub(t1, t3));
+      t3 = this.y;
+    case 5:
+      state = 0;
+      t1 = alien.get$y();
+    case 6:
+      state = 0;
+      t1 = $.sub(t3, t1);
+      t3 = this.y;
+    case 7:
+      state = 0;
+      var t4 = alien.get$y();
+    case 8:
+      state = 0;
+      var distance_squared = $.add(t2, $.mul(t1, $.sub(t3, t4)));
+      t2 = this.radius;
+    case 9:
+      state = 0;
+      t1 = alien.get$radius();
+    case 10:
+      state = 0;
+      t1 = $.add(t2, t1);
+      t2 = this.radius;
+    case 11:
+      state = 0;
+      t4 = alien.get$radius();
+    case 12:
+      state = 0;
+      return $.lt(distance_squared, $.mul(t1, $.add(t2, t4)));
+  }
+ },
+ update$0: function() {
+  if (this.animation.isDone$0() === true) {
     this.removeFromWorld = true;
     return;
   }
-  this.radius = (this.animation.frameWidth / 2) * this.scaleFactor();
-  for (var i = 0;
-   i < this.game.entities.get$length(); i = i + 1) {
-    var alien = this.game.entities.$index(i);
-    if ((alien instanceof Alien) && this.isCaughtInExplosion(alien)) {
-      ($0 = this.game).set$score($0.get$score() + 10);
-      alien.explode$0();
+  var t1 = this.animation.get$frameWidth();
+  if (typeof t1 !== 'number') return this.update$0$bailout(1, t1, 0, 0, 0);
+  t1 /= 2;
+  var t2 = this.scaleFactor$0();
+  if (typeof t2 !== 'number') return this.update$0$bailout(2, t1, t2, 0, 0);
+  this.radius = t1 * t2;
+  t1 = this.game;
+  var i = 0;
+  while (true) {
+    t2 = $.get$length(t1.get$entities());
+    if (typeof t2 !== 'number') return this.update$0$bailout(3, i, t2, t1, 0);
+    if (!(i < t2)) break;
+    t2 = t1.get$entities();
+    if (typeof t2 !== 'string' && (typeof t2 !== 'object' || (t2.constructor !== Array && !t2.is$JavaScriptIndexingBehavior()))) return this.update$0$bailout(4, i, t1, t2, 0);
+    var t3 = t2.length;
+    if (i < 0 || i >= t3) throw $.ioore(i);
+    t2 = t2[i];
+    if (typeof t2 === 'object' && !!t2.is$Alien && this.isCaughtInExplosion$1(t2) === true) {
+      t3 = t1.get$score();
+      if (typeof t3 !== 'number') return this.update$0$bailout(5, i, t2, t1, t3);
+      t1.set$score(t3 + 10);
+      t2.explode$0();
+    }
+    ++i;
+  }
+ },
+ update$0$bailout: function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+    case 3:
+      i = env0;
+      t2 = env1;
+      t1 = env2;
+      break;
+    case 4:
+      i = env0;
+      t1 = env1;
+      t2 = env2;
+      break;
+    case 5:
+      i = env0;
+      alien = env1;
+      t1 = env2;
+      t2 = env3;
+      break;
+  }
+  switch (state) {
+    case 0:
+      if (this.animation.isDone$0() === true) {
+        this.removeFromWorld = true;
+        return;
+      }
+      var t1 = this.animation.get$frameWidth();
+    case 1:
+      state = 0;
+      t1 = $.div(t1, 2);
+      var t2 = this.scaleFactor$0();
+    case 2:
+      state = 0;
+      this.radius = $.mul(t1, t2);
+      t1 = this.game;
+      var i = 0;
+    case 3:
+    case 4:
+    case 5:
+      L0: while (true) {
+        switch (state) {
+          case 0:
+            t2 = $.get$length(t1.get$entities());
+          case 3:
+            state = 0;
+            if (!$.ltB(i, t2)) break L0;
+            t2 = t1.get$entities();
+          case 4:
+            state = 0;
+            var alien = $.index(t2, i);
+          case 5:
+            if (state == 5 || (state == 0 && (typeof alien === 'object' && !!alien.is$Alien && this.isCaughtInExplosion$1(alien) === true))) {
+              switch (state) {
+                case 0:
+                  t2 = t1.get$score();
+                case 5:
+                  state = 0;
+                  t1.set$score($.add(t2, 10));
+                  alien.explode$0();
+              }
+            }
+            ++i;
+        }
+      }
+  }
+ },
+ BulletExplosion$3: function(game, x, y) {
+  this.sprite = game.get$assetManager().getAsset$1('img/explosion.png');
+  this.animation = $.Animation$4(this.sprite, 34, 0.05, false);
+  this.radius = $.div(this.animation.get$frameWidth(), 2);
+ }
+};
+
+$$.Earth = {"":
+ ["radius", "sprite", "removeFromWorld", "y", "x", "game"],
+ super: "GameEntity",
+ draw$1: function(ctx) {
+  var t1 = this.sprite;
+  var t2 = this.x;
+  if (typeof t2 !== 'number') return this.draw$1$bailout(1, ctx, t1, t2, 0, 0);
+  var t3 = t1.get$width();
+  if (typeof t3 !== 'number') return this.draw$1$bailout(2, ctx, t3, t1, t2, 0);
+  t2 -= t3 / 2;
+  t3 = this.y;
+  if (typeof t3 !== 'number') return this.draw$1$bailout(3, ctx, t3, t2, t1, 0);
+  var t4 = this.sprite.get$height();
+  if (typeof t4 !== 'number') return this.draw$1$bailout(4, ctx, t3, t2, t1, t4);
+  ctx.drawImage$3(t1, t2, t3 - t4 / 2);
+ },
+ draw$1$bailout: function(state, env0, env1, env2, env3, env4) {
+  switch (state) {
+    case 1:
+      var ctx = env0;
+      t1 = env1;
+      t2 = env2;
+      break;
+    case 2:
+      ctx = env0;
+      t3 = env1;
+      t1 = env2;
+      t2 = env3;
+      break;
+    case 3:
+      ctx = env0;
+      t3 = env1;
+      t2 = env2;
+      t1 = env3;
+      break;
+    case 4:
+      ctx = env0;
+      t3 = env1;
+      t2 = env2;
+      t1 = env3;
+      t4 = env4;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = this.sprite;
+      var t2 = this.x;
+    case 1:
+      state = 0;
+      var t3 = t1.get$width();
+    case 2:
+      state = 0;
+      t2 = $.sub(t2, $.div(t3, 2));
+      t3 = this.y;
+    case 3:
+      state = 0;
+      var t4 = this.sprite.get$height();
+    case 4:
+      state = 0;
+      ctx.drawImage$3(t1, t2, $.sub(t3, $.div(t4, 2)));
+  }
+ },
+ Earth$1: function(game) {
+  this.sprite = game.get$assetManager().getAsset$1('img/earth.png');
+ }
+};
+
+$$.EvilAliens = {"":
+ ["lastAlienAddedAt", "earth", "sentry", "score=", "lives=", "showOutlines", "assetManager", "clientBoundingRect", "halfSurfaceHeight", "halfSurfaceWidth", "surfaceHeight", "surfaceWidth", "clockTick", "timer", "mouse", "click", "ctx", "entities"],
+ super: "Game",
+ drawScore$0: function() {
+  this.ctx.set$fillStyle('red');
+  this.ctx.set$font('bold 2em Arial');
+  this.ctx.fillText$3('Score: ' + $.S(this.score), $.add($.div($.neg(this.ctx.get$canvas().get$width()), 2), 50), $.sub($.div(this.ctx.get$canvas().get$height(), 2), 50));
+ },
+ drawLives$0: function() {
+  this.ctx.set$fillStyle('red');
+  this.ctx.set$font('bold 2em Arial');
+  this.ctx.fillText$3('Lives: ' + $.S(this.lives), $.add($.div($.neg(this.ctx.get$canvas().get$width()), 2), 50), $.sub($.div(this.ctx.get$canvas().get$height(), 2), 80));
+ },
+ drawBeforeCtxRestore$0: function() {
+  this.drawScore$0();
+  this.drawLives$0();
+ },
+ update$0: function() {
+  if (!$.eqNullB(this.lastAlienAddedAt)) {
+    var t1 = this.timer.get$gameTime();
+    if (typeof t1 !== 'number') return this.update$0$bailout(1, t1, 0);
+    var t2 = this.lastAlienAddedAt;
+    if (typeof t2 !== 'number') return this.update$0$bailout(2, t2, t1);
+    t2 = t1 - t2 > 1;
+    t1 = t2;
+  } else t1 = true;
+  if (t1) {
+    t1 = this.ctx.get$canvas().get$width();
+    t2 = $.random();
+    if (typeof t2 !== 'number') return this.update$0$bailout(3, t2, t1);
+    this.addEntity$1($.Alien$3(this, t1, t2 * 3.141592653589793 * 180));
+    this.lastAlienAddedAt = this.timer.get$gameTime();
+  }
+  t1 = this.score;
+  if (typeof t1 !== 'number') return this.update$0$bailout(4, t1, 0);
+  t1 <= 0;
+  $.Game.prototype.update$0.call(this);
+ },
+ update$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t2 = env0;
+      t1 = env1;
+      break;
+    case 3:
+      t2 = env0;
+      t1 = env1;
+      break;
+    case 4:
+      t1 = env0;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+    case 2:
+      if (state == 1 || state == 2 || (state == 0 && !$.eqNullB(this.lastAlienAddedAt))) {
+        switch (state) {
+          case 0:
+            var t1 = this.timer.get$gameTime();
+          case 1:
+            state = 0;
+            var t2 = this.lastAlienAddedAt;
+          case 2:
+            state = 0;
+            t2 = $.gtB($.sub(t1, t2), 1);
+            t1 = t2;
+        }
+      } else {
+        t1 = true;
+      }
+    case 3:
+      if (state == 3 || (state == 0 && t1)) {
+        switch (state) {
+          case 0:
+            t1 = this.ctx.get$canvas().get$width();
+            t2 = $.random();
+          case 3:
+            state = 0;
+            this.addEntity$1($.Alien$3(this, t1, $.mul($.mul(t2, 3.141592653589793), 180)));
+            this.lastAlienAddedAt = this.timer.get$gameTime();
+        }
+      }
+      t1 = this.score;
+    case 4:
+      state = 0;
+      $.leB(t1, 0);
+      $.Game.prototype.update$0.call(this);
+  }
+ },
+ start$0: function() {
+  this.sentry = $.Sentry$1(this);
+  this.earth = $.Earth$1(this);
+  this.addEntity$1(this.earth);
+  this.addEntity$1(this.sentry);
+  $.Game.prototype.start$0.call(this);
+ }
+};
+
+$$._AbstractWorkerEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._AudioContextEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$complete: function() {
+  return this._get$1('complete');
+ },
+ complete$1: function(arg0) { return this.get$complete().$call$1(arg0); }
+};
+
+$$._BatteryManagerEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._BodyElementEventsImpl = {"":
+ ["_ptr"],
+ super: "_ElementEventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._DOMApplicationCacheEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._DedicatedWorkerContextEventsImpl = {"":
+ ["_ptr"],
+ super: "_WorkerContextEventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ }
+};
+
+$$._DeprecatedPeerConnectionEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ }
+};
+
+$$._DocumentEventsImpl = {"":
+ ["_ptr"],
+ super: "_ElementEventsImpl",
+ get$mouseMove: function() {
+  return this._get$1('mousemove');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$click: function() {
+  return this._get$1('click');
+ }
+};
+
+$$.EmptyElementRect = {"":
+ ["clientRects", "bounding?", "scroll", "offset", "client"],
+ super: "Object"
+};
+
+$$._SimpleClientRect = {"":
+ ["height?", "width?", "top?", "left?"],
+ super: "Object",
+ toString$0: function() {
+  return '(' + $.S(this.left) + ', ' + $.S(this.top) + ', ' + $.S(this.width) + ', ' + $.S(this.height) + ')';
+ },
+ operator$eq$1: function(other) {
+  return !(other === (void 0)) && $.eqB(this.left, other.get$left()) && $.eqB(this.top, other.get$top()) && $.eqB(this.width, other.get$width()) && $.eqB(this.height, other.get$height());
+ }
+};
+
+$$._ElementRectImpl = {"":
+ ["_clientRects", "_boundingClientRect", "scroll", "offset", "client"],
+ super: "Object",
+ get$bounding: function() {
+  return this._boundingClientRect;
+ }
+};
+
+$$._ElementEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$mouseMove: function() {
+  return this._get$1('mousemove');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$click: function() {
+  return this._get$1('click');
+ }
+};
+
+$$._EventSourceEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._EventsImpl = {"":
+ ["_ptr"],
+ super: "Object",
+ _get$1: function(type) {
+  return $._EventListenerListImpl$2(this._ptr, type);
+ },
+ operator$index$1: function(type) {
+  return this._get$1($.toLowerCase(type));
+ }
+};
+
+$$._EventListenerListImpl = {"":
+ ["_type", "_ptr"],
+ super: "Object",
+ _add$2: function(listener, useCapture) {
+  this._ptr.$dom_addEventListener$3(this._type, listener, useCapture);
+ },
+ add$2: function(listener, useCapture) {
+  this._add$2(listener, useCapture);
+  return this;
+ },
+ add$1: function(listener) {
+  return this.add$2(listener,false)
+}
+};
+
+$$._FileReaderEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._FileWriterEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._FrameSetElementEventsImpl = {"":
+ ["_ptr"],
+ super: "_ElementEventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._IDBDatabaseEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._IDBRequestEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._IDBTransactionEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$complete: function() {
+  return this._get$1('complete');
+ },
+ complete$1: function(arg0) { return this.get$complete().$call$1(arg0); }
+};
+
+$$._IDBVersionChangeRequestEventsImpl = {"":
+ ["_ptr"],
+ super: "_IDBRequestEventsImpl"
+};
+
+$$._InputElementEventsImpl = {"":
+ ["_ptr"],
+ super: "_ElementEventsImpl"
+};
+
+$$._JavaScriptAudioNodeEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._MediaElementEventsImpl = {"":
+ ["_ptr"],
+ super: "_ElementEventsImpl"
+};
+
+$$._MediaStreamEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._MessagePortEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ }
+};
+
+$$._NotificationEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$click: function() {
+  return this._get$1('click');
+ }
+};
+
+$$._PeerConnection00EventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._SVGElementInstanceEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$mouseMove: function() {
+  return this._get$1('mousemove');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$click: function() {
+  return this._get$1('click');
+ }
+};
+
+$$._SharedWorkerContextEventsImpl = {"":
+ ["_ptr"],
+ super: "_WorkerContextEventsImpl"
+};
+
+$$._SpeechRecognitionEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$start: function() {
+  return this._get$1('start');
+ },
+ start$0: function() { return this.get$start().$call$0(); },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._TextTrackEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._TextTrackCueEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._TextTrackListEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl"
+};
+
+$$._WebSocketEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._WindowEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$mouseMove: function() {
+  return this._get$1('mousemove');
+ },
+ get$message: function() {
+  return this._get$1('message');
+ },
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ },
+ get$click: function() {
+  return this._get$1('click');
+ }
+};
+
+$$._WorkerEventsImpl = {"":
+ ["_ptr"],
+ super: "_AbstractWorkerEventsImpl",
+ get$message: function() {
+  return this._get$1('message');
+ }
+};
+
+$$._WorkerContextEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._XMLHttpRequestEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._XMLHttpRequestUploadEventsImpl = {"":
+ ["_ptr"],
+ super: "_EventsImpl",
+ get$load: function() {
+  return this._get$1('load');
+ },
+ get$error: function() {
+  return this._get$1('error');
+ }
+};
+
+$$._MeasurementRequest = {"":
+ ["exception=", "value=", "completer?", "computeValue"],
+ super: "Object",
+ computeValue$0: function() { return this.computeValue.$call$0(); }
+};
+
+$$._DOMWindowCrossFrameImpl = {"":
+ ["_window"],
+ super: "Object",
+ postMessage$3: function(message, targetOrigin, messagePorts) {
+  var t1 = $.eqNullB(messagePorts);
+  var t2 = this._window;
+  if (t1) $._postMessage2(t2, message, targetOrigin);
+  else $._postMessage3(t2, message, targetOrigin, messagePorts);
+ },
+ postMessage$2: function(message,targetOrigin) {
+  return this.postMessage$3(message,targetOrigin,(void 0))
+},
+ get$top: function() {
+  return $._createSafe(this._window.get$top());
+ },
+ get$length: function() {
+  return $.get$length(this._window);
+ }
+};
+
+$$._IDBOpenDBRequestEventsImpl = {"":
+ ["_ptr"],
+ super: "_IDBRequestEventsImpl"
+};
+
+$$._FixedSizeListIterator = {"":
+ ["_lib_length", "_pos", "_array"],
+ super: "_VariableSizeListIterator",
+ hasNext$0: function() {
+  var t1 = this._lib_length;
+  if (typeof t1 !== 'number') return this.hasNext$0$bailout(1, t1, 0);
+  var t2 = this._pos;
+  if (typeof t2 !== 'number') return this.hasNext$0$bailout(2, t1, t2);
+  return t1 > t2;
+ },
+ hasNext$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = this._lib_length;
+    case 1:
+      state = 0;
+      var t2 = this._pos;
+    case 2:
+      state = 0;
+      return $.gt(t1, t2);
+  }
+ }
+};
+
+$$._VariableSizeListIterator = {"":
+ [],
+ super: "Object",
+ next$0: function() {
+  if (this.hasNext$0() !== true) throw $.captureStackTrace($.CTC0);
+  var t1 = this._array;
+  if (typeof t1 !== 'string' && (typeof t1 !== 'object' || (t1.constructor !== Array && !t1.is$JavaScriptIndexingBehavior()))) return this.next$0$bailout(1, t1, 0);
+  var t2 = this._pos;
+  if (typeof t2 !== 'number') return this.next$0$bailout(2, t1, t2);
+  this._pos = t2 + 1;
+  if (t2 !== (t2 | 0)) throw $.iae(t2);
+  var t3 = t1.length;
+  if (t2 < 0 || t2 >= t3) throw $.ioore(t2);
+  return t1[t2];
+ },
+ next$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t1 = env0;
+      t2 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      if (this.hasNext$0() !== true) throw $.captureStackTrace($.CTC0);
+      var t1 = this._array;
+    case 1:
+      state = 0;
+      var t2 = this._pos;
+    case 2:
+      state = 0;
+      this._pos = $.add(t2, 1);
+      return $.index(t1, t2);
+  }
+ },
+ hasNext$0: function() {
+  var t1 = $.get$length(this._array);
+  if (typeof t1 !== 'number') return this.hasNext$0$bailout(1, t1, 0);
+  var t2 = this._pos;
+  if (typeof t2 !== 'number') return this.hasNext$0$bailout(2, t2, t1);
+  return t1 > t2;
+ },
+ hasNext$0$bailout: function(state, env0, env1) {
+  switch (state) {
+    case 1:
+      t1 = env0;
+      break;
+    case 2:
+      t2 = env0;
+      t1 = env1;
+      break;
+  }
+  switch (state) {
+    case 0:
+      var t1 = $.get$length(this._array);
+    case 1:
+      state = 0;
+      var t2 = this._pos;
+    case 2:
+      state = 0;
+      return $.gt(t1, t2);
+  }
+ }
+};
+
+$$.Closure = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$0: function() {
+  var t1 = this.box_0;
+  t1.game_2.init$1(t1.ctx_1);
+  this.box_0.game_2.start$0();
+ }
+};
+
+$$.Closure0 = {"":
+ ["this_4", "box_0", "box_2"],
+ super: "Closure19",
+ $call$1: function(event$) {
+  $.print($.S(this.box_0.img_1.get$src()) + ' is loaded');
+  var t1 = this.this_4;
+  t1.set$successCount($.add(t1.get$successCount(), 1));
+  this.this_4.isDone$0() === true && this.box_2.downloadCallback_3.$call$0();
+ }
+};
+
+$$.Closure1 = {"":
+ ["this_5", "box_2"],
+ super: "Closure19",
+ $call$1: function(event$) {
+  var t1 = this.this_5;
+  t1.set$errorCount($.add(t1.get$errorCount(), 1));
+  this.this_5.isDone$0() === true && this.box_2.downloadCallback_3.$call$0();
+ }
+};
+
+$$.Closure2 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$2: function(k, v) {
+  var t1 = this.box_0;
+  t1.first_3 !== true && $.add$1(t1.result_1, ', ');
+  this.box_0.first_3 = false;
+  t1 = this.box_0;
+  $._emitObject(k, t1.result_1, t1.visiting_2);
+  $.add$1(this.box_0.result_1, ': ');
+  t1 = this.box_0;
+  $._emitObject(v, t1.result_1, t1.visiting_2);
+ }
+};
+
+$$.Closure3 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$0: function() {
+  return this.box_0.closure_1.$call$0();
+ }
+};
+
+$$.Closure4 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$0: function() {
+  var t1 = this.box_0;
+  return t1.closure_1.$call$1(t1.arg1_2);
+ }
+};
+
+$$.Closure5 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$0: function() {
+  var t1 = this.box_0;
+  return t1.closure_1.$call$2(t1.arg1_2, t1.arg2_3);
+ }
+};
+
+$$.Closure6 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$1: function(element) {
+  var counter = $.add(this.box_0.counter_1, 1);
+  this.box_0.counter_1 = counter;
+ }
+};
+
+$$.Closure7 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$1: function(entry) {
+  this.box_0.f_1.$call$2(entry.get$key(), entry.get$value());
+ }
+};
+
+$$.Closure8 = {"":
+ [],
+ super: "Closure19",
+ $call$1: function(n) {
+  var absN = $.abs(n);
+  var sign = $.ltB(n, 0) ? '-' : '';
+  if ($.geB(absN, 1000)) return $.S(n);
+  if ($.geB(absN, 100)) return sign + '0' + $.S(absN);
+  if ($.geB(absN, 10)) return sign + '00' + $.S(absN);
+  if ($.geB(absN, 1)) return sign + '000' + $.S(absN);
+  throw $.captureStackTrace($.IllegalArgumentException$1(n));
+ }
+};
+
+$$.Closure9 = {"":
+ [],
+ super: "Closure19",
+ $call$1: function(n) {
+  if ($.geB(n, 100)) return $.S(n);
+  if ($.geB(n, 10)) return '0' + $.S(n);
+  return '00' + $.S(n);
+ }
+};
+
+$$.Closure10 = {"":
+ [],
+ super: "Closure19",
+ $call$1: function(n) {
+  if ($.geB(n, 10)) return $.S(n);
+  return '0' + $.S(n);
+ }
+};
+
+$$.Closure11 = {"":
+ ["this_0"],
+ super: "Closure19",
+ $call$1: function(rect) {
+  var t1 = $.Point$2(rect.get$bounding().get$left(), rect.get$bounding().get$top());
+  this.this_0.set$clientBoundingRect(t1);
+ }
+};
+
+$$.Closure12 = {"":
+ ["this_0"],
+ super: "Closure19",
+ $call$1: function(e) {
+  e.preventDefault$0();
+  return $.Point$2($.sub($.sub(e.get$clientX(), this.this_0.get$clientBoundingRect().get$x()), $.div(this.this_0.get$ctx().get$canvas().get$width(), 2)), $.sub($.sub(e.get$clientY(), this.this_0.get$clientBoundingRect().get$y()), $.div(this.this_0.get$ctx().get$canvas().get$height(), 2)));
+ }
+};
+
+$$.Closure13 = {"":
+ ["this_2", "getXandY_1"],
+ super: "Closure19",
+ $call$1: function(e) {
+  var t1 = this.getXandY_1.$call$1(e);
+  this.this_2.set$click(t1);
+ }
+};
+
+$$.Closure14 = {"":
+ ["this_4", "getXandY_3"],
+ super: "Closure19",
+ $call$1: function(e) {
+  var t1 = this.getXandY_3.$call$1(e);
+  this.this_4.set$mouse(t1);
+ }
+};
+
+$$.Closure15 = {"":
+ ["this_0"],
+ super: "Closure19",
+ $call$0: function() {
+  return $._ElementRectImpl$1(this.this_0);
+ }
+};
+
+$$.Closure16 = {"":
+ [],
+ super: "Closure19",
+ $call$1: function(e) {
+  return $._completeMeasurementFutures();
+ }
+};
+
+$$.Closure17 = {"":
+ [],
+ super: "Closure19",
+ $call$0: function() {
+  return $.CTC5;
+ }
+};
+
+$$.Closure18 = {"":
+ ["box_0"],
+ super: "Closure19",
+ $call$2: function(key, value) {
+  this.box_0.f_10.$call$1(key);
+ }
+};
+
+$$.Closure19 = {"":
+ [],
+ super: "Object",
+ toString$0: function() {
+  return 'Closure';
+ }
+};
+
+Isolate.$defineClass('Closure20', 'Closure19', ['self', 'target'], {
+$call$1: function(p0) { return this.self[this.target](p0); }
+});
+Isolate.$defineClass('Closure21', 'Closure19', ['self', 'target'], {
+$call$4: function(p0, p1, p2, p3) { return this.self[this.target](p0, p1, p2, p3); }
+});
+Isolate.$defineClass('Closure22', 'Closure19', ['self', 'target'], {
+$call$0: function() { return this.self[this.target](); }
+});
+$.mul$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a * b;
+  }
+  return a.operator$mul$1(b);
+};
+
+$._AudioContextEventsImpl$1 = function(_ptr) {
+  return new $._AudioContextEventsImpl(_ptr);
+};
+
+$.floor = function(receiver) {
+  if (!(typeof receiver === 'number')) return receiver.floor$0();
+  return Math.floor(receiver);
+};
+
+$.eqB = function(a, b) {
+  if (typeof a === "object") {
+    if (!!a.operator$eq$1) return a.operator$eq$1(b) === true;
+    return a === b;
+  }
+  return a === b;
+};
+
+$._completeMeasurementFutures = function() {
+  if ($.eqB($._nextMeasurementFrameScheduled, false)) return;
+  $._nextMeasurementFrameScheduled = false;
+  if (!($._pendingRequests === (void 0))) {
+    for (var t1 = $.iterator($._pendingRequests); t1.hasNext$0() === true; ) {
+      var request = t1.next$0();
+      try {
+        var t2 = request.computeValue$0();
+        request.set$value(t2);
+      } catch (exception) {
+        t2 = $.unwrapException(exception);
+        var e = t2;
+        t2 = e;
+        request.set$value(t2);
+        request.set$exception(true);
+      }
     }
   }
-}
-BulletExplosion.prototype.isCaughtInExplosion = function(alien) {
-  var distance_squared = (((this.x - alien.x) * (this.x - alien.x)) + ((this.y - alien.y) * (this.y - alien.y)));
-  var radii_squared = (this.radius + alien.radius) * (this.radius + alien.radius);
-  return distance_squared < radii_squared;
-}
-BulletExplosion.prototype.scaleFactor = function() {
-  return 1 + (this.animation.currentFrame() / 3);
-}
-BulletExplosion.prototype.draw = function(ctx) {
-  this.animation.drawFrame(this.game.clockTick, ctx, this.x, this.y, this.scaleFactor());
-  GameEntity.prototype.draw.call(this, ctx);
-}
-BulletExplosion.prototype.update$0 = BulletExplosion.prototype.update;
-// ********** Code for Earth **************
-$inherits(Earth, GameEntity);
-function Earth(game) {
-  // Initializers done
-  GameEntity.withPosition$ctor.call(this, game, 0, 0);
-  this.sprite = game.assetManager.getAsset('img/earth.png');
-}
-Earth.prototype.draw = function(ctx) {
-  ctx.drawImage$3(this.sprite, this.x - this.sprite.get$width() / 2, this.y - this.sprite.get$height() / 2);
-}
-// ********** Code for EvilAliens **************
-$inherits(EvilAliens, Game);
-function EvilAliens(assetManager) {
-  this.lives = 10
-  this.score = 0
-  // Initializers done
-  Game.call(this, assetManager);
-}
-EvilAliens.prototype.get$lives = function() { return this.lives; };
-EvilAliens.prototype.set$lives = function(value) { return this.lives = value; };
-EvilAliens.prototype.get$score = function() { return this.score; };
-EvilAliens.prototype.set$score = function(value) { return this.score = value; };
-EvilAliens.prototype.start = function() {
-  this.sentry = new Sentry(this);
-  this.earth = new Earth(this);
-  this.addEntity(this.earth);
-  this.addEntity(this.sentry);
-  Game.prototype.start.call(this);
-}
-EvilAliens.prototype.get$start = function() {
-  return this.start.bind(this);
-}
-EvilAliens.prototype.update = function() {
-  if (this.lastAlienAddedAt == null || (this.timer.gameTime - this.lastAlienAddedAt) > 1) {
-    this.addEntity(new Alien(this, this.ctx.get$canvas().get$width(), Math.random() * 3.1415926535897932/*Math.PI*/ * 180));
-    this.lastAlienAddedAt = this.timer.gameTime;
+  var completedRequests = $._pendingRequests;
+  var readyMeasurementFrameCallbacks = $._pendingMeasurementFrameCallbacks;
+  $._pendingRequests = (void 0);
+  $._pendingMeasurementFrameCallbacks = (void 0);
+  if (!(completedRequests === (void 0))) {
+    for (t1 = $.iterator(completedRequests); t1.hasNext$0() === true; ) {
+      t2 = t1.next$0();
+      if (t2.get$exception() === true) t2.get$completer().completeException$1(t2.get$value());
+      else t2.get$completer().complete$1(t2.get$value());
+    }
   }
-  if (this.score <= 0) {
+  if (!(readyMeasurementFrameCallbacks === (void 0))) {
+    for (t1 = $.iterator(readyMeasurementFrameCallbacks); t1.hasNext$0() === true; ) {
+      t1.next$0().$call$0();
+    }
   }
-  Game.prototype.update.call(this);
+};
+
+$._containsRef = function(c, ref) {
+  for (var t1 = $.iterator(c); t1.hasNext$0() === true; ) {
+    if (t1.next$0() === ref) return true;
+  }
+  return false;
+};
+
+$.isJsArray = function(value) {
+  return !(value === (void 0)) && (value.constructor === Array);
+};
+
+$.indexSet$slow = function(a, index, value) {
+  if ($.isJsArray(a) === true) {
+    if (!((typeof index === 'number') && (index === (index | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(index));
+    if (index < 0 || $.geB(index, $.get$length(a))) throw $.captureStackTrace($.IndexOutOfRangeException$1(index));
+    $.checkMutable(a, 'indexed set');
+    a[index] = value;
+    return;
+  }
+  a.operator$indexSet$2(index, value);
+};
+
+$._nextProbe = function(currentProbe, numberOfProbes, length$) {
+  return $.and($.add(currentProbe, numberOfProbes), $.sub(length$, 1));
+};
+
+$.allMatches = function(receiver, str) {
+  if (!(typeof receiver === 'string')) return receiver.allMatches$1(str);
+  $.checkString(str);
+  return $.allMatchesInStringUnchecked(receiver, str);
+};
+
+$.substringUnchecked = function(receiver, startIndex, endIndex) {
+  return receiver.substring(startIndex, endIndex);
+};
+
+$.DateImplementation$now$0 = function() {
+  var t1 = new $.DateImplementation(false, $.dateNow());
+  t1.DateImplementation$now$0();
+  return t1;
+};
+
+$.get$length = function(receiver) {
+  if (typeof receiver === 'string' || $.isJsArray(receiver) === true) {
+    return receiver.length;
+  }
+  return receiver.get$length();
+};
+
+$.ge$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a >= b;
+  }
+  return a.operator$ge$1(b);
+};
+
+$.IllegalJSRegExpException$2 = function(_pattern, _errmsg) {
+  return new $.IllegalJSRegExpException(_errmsg, _pattern);
+};
+
+$._IDBOpenDBRequestEventsImpl$1 = function(_ptr) {
+  return new $._IDBOpenDBRequestEventsImpl(_ptr);
+};
+
+$.typeNameInIE = function(obj) {
+  var name$ = $.constructorNameFallback(obj);
+  if ($.eqB(name$, 'Window')) return 'DOMWindow';
+  if ($.eqB(name$, 'Document')) {
+    if (!!obj.xmlVersion) return 'Document';
+    return 'HTMLDocument';
+  }
+  if ($.eqB(name$, 'HTMLTableDataCellElement')) return 'HTMLTableCellElement';
+  if ($.eqB(name$, 'HTMLTableHeaderCellElement')) return 'HTMLTableCellElement';
+  if ($.eqB(name$, 'MSStyleCSSProperties')) return 'CSSStyleDeclaration';
+  if ($.eqB(name$, 'CanvasPixelArray')) return 'Uint8ClampedArray';
+  if ($.eqB(name$, 'HTMLPhraseElement')) return 'HTMLElement';
+  if ($.eqB(name$, 'MouseWheelEvent')) return 'WheelEvent';
+  return name$;
+};
+
+$.constructorNameFallback = function(obj) {
+  var constructor$ = (obj.constructor);
+  if ((typeof(constructor$)) === 'function') {
+    var name$ = (constructor$.name);
+    if ((typeof(name$)) === 'string' && $.isEmpty(name$) !== true && !(name$ === 'Object')) return name$;
+  }
+  var string = (Object.prototype.toString.call(obj));
+  return $.substring$2(string, 8, string.length - 1);
+};
+
+$.regExpMatchStart = function(m) {
+  return m.index;
+};
+
+$.NullPointerException$2 = function(functionName, arguments$) {
+  return new $.NullPointerException(arguments$, functionName);
+};
+
+$.Alien$3 = function(game, radialDistance, angle) {
+  var t1 = new $.Alien(100, angle, radialDistance, (void 0), (void 0), false, (void 0), (void 0), game);
+  t1.Alien$3(game, radialDistance, angle);
+  return t1;
+};
+
+$.clear = function(receiver) {
+  if ($.isJsArray(receiver) !== true) return receiver.clear$0();
+  $.set$length(receiver, 0);
+};
+
+$.max = function(a, b) {
+  return $.ltB($.compareTo(a, b), 0) ? b : a;
+};
+
+$.printString = function(string) {
+  if (typeof dartPrint == "function") dartPrint(string);
+  else {
+    if (typeof console == "object") console.log(string);
+    else {
+      write(string);
+      write("\n");
+    }
+  }
+};
+
+$.JSSyntaxRegExp$_globalVersionOf$1 = function(other) {
+  var t1 = other.get$pattern();
+  var t2 = other.get$multiLine();
+  t1 = new $.JSSyntaxRegExp(other.get$ignoreCase(), t2, t1);
+  t1.JSSyntaxRegExp$_globalVersionOf$1(other);
+  return t1;
+};
+
+$.tdiv = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return $.truncate((a) / (b));
+  }
+  return a.operator$tdiv$1(b);
+};
+
+$.removeRange = function(receiver, start, length$) {
+  if ($.isJsArray(receiver) !== true) return receiver.removeRange$2(start, length$);
+  $.checkGrowable(receiver, 'removeRange');
+  if ($.eqB(length$, 0)) return;
+  $.checkNull(start);
+  $.checkNull(length$);
+  if (!((typeof start === 'number') && (start === (start | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(start));
+  if (!((typeof length$ === 'number') && (length$ === (length$ | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(length$));
+  if (length$ < 0) throw $.captureStackTrace($.IllegalArgumentException$1(length$));
+  var receiverLength = (receiver.length);
+  if (start < 0 || start >= receiverLength) throw $.captureStackTrace($.IndexOutOfRangeException$1(start));
+  var t1 = start + length$;
+  if (t1 > receiverLength) throw $.captureStackTrace($.IndexOutOfRangeException$1(t1));
+  t1 = $.add(start, length$);
+  if (typeof length$ !== 'number') throw $.iae(length$);
+  var t2 = receiverLength - length$;
+  if (typeof start !== 'number') throw $.iae(start);
+  $.copy(receiver, t1, receiver, start, t2 - start);
+  $.set$length(receiver, t2);
+};
+
+$.typeNameInChrome = function(obj) {
+  var name$ = (obj.constructor.name);
+  if (name$ === 'Window') return 'DOMWindow';
+  if (name$ === 'CanvasPixelArray') return 'Uint8ClampedArray';
+  return name$;
+};
+
+$.shr = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    a = (a);
+    b = (b);
+    if (b < 0) throw $.captureStackTrace($.IllegalArgumentException$1(b));
+    if (a > 0) {
+      if (b > 31) return 0;
+      return a >>> b;
+    }
+    if (b > 31) b = 31;
+    return (a >> b) >>> 0;
+  }
+  return a.operator$shr$1(b);
+};
+
+$.eqNull = function(a) {
+  if (typeof a === "object") {
+    if (!!a.operator$eq$1) return a.operator$eq$1((void 0));
+    return false;
+  }
+  return typeof a === "undefined";
+};
+
+$.and = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return (a & b) >>> 0;
+  }
+  return a.operator$and$1(b);
+};
+
+$.substring$2 = function(receiver, startIndex, endIndex) {
+  if (!(typeof receiver === 'string')) return receiver.substring$2(startIndex, endIndex);
+  $.checkNum(startIndex);
+  var length$ = receiver.length;
+  if (endIndex === (void 0)) endIndex = length$;
+  $.checkNum(endIndex);
+  if ($.ltB(startIndex, 0)) throw $.captureStackTrace($.IndexOutOfRangeException$1(startIndex));
+  if ($.gtB(startIndex, endIndex)) throw $.captureStackTrace($.IndexOutOfRangeException$1(startIndex));
+  if ($.gtB(endIndex, length$)) throw $.captureStackTrace($.IndexOutOfRangeException$1(endIndex));
+  return $.substringUnchecked(receiver, startIndex, endIndex);
+};
+
+$.Point$2 = function(x, y) {
+  return new $.Point(y, x);
+};
+
+$.indexSet = function(a, index, value) {
+  if (a.constructor === Array && !a.immutable$list) {
+    var key = (index >>> 0);
+    if (key === index && key < (a.length)) {
+      a[key] = value;
+      return;
+    }
+  }
+  $.indexSet$slow(a, index, value);
+};
+
+$._DOMApplicationCacheEventsImpl$1 = function(_ptr) {
+  return new $._DOMApplicationCacheEventsImpl(_ptr);
+};
+
+$.ExceptionImplementation$1 = function(msg) {
+  return new $.ExceptionImplementation(msg);
+};
+
+$.StringMatch$3 = function(_start, str, pattern) {
+  return new $.StringMatch(pattern, str, _start);
+};
+
+$.invokeClosure = function(closure, isolate, numberOfArguments, arg1, arg2) {
+  var t1 = ({});
+  t1.arg2_3 = arg2;
+  t1.arg1_2 = arg1;
+  t1.closure_1 = closure;
+  if ($.eqB(numberOfArguments, 0)) {
+    return new $.Closure3(t1).$call$0();
+  }
+  if ($.eqB(numberOfArguments, 1)) {
+    return new $.Closure4(t1).$call$0();
+  }
+  if ($.eqB(numberOfArguments, 2)) {
+    return new $.Closure5(t1).$call$0();
+  }
+  throw $.captureStackTrace($.ExceptionImplementation$1('Unsupported number of arguments for wrapped closure'));
+};
+
+$.stringJoinUnchecked = function(array, separator) {
+  return array.join(separator);
+};
+
+$.gt = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a > b) : $.gt$slow(a, b);
+};
+
+$._createMeasurementFuture = function(computeValue, completer) {
+  if ($._pendingRequests === (void 0)) {
+    $._pendingRequests = [];
+    $._maybeScheduleMeasurementFrame();
+  }
+  $.add$1($._pendingRequests, $._MeasurementRequest$2(computeValue, completer));
+  return completer.get$future();
+};
+
+$._postMessage2 = function(win, message, targetOrigin) {
+      win.postMessage(message, targetOrigin);
+;
+};
+
+$._maybeScheduleMeasurementFrame = function() {
+  if ($._nextMeasurementFrameScheduled === true) return;
+  $._nextMeasurementFrameScheduled = true;
+  if ($._firstMeasurementRequest === true) {
+    $.add$1($.window().get$on().get$message(), new $.Closure16());
+    $._firstMeasurementRequest = false;
+  }
+  $.window().postMessage$2('DART-MEASURE', '*');
+};
+
+$.buildDynamicMetadata = function(inputTable) {
+  if (typeof inputTable !== 'string' && (typeof inputTable !== 'object' || (inputTable.constructor !== Array && !inputTable.is$JavaScriptIndexingBehavior()))) return $.buildDynamicMetadata$bailout(1, inputTable, 0, 0, 0, 0, 0, 0);
+  var result = [];
+  for (var i = 0; t1 = inputTable.length, i < t1; ++i) {
+    if (i < 0 || i >= t1) throw $.ioore(i);
+    var tag = $.index(inputTable[i], 0);
+    var t2 = inputTable.length;
+    if (i < 0 || i >= t2) throw $.ioore(i);
+    var tags = $.index(inputTable[i], 1);
+    var set = $.HashSetImplementation$0();
+    $.setRuntimeTypeInfo(set, ({E: 'String'}));
+    var tagNames = $.split(tags, '|');
+    if (typeof tagNames !== 'string' && (typeof tagNames !== 'object' || (tagNames.constructor !== Array && !tagNames.is$JavaScriptIndexingBehavior()))) return $.buildDynamicMetadata$bailout(2, inputTable, result, tagNames, tag, i, tags, set);
+    for (var j = 0; t1 = tagNames.length, j < t1; ++j) {
+      if (j < 0 || j >= t1) throw $.ioore(j);
+      set.add$1(tagNames[j]);
+    }
+    $.add$1(result, $.MetaInfo$3(tag, tags, set));
+  }
+  return result;
+  var t1;
+};
+
+$.contains$1 = function(receiver, other) {
+  if (!(typeof receiver === 'string')) return receiver.contains$1(other);
+  return $.contains$2(receiver, other, 0);
+};
+
+$._EventSourceEventsImpl$1 = function(_ptr) {
+  return new $._EventSourceEventsImpl(_ptr);
+};
+
+$.mul = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a * b) : $.mul$slow(a, b);
+};
+
+$._NotificationEventsImpl$1 = function(_ptr) {
+  return new $._NotificationEventsImpl(_ptr);
+};
+
+$.neg = function(a) {
+  if (typeof a === "number") {
+    return -a;
+  }
+  return a.operator$negate$0();
+};
+
+$._emitCollection = function(c, result, visiting) {
+  $.add$1(visiting, c);
+  var isList = typeof c === 'object' && (c.constructor === Array || c.is$List0());
+  $.add$1(result, isList ? '[' : '{');
+  for (var t1 = $.iterator(c), first = true; t1.hasNext$0() === true; ) {
+    var t2 = t1.next$0();
+    !first && $.add$1(result, ', ');
+    $._emitObject(t2, result, visiting);
+    first = false;
+  }
+  $.add$1(result, isList ? ']' : '}');
+  $.removeLast(visiting);
+};
+
+$.checkMutable = function(list, reason) {
+  if (!!(list.immutable$list)) throw $.captureStackTrace($.UnsupportedOperationException$1(reason));
+};
+
+$.DoubleLinkedQueueEntry$1 = function(e) {
+  var t1 = new $.DoubleLinkedQueueEntry((void 0), (void 0), (void 0));
+  t1.DoubleLinkedQueueEntry$1(e);
+  return t1;
+};
+
+$.sub$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a - b;
+  }
+  return a.operator$sub$1(b);
+};
+
+$.toStringWrapper = function() {
+  return $.toString((this.dartException));
+};
+
+$._PeerConnection00EventsImpl$1 = function(_ptr) {
+  return new $._PeerConnection00EventsImpl(_ptr);
+};
+
+$._WorkerContextEventsImpl$1 = function(_ptr) {
+  return new $._WorkerContextEventsImpl(_ptr);
+};
+
+$._DocumentEventsImpl$1 = function(_ptr) {
+  return new $._DocumentEventsImpl(_ptr);
+};
+
+$.regExpTest = function(regExp, str) {
+  return $.regExpGetNative(regExp).test(str);
+};
+
+$.getDay = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCDate()) : ($.lazyAsJsDate(receiver).getDate());
+};
+
+$._EventsImpl$1 = function(_ptr) {
+  return new $._EventsImpl(_ptr);
+};
+
+$.HashSetImplementation$0 = function() {
+  var t1 = new $.HashSetImplementation((void 0));
+  t1.HashSetImplementation$0();
+  return t1;
+};
+
+$._IDBRequestEventsImpl$1 = function(_ptr) {
+  return new $._IDBRequestEventsImpl(_ptr);
+};
+
+$.stringSplitUnchecked = function(receiver, pattern) {
+  if (typeof pattern === 'string') {
+    return receiver.split(pattern);
+  }
+  if (typeof pattern === 'object' && !!pattern.is$JSSyntaxRegExp) {
+    return receiver.split($.regExpGetNative(pattern));
+  }
+  throw $.captureStackTrace('StringImplementation.split(Pattern) UNIMPLEMENTED');
+};
+
+$.checkGrowable = function(list, reason) {
+  if (!!(list.fixed$length)) throw $.captureStackTrace($.UnsupportedOperationException$1(reason));
+};
+
+$._SpeechRecognitionEventsImpl$1 = function(_ptr) {
+  return new $._SpeechRecognitionEventsImpl(_ptr);
+};
+
+$._SVGElementInstanceEventsImpl$1 = function(_ptr) {
+  return new $._SVGElementInstanceEventsImpl(_ptr);
+};
+
+$.add$1 = function(receiver, value) {
+  if ($.isJsArray(receiver) === true) {
+    $.checkGrowable(receiver, 'add');
+    receiver.push(value);
+    return;
+  }
+  return receiver.add$1(value);
+};
+
+$.regExpExec = function(regExp, str) {
+  var result = ($.regExpGetNative(regExp).exec(str));
+  if (result === null) return;
+  return result;
+};
+
+$.add = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a + b) : $.add$slow(a, b);
+};
+
+$.EvilAliens$1 = function(assetManager) {
+  var t1 = new $.EvilAliens((void 0), (void 0), (void 0), 0, 10, false, assetManager, (void 0), (void 0), (void 0), (void 0), (void 0), (void 0), (void 0), (void 0), (void 0), (void 0), (void 0));
+  t1.Game$1(assetManager);
+  return t1;
+};
+
+$.geB = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a >= b) : $.ge$slow(a, b) === true;
+};
+
+$.getMinutes = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCMinutes()) : ($.lazyAsJsDate(receiver).getMinutes());
+};
+
+$.isEmpty = function(receiver) {
+  if (typeof receiver === 'string' || $.isJsArray(receiver) === true) {
+    return receiver.length === 0;
+  }
+  return receiver.isEmpty$0();
+};
+
+$.getMonth = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCMonth()) + 1 : ($.lazyAsJsDate(receiver).getMonth()) + 1;
+};
+
+$.atan2 = function(a, b) {
+  return $.atan20(a, b);
+};
+
+$.atan20 = function(a, b) {
+  return Math.atan2($.checkNum(a), $.checkNum(b));
+};
+
+$.stringContainsUnchecked = function(receiver, other, startIndex) {
+  if (typeof other === 'string') return !($.indexOf$2(receiver, other, startIndex) === -1);
+  if (typeof other === 'object' && !!other.is$JSSyntaxRegExp) return other.hasMatch$1($.substring$1(receiver, startIndex));
+  return $.iterator($.allMatches(other, $.substring$1(receiver, startIndex))).hasNext$0();
+};
+
+$.ObjectNotClosureException$0 = function() {
+  return new $.ObjectNotClosureException();
+};
+
+$.window = function() {
+  return window;;
+};
+
+$.abs = function(receiver) {
+  if (!(typeof receiver === 'number')) return receiver.abs$0();
+  return Math.abs(receiver);
+};
+
+$.iterator = function(receiver) {
+  if ($.isJsArray(receiver) === true) return $.ListIterator$1(receiver);
+  return receiver.iterator$0();
+};
+
+$.regExpAttachGlobalNative = function(regExp) {
+  regExp._re = $.regExpMakeNative(regExp, true);
+};
+
+$.leB = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a <= b) : $.le$slow(a, b) === true;
+};
+
+$.isNegative = function(receiver) {
+  if (typeof receiver === 'number') {
+    return receiver === 0 ? 1 / receiver < 0 : receiver < 0;
+  }
+  return receiver.isNegative$0();
+};
+
+$._DOMWindowCrossFrameImpl$1 = function(_window) {
+  return new $._DOMWindowCrossFrameImpl(_window);
+};
+
+$.regExpMakeNative = function(regExp, global) {
+  var pattern = regExp.get$pattern();
+  var multiLine = regExp.get$multiLine();
+  var ignoreCase = regExp.get$ignoreCase();
+  $.checkString(pattern);
+  var sb = $.StringBufferImpl$1('');
+  multiLine === true && $.add$1(sb, 'm');
+  ignoreCase === true && $.add$1(sb, 'i');
+  global === true && $.add$1(sb, 'g');
+  try {
+    return new RegExp(pattern, $.toString(sb));
+  } catch (exception) {
+    var t1 = $.unwrapException(exception);
+    var e = t1;
+    throw $.captureStackTrace($.IllegalJSRegExpException$2(pattern, (String(e))));
+  }
+};
+
+$.Sentry$1 = function(game) {
+  var t1 = new $.Sentry(0, (void 0), (void 0), false, 85, 0, game);
+  t1.Sentry$1(game);
+  return t1;
+};
+
+$.mapToString = function(m) {
+  var result = $.StringBufferImpl$1('');
+  $._emitMap(m, result, $.List((void 0)));
+  return result.toString$0();
+};
+
+$.lazyAsJsDate = function(receiver) {
+  if (receiver.date === (void 0)) receiver.date = new Date(receiver.get$millisecondsSinceEpoch());
+  return receiver.date;
+};
+
+$._XMLHttpRequestEventsImpl$1 = function(_ptr) {
+  return new $._XMLHttpRequestEventsImpl(_ptr);
+};
+
+$._JavaScriptAudioNodeEventsImpl$1 = function(_ptr) {
+  return new $._JavaScriptAudioNodeEventsImpl(_ptr);
+};
+
+$._emitObject = function(o, result, visiting) {
+  if (typeof o === 'object' && (o.constructor === Array || o.is$Collection())) {
+    if ($._containsRef(visiting, o) === true) {
+      $.add$1(result, typeof o === 'object' && (o.constructor === Array || o.is$List0()) ? '[...]' : '{...}');
+    } else $._emitCollection(o, result, visiting);
+  } else {
+    if (typeof o === 'object' && o.is$Map()) {
+      if ($._containsRef(visiting, o) === true) $.add$1(result, '{...}');
+      else $._emitMap(o, result, visiting);
+    } else {
+      $.add$1(result, $.eqNullB(o) ? 'null' : o);
+    }
+  }
+};
+
+$._emitMap = function(m, result, visiting) {
+  var t1 = ({});
+  t1.visiting_2 = visiting;
+  t1.result_1 = result;
+  $.add$1(t1.visiting_2, m);
+  $.add$1(t1.result_1, '{');
+  t1.first_3 = true;
+  $.forEach(m, new $.Closure2(t1));
+  $.add$1(t1.result_1, '}');
+  $.removeLast(t1.visiting_2);
+};
+
+$._IDBDatabaseEventsImpl$1 = function(_ptr) {
+  return new $._IDBDatabaseEventsImpl(_ptr);
+};
+
+$.compareTo = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    if ($.ltB(a, b)) return -1;
+    if ($.gtB(a, b)) return 1;
+    if ($.eqB(a, b)) {
+      if ($.eqB(a, 0)) {
+        var aIsNegative = $.isNegative(a);
+        if ($.eqB(aIsNegative, $.isNegative(b))) return 0;
+        if (aIsNegative === true) return -1;
+        return 1;
+      }
+      return 0;
+    }
+    if ($.isNaN(a) === true) {
+      if ($.isNaN(b) === true) return 0;
+      return 1;
+    }
+    return -1;
+  }
+  if (typeof a === 'string') {
+    if (!(typeof b === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(b));
+    if (a == b) var t1 = 0;
+    else {
+      t1 = (a < b) ? -1 : 1;
+    }
+    return t1;
+  }
+  return a.compareTo$1(b);
+};
+
+$.ge = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a >= b) : $.ge$slow(a, b);
+};
+
+$._MeasurementRequest$2 = function(computeValue, completer) {
+  return new $._MeasurementRequest(false, (void 0), completer, computeValue);
+};
+
+$._TextTrackCueEventsImpl$1 = function(_ptr) {
+  return new $._TextTrackCueEventsImpl(_ptr);
+};
+
+$.MatchImplementation$5 = function(pattern, str, _start, _end, _groups) {
+  return new $.MatchImplementation(_groups, _end, _start, str, pattern);
+};
+
+$._SimpleClientRect$4 = function(left, top$, width, height) {
+  return new $._SimpleClientRect(height, width, top$, left);
+};
+
+$.UnsupportedOperationException$1 = function(_message) {
+  return new $.UnsupportedOperationException(_message);
+};
+
+$.BulletExplosion$3 = function(game, x, y) {
+  var t1 = new $.BulletExplosion((void 0), (void 0), (void 0), false, y, x, game);
+  t1.BulletExplosion$3(game, x, y);
+  return t1;
+};
+
+$.indexOf$2 = function(receiver, element, start) {
+  if ($.isJsArray(receiver) === true) {
+    if (!((typeof start === 'number') && (start === (start | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(start));
+    return $.indexOf(receiver, element, start, (receiver.length));
+  }
+  if (typeof receiver === 'string') {
+    $.checkNull(element);
+    if (!((typeof start === 'number') && (start === (start | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(start));
+    if (!(typeof element === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(element));
+    if (start < 0) return -1;
+    return receiver.indexOf(element, start);
+  }
+  return receiver.indexOf$2(element, start);
+};
+
+$._DedicatedWorkerContextEventsImpl$1 = function(_ptr) {
+  return new $._DedicatedWorkerContextEventsImpl(_ptr);
+};
+
+$._FileReaderEventsImpl$1 = function(_ptr) {
+  return new $._FileReaderEventsImpl(_ptr);
+};
+
+$.Timer$0 = function() {
+  return new $.Timer(0, 0);
+};
+
+$.NoMoreElementsException$0 = function() {
+  return new $.NoMoreElementsException();
+};
+
+$.getYear = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCFullYear()) : ($.lazyAsJsDate(receiver).getFullYear());
+};
+
+$.eqNullB = function(a) {
+  if (typeof a === "object") {
+    if (!!a.operator$eq$1) return a.operator$eq$1((void 0)) === true;
+    return false;
+  }
+  return typeof a === "undefined";
+};
+
+$.Element$tag = function(tag) {
+  return document.createElement(tag);
+};
+
+$._FrameSetElementEventsImpl$1 = function(_ptr) {
+  return new $._FrameSetElementEventsImpl(_ptr);
+};
+
+$.add$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a + b;
+  }
+  return a.operator$add$1(b);
+};
+
+$.addLast = function(receiver, value) {
+  if ($.isJsArray(receiver) !== true) return receiver.addLast$1(value);
+  $.checkGrowable(receiver, 'addLast');
+  receiver.push(value);
+};
+
+$.newList = function(length$) {
+  if (length$ === (void 0)) {
+    return new Array();
+  }
+  if (!((typeof length$ === 'number') && (length$ === (length$ | 0))) || length$ < 0) throw $.captureStackTrace($.IllegalArgumentException$1(length$));
+  var result = (new Array(length$));
+  result.fixed$length = true;
+  return result;
+};
+
+$.main = function() {
+  var t1 = ({});
+  t1.ctx_1 = $.document().query$1('#surface').getContext$1('2d');
+  var assetManager = $.AssetManager$0();
+  assetManager.queueDownload$1('img/alien-explosion.png');
+  assetManager.queueDownload$1('img/alien.png');
+  assetManager.queueDownload$1('img/bullet.png');
+  assetManager.queueDownload$1('img/earth.png');
+  assetManager.queueDownload$1('img/sentry.png');
+  assetManager.queueDownload$1('img/explosion.png');
+  t1.game_2 = $.EvilAliens$1(assetManager);
+  assetManager.downloadAll$1(new $.Closure(t1));
+};
+
+$._AbstractWorkerEventsImpl$1 = function(_ptr) {
+  return new $._AbstractWorkerEventsImpl(_ptr);
+};
+
+$.dateNow = function() {
+  return Date.now();
+};
+
+$._computeLoadLimit = function(capacity) {
+  return $.tdiv($.mul(capacity, 3), 4);
+};
+
+$.HashSetIterator$1 = function(set_) {
+  var t1 = new $.HashSetIterator(-1, set_.get$_backingMap().get$_keys());
+  t1.HashSetIterator$1(set_);
+  return t1;
+};
+
+$.IllegalArgumentException$1 = function(arg) {
+  return new $.IllegalArgumentException(arg);
+};
+
+$._MediaElementEventsImpl$1 = function(_ptr) {
+  return new $._MediaElementEventsImpl(_ptr);
+};
+
+$._IDBTransactionEventsImpl$1 = function(_ptr) {
+  return new $._IDBTransactionEventsImpl(_ptr);
+};
+
+$._BodyElementEventsImpl$1 = function(_ptr) {
+  return new $._BodyElementEventsImpl(_ptr);
+};
+
+$._AllMatchesIterator$2 = function(re, _str) {
+  return new $._AllMatchesIterator(false, (void 0), _str, $.JSSyntaxRegExp$_globalVersionOf$1(re));
+};
+
+$.FutureImpl$0 = function() {
+  var t1 = [];
+  var t2 = [];
+  return new $.FutureImpl([], t2, t1, false, (void 0), (void 0), (void 0), false);
+};
+
+$.iae = function(argument) {
+  throw $.captureStackTrace($.IllegalArgumentException$1(argument));
+};
+
+$.truncate = function(receiver) {
+  if (!(typeof receiver === 'number')) return receiver.truncate$0();
+  return receiver < 0 ? $.ceil(receiver) : $.floor(receiver);
+};
+
+$.isNaN = function(receiver) {
+  if (typeof receiver === 'number') {
+    return isNaN(receiver);
+  }
+  return receiver.isNaN$0();
+};
+
+$.allMatchesInStringUnchecked = function(needle, haystack) {
+  var result = $.List((void 0));
+  $.setRuntimeTypeInfo(result, ({E: 'Match'}));
+  var length$ = $.get$length(haystack);
+  var patternLength = $.get$length(needle);
+  if (patternLength !== (patternLength | 0)) return $.allMatchesInStringUnchecked$bailout(1, needle, haystack, length$, patternLength, result);
+  for (var startIndex = 0; true; ) {
+    var position = $.indexOf$2(haystack, needle, startIndex);
+    if ($.eqB(position, -1)) break;
+    result.push($.StringMatch$3(position, haystack, needle));
+    var endIndex = $.add(position, patternLength);
+    if ($.eqB(endIndex, length$)) break;
+    else {
+      startIndex = $.eqB(position, endIndex) ? $.add(startIndex, 1) : endIndex;
+    }
+  }
+  return result;
+};
+
+$.Animation$4 = function(spriteSheet, frameWidth, frameDuration, loop) {
+  var t1 = new $.Animation(0, loop, (void 0), frameDuration, (void 0), frameWidth, spriteSheet);
+  t1.Animation$4(spriteSheet, frameWidth, frameDuration, loop);
+  return t1;
+};
+
+$.le$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a <= b;
+  }
+  return a.operator$le$1(b);
+};
+
+$._AllMatchesIterable$2 = function(_re, _str) {
+  return new $._AllMatchesIterable(_str, _re);
+};
+
+$.copy = function(src, srcStart, dst, dstStart, count) {
+  if (typeof src !== 'string' && (typeof src !== 'object' || (src.constructor !== Array && !src.is$JavaScriptIndexingBehavior()))) return $.copy$bailout(1, src, srcStart, dst, dstStart, count);
+  if (typeof dst !== 'object' || ((dst.constructor !== Array || !!dst.immutable$list) && !dst.is$JavaScriptIndexingBehavior())) return $.copy$bailout(1, src, srcStart, dst, dstStart, count);
+  if (typeof count !== 'number') return $.copy$bailout(1, src, srcStart, dst, dstStart, count);
+  if (srcStart === (void 0)) srcStart = 0;
+  if (typeof srcStart !== 'number') return $.copy$bailout(2, src, dst, dstStart, count, srcStart);
+  if (dstStart === (void 0)) dstStart = 0;
+  if (typeof dstStart !== 'number') return $.copy$bailout(3, src, dst, count, srcStart, dstStart);
+  if (srcStart < dstStart) {
+    for (var i = srcStart + count - 1, j = dstStart + count - 1; i >= srcStart; --i, --j) {
+      if (i !== (i | 0)) throw $.iae(i);
+      var t1 = src.length;
+      if (i < 0 || i >= t1) throw $.ioore(i);
+      var t2 = src[i];
+      if (j !== (j | 0)) throw $.iae(j);
+      var t3 = dst.length;
+      if (j < 0 || j >= t3) throw $.ioore(j);
+      dst[j] = t2;
+    }
+  } else {
+    for (t1 = srcStart + count, i = srcStart, j = dstStart; i < t1; ++i, ++j) {
+      if (i !== (i | 0)) throw $.iae(i);
+      t2 = src.length;
+      if (i < 0 || i >= t2) throw $.ioore(i);
+      t3 = src[i];
+      if (j !== (j | 0)) throw $.iae(j);
+      var t4 = dst.length;
+      if (j < 0 || j >= t4) throw $.ioore(j);
+      dst[j] = t3;
+    }
+  }
+};
+
+$.dynamicSetMetadata = function(inputTable) {
+  var t1 = $.buildDynamicMetadata(inputTable);
+  $._dynamicMetadata(t1);
+};
+
+$.endsWith = function(receiver, other) {
+  if (!(typeof receiver === 'string')) return receiver.endsWith$1(other);
+  $.checkString(other);
+  var receiverLength = receiver.length;
+  var otherLength = $.get$length(other);
+  if ($.gtB(otherLength, receiverLength)) return false;
+  if (typeof otherLength !== 'number') throw $.iae(otherLength);
+  return $.eq(other, $.substring$1(receiver, receiverLength - otherLength));
+};
+
+$.getMilliseconds = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCMilliseconds()) : ($.lazyAsJsDate(receiver).getMilliseconds());
+};
+
+$.ListIterator$1 = function(list) {
+  return new $.ListIterator(list, 0);
+};
+
+$.checkNum = function(value) {
+  if (!(typeof value === 'number')) {
+    $.checkNull(value);
+    throw $.captureStackTrace($.IllegalArgumentException$1(value));
+  }
+  return value;
+};
+
+$.Earth$1 = function(game) {
+  var t1 = new $.Earth((void 0), (void 0), false, 0, 0, game);
+  t1.Earth$1(game);
+  return t1;
+};
+
+$.AssetManager$0 = function() {
+  var t1 = new $.AssetManager((void 0), (void 0), 0, 0);
+  t1.AssetManager$0();
+  return t1;
+};
+
+$.FutureAlreadyCompleteException$0 = function() {
+  return new $.FutureAlreadyCompleteException();
+};
+
+$._WorkerEventsImpl$1 = function(_ptr) {
+  return new $._WorkerEventsImpl(_ptr);
+};
+
+$.ltB = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a < b) : $.lt$slow(a, b) === true;
+};
+
+$.convertDartClosureToJS = function(closure, arity) {
+  if (closure === (void 0)) return;
+  var function$ = (closure.$identity);
+  if (!!function$) return function$;
+  function$ = (function() {
+    return $.invokeClosure.$call$5(closure, $, arity, arguments[0], arguments[1]);
+  });
+  closure.$identity = function$;
+  return function$;
+};
+
+$._FixedSizeListIterator$1 = function(array) {
+  return new $._FixedSizeListIterator($.get$length(array), 0, array);
+};
+
+$.split = function(receiver, pattern) {
+  if (!(typeof receiver === 'string')) return receiver.split$1(pattern);
+  $.checkNull(pattern);
+  return $.stringSplitUnchecked(receiver, pattern);
+};
+
+$.concatAll = function(strings) {
+  return $.stringJoinUnchecked($._toJsStringArray(strings), '');
+};
+
+$._InputElementEventsImpl$1 = function(_ptr) {
+  return new $._InputElementEventsImpl(_ptr);
+};
+
+$._DoubleLinkedQueueIterator$1 = function(_sentinel) {
+  var t1 = new $._DoubleLinkedQueueIterator((void 0), _sentinel);
+  t1._DoubleLinkedQueueIterator$1(_sentinel);
+  return t1;
+};
+
+$.S = function(value) {
+  var res = $.toString(value);
+  if (!(typeof res === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(value));
+  return res;
+};
+
+$._TextTrackListEventsImpl$1 = function(_ptr) {
+  return new $._TextTrackListEventsImpl(_ptr);
+};
+
+$._dynamicMetadata = function(table) {
+  $dynamicMetadata = table;
+};
+
+$._dynamicMetadata0 = function() {
+  if ((typeof($dynamicMetadata)) === 'undefined') {
+    var t1 = [];
+    $._dynamicMetadata(t1);
+  }
+  return $dynamicMetadata;
+};
+
+$.LinkedHashMapImplementation$0 = function() {
+  var t1 = new $.LinkedHashMapImplementation((void 0), (void 0));
+  t1.LinkedHashMapImplementation$0();
+  return t1;
+};
+
+$._DeprecatedPeerConnectionEventsImpl$1 = function(_ptr) {
+  return new $._DeprecatedPeerConnectionEventsImpl(_ptr);
+};
+
+$.regExpGetNative = function(regExp) {
+  var r = (regExp._re);
+  return r === (void 0) ? (regExp._re = $.regExpMakeNative(regExp, false)) : r;
+};
+
+$.throwNoSuchMethod = function(obj, name$, arguments$) {
+  throw $.captureStackTrace($.NoSuchMethodException$4(obj, name$, arguments$, (void 0)));
+};
+
+$.checkNull = function(object) {
+  if (object === (void 0)) throw $.captureStackTrace($.NullPointerException$2((void 0), $.CTC));
+  return object;
+};
+
+$.CompleterImpl$0 = function() {
+  return new $.CompleterImpl($.FutureImpl$0());
+};
+
+$._EventListenerListImpl$2 = function(_ptr, _type) {
+  return new $._EventListenerListImpl(_type, _ptr);
+};
+
+$.getSeconds = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCSeconds()) : ($.lazyAsJsDate(receiver).getSeconds());
+};
+
+$._WindowEventsImpl$1 = function(_ptr) {
+  return new $._WindowEventsImpl(_ptr);
+};
+
+$.DoubleLinkedQueue$0 = function() {
+  var t1 = new $.DoubleLinkedQueue((void 0));
+  t1.DoubleLinkedQueue$0();
+  return t1;
+};
+
+$.checkNumbers = function(a, b) {
+  if (typeof a === 'number') {
+    if (typeof b === 'number') return true;
+    $.checkNull(b);
+    throw $.captureStackTrace($.IllegalArgumentException$1(b));
+  }
+  return false;
+};
+
+$.random = function() {
+  return $.random0();
+};
+
+$.random0 = function() {
+  return Math.random();
+};
+
+$._DoubleLinkedQueueEntrySentinel$0 = function() {
+  var t1 = new $._DoubleLinkedQueueEntrySentinel((void 0), (void 0), (void 0));
+  t1.DoubleLinkedQueueEntry$1((void 0));
+  t1._DoubleLinkedQueueEntrySentinel$0();
+  return t1;
+};
+
+$.getHours = function(receiver) {
+  return receiver.get$isUtc() === true ? ($.lazyAsJsDate(receiver).getUTCHours()) : ($.lazyAsJsDate(receiver).getHours());
+};
+
+$.lt$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a < b;
+  }
+  return a.operator$lt$1(b);
+};
+
+$.AlienExplosion$3 = function(game, x, y) {
+  var t1 = new $.AlienExplosion((void 0), (void 0), (void 0), false, y, x, game);
+  t1.AlienExplosion$3(game, x, y);
+  return t1;
+};
+
+$.index$slow = function(a, index) {
+  if (typeof a === 'string' || $.isJsArray(a) === true) {
+    if (!((typeof index === 'number') && (index === (index | 0)))) {
+      if (!(typeof index === 'number')) throw $.captureStackTrace($.IllegalArgumentException$1(index));
+      if (!($.truncate(index) === index)) throw $.captureStackTrace($.IllegalArgumentException$1(index));
+    }
+    if ($.ltB(index, 0) || $.geB(index, $.get$length(a))) throw $.captureStackTrace($.IndexOutOfRangeException$1(index));
+    return a[index];
+  }
+  return a.operator$index$1(index);
+};
+
+$.removeLast = function(receiver) {
+  if ($.isJsArray(receiver) === true) {
+    $.checkGrowable(receiver, 'removeLast');
+    if ($.get$length(receiver) === 0) throw $.captureStackTrace($.IndexOutOfRangeException$1(-1));
+    return receiver.pop();
+  }
+  return receiver.removeLast$0();
+};
+
+$._postMessage3 = function(win, message, targetOrigin, messagePorts) {
+      win.postMessage(message, targetOrigin, messagePorts);
+;
+};
+
+$.contains$2 = function(receiver, other, startIndex) {
+  if (!(typeof receiver === 'string')) return receiver.contains$2(other, startIndex);
+  $.checkNull(other);
+  return $.stringContainsUnchecked(receiver, other, startIndex);
+};
+
+$.toString = function(value) {
+  if (typeof value == "object") {
+    if ($.isJsArray(value) === true) return $.collectionToString(value);
+    return value.toString$0();
+  }
+  if (value === 0 && (1 / value) < 0) return '-0.0';
+  if (value === (void 0)) return 'null';
+  if (typeof value == "function") return 'Closure';
+  return String(value);
+};
+
+$._toJsStringArray = function(strings) {
+  if (typeof strings !== 'object' || ((strings.constructor !== Array || !!strings.immutable$list) && !strings.is$JavaScriptIndexingBehavior())) return $._toJsStringArray$bailout(1, strings);
+  $.checkNull(strings);
+  var length$ = strings.length;
+  if ($.isJsArray(strings) === true) {
+    for (var i = 0; i < length$; ++i) {
+      var t1 = strings.length;
+      if (i < 0 || i >= t1) throw $.ioore(i);
+      var t2 = strings[i];
+      $.checkNull(t2);
+      if (!(typeof t2 === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(t2));
+    }
+    var array = strings;
+  } else {
+    array = $.List(length$);
+    for (i = 0; i < length$; ++i) {
+      t1 = strings.length;
+      if (i < 0 || i >= t1) throw $.ioore(i);
+      t2 = strings[i];
+      $.checkNull(t2);
+      if (!(typeof t2 === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(t2));
+      t1 = array.length;
+      if (i < 0 || i >= t1) throw $.ioore(i);
+      array[i] = t2;
+    }
+  }
+  return array;
+};
+
+$.IndexOutOfRangeException$1 = function(_index) {
+  return new $.IndexOutOfRangeException(_index);
+};
+
+$._TextTrackEventsImpl$1 = function(_ptr) {
+  return new $._TextTrackEventsImpl(_ptr);
+};
+
+$.charCodeAt = function(receiver, index) {
+  if (typeof receiver === 'string') {
+    if (!(typeof index === 'number')) throw $.captureStackTrace($.IllegalArgumentException$1(index));
+    if (index < 0) throw $.captureStackTrace($.IndexOutOfRangeException$1(index));
+    if (index >= receiver.length) throw $.captureStackTrace($.IndexOutOfRangeException$1(index));
+    return receiver.charCodeAt(index);
+  }
+  return receiver.charCodeAt$1(index);
+};
+
+$._BatteryManagerEventsImpl$1 = function(_ptr) {
+  return new $._BatteryManagerEventsImpl(_ptr);
+};
+
+$._ElementRectImpl$1 = function(element) {
+  var t1 = $._SimpleClientRect$4(element.get$$$dom_clientLeft(), element.get$$$dom_clientTop(), element.get$$$dom_clientWidth(), element.get$$$dom_clientHeight());
+  var t2 = $._SimpleClientRect$4(element.get$$$dom_offsetLeft(), element.get$$$dom_offsetTop(), element.get$$$dom_offsetWidth(), element.get$$$dom_offsetHeight());
+  var t3 = $._SimpleClientRect$4(element.get$$$dom_scrollLeft(), element.get$$$dom_scrollTop(), element.get$$$dom_scrollWidth(), element.get$$$dom_scrollHeight());
+  var t4 = element.$dom_getBoundingClientRect$0();
+  return new $._ElementRectImpl(element.$dom_getClientRects$0(), t4, t3, t2, t1);
+};
+
+$._WebSocketEventsImpl$1 = function(_ptr) {
+  return new $._WebSocketEventsImpl(_ptr);
+};
+
+$.KeyValuePair$2 = function(key, value) {
+  return new $.KeyValuePair(value, key);
+};
+
+$.collectionToString = function(c) {
+  var result = $.StringBufferImpl$1('');
+  $._emitCollection(c, result, $.List((void 0)));
+  return result.toString$0();
+};
+
+$.MetaInfo$3 = function(tag, tags, set) {
+  return new $.MetaInfo(set, tags, tag);
+};
+
+$._MediaStreamEventsImpl$1 = function(_ptr) {
+  return new $._MediaStreamEventsImpl(_ptr);
+};
+
+$.defineProperty = function(obj, property, value) {
+  Object.defineProperty(obj, property,
+      {value: value, enumerable: false, writable: true, configurable: true});;
+};
+
+$.dynamicFunction = function(name$) {
+  var f = (Object.prototype[name$]);
+  if (!(f === (void 0)) && (!!f.methods)) {
+    return f.methods;
+  }
+  var methods = ({});
+  var dartMethod = (Object.getPrototypeOf($.CTC7)[name$]);
+  if (!(dartMethod === (void 0))) methods['Object'] = dartMethod;
+  var bind = (function() {return $.dynamicBind.$call$4(this, name$, methods, Array.prototype.slice.call(arguments));});
+  bind.methods = methods;
+  $.defineProperty((Object.prototype), name$, bind);
+  return methods;
+};
+
+$.print = function(obj) {
+  return $.printString($.toString(obj));
+};
+
+$.checkString = function(value) {
+  if (!(typeof value === 'string')) {
+    $.checkNull(value);
+    throw $.captureStackTrace($.IllegalArgumentException$1(value));
+  }
+  return value;
+};
+
+$.div = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a / b) : $.div$slow(a, b);
+};
+
+$.DateImplementation$fromMillisecondsSinceEpoch$2 = function(millisecondsSinceEpoch, isUtc) {
+  var t1 = new $.DateImplementation($.checkNull(isUtc), millisecondsSinceEpoch);
+  t1.DateImplementation$fromMillisecondsSinceEpoch$2(millisecondsSinceEpoch, isUtc);
+  return t1;
+};
+
+$.objectToString = function(object) {
+  var name$ = $.constructorNameFallback(object);
+  if ($.eqB(name$, 'Object')) {
+    var decompiled = (String(object.constructor).match(/^\s*function\s*(\S*)\s*\(/)[1]);
+    if (typeof decompiled === 'string') name$ = decompiled;
+  }
+  return 'Instance of \'' + $.S($.charCodeAt(name$, 0) === 36 ? $.substring$1(name$, 1) : name$) + '\'';
+};
+
+$.indexOf = function(a, element, startIndex, endIndex) {
+  if (typeof a !== 'string' && (typeof a !== 'object' || (a.constructor !== Array && !a.is$JavaScriptIndexingBehavior()))) return $.indexOf$bailout(1, a, element, startIndex, endIndex);
+  if (typeof endIndex !== 'number') return $.indexOf$bailout(1, a, element, startIndex, endIndex);
+  if ($.geB(startIndex, a.length)) return -1;
+  if ($.ltB(startIndex, 0)) startIndex = 0;
+  if (typeof startIndex !== 'number') return $.indexOf$bailout(2, a, element, startIndex, endIndex);
+  for (var i = startIndex; i < endIndex; ++i) {
+    if (i !== (i | 0)) throw $.iae(i);
+    var t1 = a.length;
+    if (i < 0 || i >= t1) throw $.ioore(i);
+    if ($.eqB(a[i], element)) return i;
+  }
+  return -1;
+};
+
+$._firstProbe = function(hashCode, length$) {
+  return $.and(hashCode, $.sub(length$, 1));
+};
+
+$.set$length = function(receiver, newLength) {
+  if ($.isJsArray(receiver) === true) {
+    $.checkNull(newLength);
+    if (!((typeof newLength === 'number') && (newLength === (newLength | 0)))) throw $.captureStackTrace($.IllegalArgumentException$1(newLength));
+    if (newLength < 0) throw $.captureStackTrace($.IndexOutOfRangeException$1(newLength));
+    $.checkGrowable(receiver, 'set length');
+    receiver.length = newLength;
+  } else receiver.set$length(newLength);
+  return newLength;
+};
+
+$.indexOf0 = function(a, element, startIndex, endIndex) {
+  if (typeof a !== 'string' && (typeof a !== 'object' || (a.constructor !== Array && !a.is$JavaScriptIndexingBehavior()))) return $.indexOf0$bailout(1, a, element, startIndex, endIndex);
+  if (typeof endIndex !== 'number') return $.indexOf0$bailout(1, a, element, startIndex, endIndex);
+  if ($.geB(startIndex, a.length)) return -1;
+  if ($.ltB(startIndex, 0)) startIndex = 0;
+  if (typeof startIndex !== 'number') return $.indexOf0$bailout(2, a, element, startIndex, endIndex);
+  for (var i = startIndex; i < endIndex; ++i) {
+    if (i !== (i | 0)) throw $.iae(i);
+    var t1 = a.length;
+    if (i < 0 || i >= t1) throw $.ioore(i);
+    if ($.eqB(a[i], element)) return i;
+  }
+  return -1;
+};
+
+$.ioore = function(index) {
+  throw $.captureStackTrace($.IndexOutOfRangeException$1(index));
+};
+
+$.gt$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a > b;
+  }
+  return a.operator$gt$1(b);
+};
+
+$.typeNameInFirefox = function(obj) {
+  var name$ = $.constructorNameFallback(obj);
+  if ($.eqB(name$, 'Window')) return 'DOMWindow';
+  if ($.eqB(name$, 'Document')) return 'HTMLDocument';
+  if ($.eqB(name$, 'XMLDocument')) return 'Document';
+  if ($.eqB(name$, 'WorkerMessageEvent')) return 'MessageEvent';
+  return name$;
+};
+
+$.forEach0 = function(iterable, f) {
+  for (var t1 = $.iterator(iterable); t1.hasNext$0() === true; ) {
+    f.$call$1(t1.next$0());
+  }
+};
+
+$.forEach = function(receiver, f) {
+  if ($.isJsArray(receiver) !== true) return receiver.forEach$1(f);
+  return $.forEach0(receiver, f);
+};
+
+$.hashCode = function(receiver) {
+  if (typeof receiver === 'number') {
+    return receiver & 0x1FFFFFFF;
+  }
+  if (!(typeof receiver === 'string')) return receiver.hashCode$0();
+  var length$ = (receiver.length);
+  for (var hash = 0, i = 0; i < length$; ++i) {
+    hash = (536870911 & hash + (receiver.charCodeAt(i))) >>> 0;
+    hash = (536870911 & hash + ((524287 & hash) >>> 0 << 10)) >>> 0;
+    hash = (hash ^ $.shr(hash, 6)) >>> 0;
+  }
+  hash = (536870911 & hash + ((67108863 & hash) >>> 0 << 3)) >>> 0;
+  hash = (hash ^ $.shr(hash, 11)) >>> 0;
+  return (536870911 & hash + ((16383 & hash) >>> 0 << 15)) >>> 0;
+};
+
+$.makeLiteralMap = function(keyValuePairs) {
+  var iterator = $.iterator(keyValuePairs);
+  var result = $.LinkedHashMapImplementation$0();
+  for (; iterator.hasNext$0() === true; ) {
+    result.operator$indexSet$2(iterator.next$0(), iterator.next$0());
+  }
+  return result;
+};
+
+$.min = function(a, b) {
+  var c = $.compareTo(a, b);
+  if ($.eqB(c, 0)) return a;
+  if ($.ltB(c, 0)) {
+    if (typeof b === 'number' && $.isNaN(b) === true) return b;
+    return a;
+  }
+  if (typeof a === 'number' && $.isNaN(a) === true) return a;
+  return b;
+};
+
+$.startsWith = function(receiver, other) {
+  if (!(typeof receiver === 'string')) return receiver.startsWith$1(other);
+  $.checkString(other);
+  var length$ = $.get$length(other);
+  if ($.gtB(length$, receiver.length)) return false;
+  return other == receiver.substring(0, length$);
+};
+
+$.forEach1 = function(iterable, f) {
+  for (var t1 = $.iterator(iterable); t1.hasNext$0() === true; ) {
+    f.$call$1(t1.next$0());
+  }
+};
+
+$.le = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a <= b) : $.le$slow(a, b);
+};
+
+$.toStringForNativeObject = function(obj) {
+  return 'Instance of ' + $.S($.getTypeNameOf(obj));
+};
+
+$.dynamicBind = function(obj, name$, methods, arguments$) {
+  var tag = $.getTypeNameOf(obj);
+  var method = (methods[tag]);
+  if (method === (void 0) && !($._dynamicMetadata0() === (void 0))) {
+    for (var i = 0; $.ltB(i, $.get$length($._dynamicMetadata0())); ++i) {
+      var entry = $.index($._dynamicMetadata0(), i);
+      if ($.contains$1(entry.get$set(), tag) === true) {
+        method = (methods[entry.get$tag()]);
+        if (!(method === (void 0))) break;
+      }
+    }
+  }
+  if (method === (void 0)) {
+    method = (methods['Object']);
+  }
+  var proto = (Object.getPrototypeOf(obj));
+  if (method === (void 0)) {
+    method = (function () {if (Object.getPrototypeOf(this) === proto) {$.throwNoSuchMethod.$call$3(this, name$, Array.prototype.slice.call(arguments));} else {return Object.prototype[name$].apply(this, arguments);}});
+  }
+  var nullCheckMethod = (function() {var res = method.apply(this, Array.prototype.slice.call(arguments));return res === null ? (void 0) : res;});
+  (!proto.hasOwnProperty(name$)) && $.defineProperty(proto, name$, nullCheckMethod);
+  return nullCheckMethod.apply(obj, arguments$);
+};
+
+$._MessagePortEventsImpl$1 = function(_ptr) {
+  return new $._MessagePortEventsImpl(_ptr);
+};
+
+$.getFunctionForTypeNameOf = function() {
+  if (!((typeof(navigator)) === 'object')) return $.typeNameInChrome;
+  var userAgent = (navigator.userAgent);
+  if ($.contains$1(userAgent, $.CTC6) === true) return $.typeNameInChrome;
+  if ($.contains$1(userAgent, 'Firefox') === true) return $.typeNameInFirefox;
+  if ($.contains$1(userAgent, 'MSIE') === true) return $.typeNameInIE;
+  return $.constructorNameFallback;
+};
+
+$.index = function(a, index) {
+  if (typeof a == "string" || a.constructor === Array) {
+    var key = (index >>> 0);
+    if (key === index && key < (a.length)) {
+      return a[key];
+    }
+  }
+  return $.index$slow(a, index);
+};
+
+$._ElementEventsImpl$1 = function(_ptr) {
+  return new $._ElementEventsImpl(_ptr);
+};
+
+$.toLowerCase = function(receiver) {
+  if (!(typeof receiver === 'string')) return receiver.toLowerCase$0();
+  return receiver.toLowerCase();
+};
+
+$.sin = function(x) {
+  return $.sin0(x);
+};
+
+$.sin0 = function(value) {
+  return Math.sin($.checkNum(value));
+};
+
+$.List = function(length$) {
+  return $.newList(length$);
+};
+
+$._createSafe = function(w) {
+  if (w === $.window()) return w;
+  return $._DOMWindowCrossFrameImpl$1(w);
+};
+
+$._XMLHttpRequestUploadEventsImpl$1 = function(_ptr) {
+  return new $._XMLHttpRequestUploadEventsImpl(_ptr);
+};
+
+$.captureStackTrace = function(ex) {
+  var jsError = (new Error());
+  jsError.dartException = ex;
+  jsError.toString = $.toStringWrapper.$call$0;
+  return jsError;
+};
+
+$.StackOverflowException$0 = function() {
+  return new $.StackOverflowException();
+};
+
+$.eq = function(a, b) {
+  if (typeof a === "object") {
+    if (!!a.operator$eq$1) return a.operator$eq$1(b);
+    return a === b;
+  }
+  return a === b;
+};
+
+$.StringBufferImpl$1 = function(content$) {
+  var t1 = new $.StringBufferImpl((void 0), (void 0));
+  t1.StringBufferImpl$1(content$);
+  return t1;
+};
+
+$.HashMapImplementation$0 = function() {
+  var t1 = new $.HashMapImplementation((void 0), (void 0), (void 0), (void 0), (void 0));
+  t1.HashMapImplementation$0();
+  return t1;
+};
+
+$.substring$1 = function(receiver, startIndex) {
+  if (!(typeof receiver === 'string')) return receiver.substring$1(startIndex);
+  return $.substring$2(receiver, startIndex, (void 0));
+};
+
+$.div$slow = function(a, b) {
+  if ($.checkNumbers(a, b) === true) {
+    return a / b;
+  }
+  return a.operator$div$1(b);
+};
+
+$.Bullet$5 = function(game, x, y, angle, explodesAt) {
+  var t1 = new $.Bullet((void 0), 95, explodesAt, angle, (void 0), (void 0), false, y, x, game);
+  t1.Bullet$5(game, x, y, angle, explodesAt);
+  return t1;
+};
+
+$._SharedWorkerContextEventsImpl$1 = function(_ptr) {
+  return new $._SharedWorkerContextEventsImpl(_ptr);
+};
+
+$._IDBVersionChangeRequestEventsImpl$1 = function(_ptr) {
+  return new $._IDBVersionChangeRequestEventsImpl(_ptr);
+};
+
+$.gtB = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a > b) : $.gt$slow(a, b) === true;
+};
+
+$.setRuntimeTypeInfo = function(target, typeInfo) {
+  if (!(target === (void 0))) target.builtin$typeInfo = typeInfo;
+};
+
+$.document = function() {
+  return document;;
+};
+
+$._FileWriterEventsImpl$1 = function(_ptr) {
+  return new $._FileWriterEventsImpl(_ptr);
+};
+
+$.FutureNotCompleteException$0 = function() {
+  return new $.FutureNotCompleteException();
+};
+
+$.NoSuchMethodException$4 = function(_receiver, _functionName, _arguments, existingArgumentNames) {
+  return new $.NoSuchMethodException(existingArgumentNames, _arguments, _functionName, _receiver);
+};
+
+$.lt = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a < b) : $.lt$slow(a, b);
+};
+
+$.unwrapException = function(ex) {
+  if ("dartException" in ex) {
+    return ex.dartException;
+  }
+  var message = (ex.message);
+  if (ex instanceof TypeError) {
+    var type = (ex.type);
+    var name$ = (ex.arguments ? ex.arguments[0] : "");
+    if ($.eqB(type, 'property_not_function') || $.eqB(type, 'called_non_callable') || $.eqB(type, 'non_object_property_call') || $.eqB(type, 'non_object_property_load')) {
+      if (typeof name$ === 'string' && $.startsWith(name$, '$call$') === true) return $.ObjectNotClosureException$0();
+      return $.NullPointerException$2((void 0), $.CTC);
+    }
+    if ($.eqB(type, 'undefined_method')) {
+      if (typeof name$ === 'string' && $.startsWith(name$, '$call$') === true) return $.ObjectNotClosureException$0();
+      return $.NoSuchMethodException$4('', name$, [], (void 0));
+    }
+    if (typeof message === 'string') {
+      if ($.endsWith(message, 'is null') === true || $.endsWith(message, 'is undefined') === true || $.endsWith(message, 'is null or undefined') === true) return $.NullPointerException$2((void 0), $.CTC);
+      if ($.endsWith(message, 'is not a function') === true) return $.NoSuchMethodException$4('', '<unknown>', [], (void 0));
+    }
+    return $.ExceptionImplementation$1(typeof message === 'string' ? message : '');
+  }
+  if (ex instanceof RangeError) {
+    if (typeof message === 'string' && $.contains$1(message, 'call stack') === true) return $.StackOverflowException$0();
+    return $.IllegalArgumentException$1('');
+  }
+  if (typeof InternalError == 'function' && ex instanceof InternalError) {
+    if (typeof message === 'string' && message === 'too much recursion') return $.StackOverflowException$0();
+  }
+  return ex;
+};
+
+$.ceil = function(receiver) {
+  if (!(typeof receiver === 'number')) return receiver.ceil$0();
+  return Math.ceil(receiver);
+};
+
+$.getTypeNameOf = function(obj) {
+  if ($._getTypeNameOf === (void 0)) $._getTypeNameOf = $.getFunctionForTypeNameOf();
+  return $._getTypeNameOf.$call$1(obj);
+};
+
+$.cos = function(x) {
+  return $.cos0(x);
+};
+
+$.cos0 = function(value) {
+  return Math.cos($.checkNum(value));
+};
+
+$.sub = function(a, b) {
+  return typeof a === 'number' && typeof b === 'number' ? (a - b) : $.sub$slow(a, b);
+};
+
+$.copy$bailout = function(state, env0, env1, env2, env3, env4) {
+  switch (state) {
+    case 1:
+      var src = env0;
+      var srcStart = env1;
+      var dst = env2;
+      var dstStart = env3;
+      var count = env4;
+      break;
+    case 1:
+      src = env0;
+      srcStart = env1;
+      dst = env2;
+      dstStart = env3;
+      count = env4;
+      break;
+    case 1:
+      src = env0;
+      srcStart = env1;
+      dst = env2;
+      dstStart = env3;
+      count = env4;
+      break;
+    case 2:
+      src = env0;
+      dst = env1;
+      dstStart = env2;
+      count = env3;
+      srcStart = env4;
+      break;
+    case 3:
+      src = env0;
+      dst = env1;
+      count = env2;
+      srcStart = env3;
+      dstStart = env4;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+      state = 0;
+    case 1:
+      state = 0;
+    case 1:
+      state = 0;
+      if (srcStart === (void 0)) srcStart = 0;
+    case 2:
+      state = 0;
+      if (dstStart === (void 0)) dstStart = 0;
+    case 3:
+      state = 0;
+      if ($.ltB(srcStart, dstStart)) {
+        for (var i = $.sub($.add(srcStart, count), 1), j = $.sub($.add(dstStart, count), 1); $.geB(i, srcStart); i = $.sub(i, 1), j = $.sub(j, 1)) {
+          $.indexSet(dst, j, $.index(src, i));
+        }
+      } else {
+        for (i = srcStart, j = dstStart; $.ltB(i, $.add(srcStart, count)); i = $.add(i, 1), j = $.add(j, 1)) {
+          $.indexSet(dst, j, $.index(src, i));
+        }
+      }
+  }
+};
+
+$.indexOf0$bailout = function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      var a = env0;
+      var element = env1;
+      var startIndex = env2;
+      var endIndex = env3;
+      break;
+    case 1:
+      a = env0;
+      element = env1;
+      startIndex = env2;
+      endIndex = env3;
+      break;
+    case 2:
+      a = env0;
+      element = env1;
+      startIndex = env2;
+      endIndex = env3;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+      state = 0;
+    case 1:
+      state = 0;
+      if ($.geB(startIndex, $.get$length(a))) return -1;
+      if ($.ltB(startIndex, 0)) startIndex = 0;
+    case 2:
+      state = 0;
+      for (var i = startIndex; $.ltB(i, endIndex); i = $.add(i, 1)) {
+        if ($.eqB($.index(a, i), element)) return i;
+      }
+      return -1;
+  }
+};
+
+$.indexOf$bailout = function(state, env0, env1, env2, env3) {
+  switch (state) {
+    case 1:
+      var a = env0;
+      var element = env1;
+      var startIndex = env2;
+      var endIndex = env3;
+      break;
+    case 1:
+      a = env0;
+      element = env1;
+      startIndex = env2;
+      endIndex = env3;
+      break;
+    case 2:
+      a = env0;
+      element = env1;
+      startIndex = env2;
+      endIndex = env3;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+      state = 0;
+    case 1:
+      state = 0;
+      if ($.geB(startIndex, $.get$length(a))) return -1;
+      if ($.ltB(startIndex, 0)) startIndex = 0;
+    case 2:
+      state = 0;
+      for (var i = startIndex; $.ltB(i, endIndex); i = $.add(i, 1)) {
+        if ($.eqB($.index(a, i), element)) return i;
+      }
+      return -1;
+  }
+};
+
+$.buildDynamicMetadata$bailout = function(state, env0, env1, env2, env3, env4, env5, env6) {
+  switch (state) {
+    case 1:
+      var inputTable = env0;
+      break;
+    case 2:
+      inputTable = env0;
+      result = env1;
+      tagNames = env2;
+      tag = env3;
+      i = env4;
+      tags = env5;
+      set = env6;
+      break;
+  }
+  switch (state) {
+    case 0:
+    case 1:
+      state = 0;
+      var result = [];
+      var i = 0;
+    case 2:
+      L0: while (true) {
+        switch (state) {
+          case 0:
+            if (!$.ltB(i, $.get$length(inputTable))) break L0;
+            var tag = $.index($.index(inputTable, i), 0);
+            var tags = $.index($.index(inputTable, i), 1);
+            var set = $.HashSetImplementation$0();
+            $.setRuntimeTypeInfo(set, ({E: 'String'}));
+            var tagNames = $.split(tags, '|');
+          case 2:
+            state = 0;
+            for (var j = 0; $.ltB(j, $.get$length(tagNames)); ++j) {
+              set.add$1($.index(tagNames, j));
+            }
+            $.add$1(result, $.MetaInfo$3(tag, tags, set));
+            ++i;
+        }
+      }
+      return result;
+  }
+};
+
+$.allMatchesInStringUnchecked$bailout = function(state, needle, haystack, length$, patternLength, result) {
+  for (var startIndex = 0; true; ) {
+    var position = $.indexOf$2(haystack, needle, startIndex);
+    if ($.eqB(position, -1)) break;
+    result.push($.StringMatch$3(position, haystack, needle));
+    var endIndex = $.add(position, patternLength);
+    if ($.eqB(endIndex, length$)) break;
+    else {
+      startIndex = $.eqB(position, endIndex) ? $.add(startIndex, 1) : endIndex;
+    }
+  }
+  return result;
+};
+
+$._toJsStringArray$bailout = function(state, strings) {
+  $.checkNull(strings);
+  var length$ = $.get$length(strings);
+  if ($.isJsArray(strings) === true) {
+    for (var i = 0; $.ltB(i, length$); ++i) {
+      var string = $.index(strings, i);
+      $.checkNull(string);
+      if (!(typeof string === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(string));
+    }
+    var array = strings;
+  } else {
+    array = $.List(length$);
+    for (i = 0; $.ltB(i, length$); ++i) {
+      string = $.index(strings, i);
+      $.checkNull(string);
+      if (!(typeof string === 'string')) throw $.captureStackTrace($.IllegalArgumentException$1(string));
+      var t1 = array.length;
+      if (i < 0 || i >= t1) throw $.ioore(i);
+      array[i] = string;
+    }
+  }
+  return array;
+};
+
+$.dynamicBind.$call$4 = $.dynamicBind;
+$.dynamicBind.$name = "dynamicBind";
+$.throwNoSuchMethod.$call$3 = $.throwNoSuchMethod;
+$.throwNoSuchMethod.$name = "throwNoSuchMethod";
+$.typeNameInIE.$call$1 = $.typeNameInIE;
+$.typeNameInIE.$name = "typeNameInIE";
+$.typeNameInChrome.$call$1 = $.typeNameInChrome;
+$.typeNameInChrome.$name = "typeNameInChrome";
+$.toStringWrapper.$call$0 = $.toStringWrapper;
+$.toStringWrapper.$name = "toStringWrapper";
+$.invokeClosure.$call$5 = $.invokeClosure;
+$.invokeClosure.$name = "invokeClosure";
+$.typeNameInFirefox.$call$1 = $.typeNameInFirefox;
+$.typeNameInFirefox.$name = "typeNameInFirefox";
+$.constructorNameFallback.$call$1 = $.constructorNameFallback;
+$.constructorNameFallback.$name = "constructorNameFallback";
+Isolate.$finishClasses($$);
+$$ = {};
+Isolate.makeConstantList = function(list) {
+  list.immutable$list = true;
+  list.fixed$length = true;
+  return list;
+};
+$.CTC = Isolate.makeConstantList([]);
+$.CTC7 = new Isolate.$isolateProperties.Object();
+$.CTC4 = new Isolate.$isolateProperties._SimpleClientRect(0, 0, 0, 0);
+$.CTC5 = new Isolate.$isolateProperties.EmptyElementRect(Isolate.$isolateProperties.CTC, Isolate.$isolateProperties.CTC4, Isolate.$isolateProperties.CTC4, Isolate.$isolateProperties.CTC4, Isolate.$isolateProperties.CTC4);
+$.CTC3 = new Isolate.$isolateProperties.JSSyntaxRegExp(false, false, '^#[_a-zA-Z]\\w*$');
+$.CTC2 = new Isolate.$isolateProperties._DeletedKeySentinel();
+$.CTC6 = new Isolate.$isolateProperties.JSSyntaxRegExp(false, false, 'Chrome|DumpRenderTree');
+$.CTC0 = new Isolate.$isolateProperties.NoMoreElementsException();
+$.CTC1 = new Isolate.$isolateProperties.EmptyQueueException();
+$._pendingRequests = (void 0);
+$._getTypeNameOf = (void 0);
+$._nextMeasurementFrameScheduled = false;
+$._firstMeasurementRequest = true;
+$._pendingMeasurementFrameCallbacks = (void 0);
+var $ = null;
+Isolate.$finishClasses($$);
+$$ = {};
+Isolate = Isolate.$finishIsolateConstructor(Isolate);
+var $ = new Isolate();
+$.$defineNativeClass = function(cls, fields, methods) {
+  var generateGetterSetter = function(field, prototype) {
+  var len = field.length;
+  var lastChar = field[len - 1];
+  var needsGetter = lastChar == '?' || lastChar == '=';
+  var needsSetter = lastChar == '!' || lastChar == '=';
+  if (needsGetter || needsSetter) field = field.substring(0, len - 1);
+  if (needsGetter) {
+    var getterString = "return this." + field + ";";
+    prototype["get$" + field] = new Function(getterString);
+  }
+  if (needsSetter) {
+    var setterString = "this." + field + " = v;";
+    prototype["set$" + field] = new Function("v", setterString);
+  }
+  return field;
+};
+  for (var i = 0; i < fields.length; i++) {
+    generateGetterSetter(fields[i], methods);
+  }
+  for (var method in methods) {
+    $.dynamicFunction(method)[cls] = methods[method];
+  }
+};
+$.defineProperty(Object.prototype, 'is$List0', function() { return false; });
+$.defineProperty(Object.prototype, 'is$Map', function() { return false; });
+$.defineProperty(Object.prototype, 'is$JavaScriptIndexingBehavior', function() { return false; });
+$.defineProperty(Object.prototype, 'is$Collection', function() { return false; });
+$.defineProperty(Object.prototype, 'toString$0', function() { return $.toStringForNativeObject(this); });
+$.$defineNativeClass('AbstractWorker', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$on')) {
+    return $._AbstractWorkerEventsImpl$1(this);
+  } else {
+    return Object.prototype.get$on.call(this);
+  }
+ }
+});
+
+$.$defineNativeClass('HTMLAnchorElement', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('WebKitAnimationList', ["length?"], {
+});
+
+$.$defineNativeClass('HTMLAppletElement', ["width=", "height="], {
+});
+
+$.$defineNativeClass('Attr', ["value="], {
+});
+
+$.$defineNativeClass('AudioBuffer', ["length?"], {
+});
+
+$.$defineNativeClass('AudioContext', [], {
+ get$on: function() {
+  return $._AudioContextEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('AudioParam', ["value="], {
+});
+
+$.$defineNativeClass('HTMLBRElement', [], {
+ clear$0: function() { return this.clear.$call$0(); }
+});
+
+$.$defineNativeClass('BatteryManager', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._BatteryManagerEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLBodyElement', [], {
+ get$on: function() {
+  return $._BodyElementEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLButtonElement', ["value="], {
+});
+
+$.$defineNativeClass('WebKitCSSMatrix', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('CSSRuleList', ["length?"], {
+});
+
+$.$defineNativeClass('CSSStyleDeclaration', ["length?"], {
+ set$width: function(value) {
+  this.setProperty$3('width', value, '');
+ },
+ get$width: function() {
+  return this.getPropertyValue$1('width');
+ },
+ get$top: function() {
+  return this.getPropertyValue$1('top');
+ },
+ set$src: function(value) {
+  this.setProperty$3('src', value, '');
+ },
+ get$src: function() {
+  return this.getPropertyValue$1('src');
+ },
+ get$left: function() {
+  return this.getPropertyValue$1('left');
+ },
+ set$height: function(value) {
+  this.setProperty$3('height', value, '');
+ },
+ get$height: function() {
+  return this.getPropertyValue$1('height');
+ },
+ set$font: function(value) {
+  this.setProperty$3('font', value, '');
+ },
+ get$clear: function() {
+  return this.getPropertyValue$1('clear');
+ },
+ clear$0: function() { return this.get$clear().$call$0(); },
+ setProperty$3: function(propertyName, value, priority) {
+  return this.setProperty(propertyName,value,priority);
+ },
+ getPropertyValue$1: function(propertyName) {
+  return this.getPropertyValue(propertyName);
+ }
+});
+
+$.$defineNativeClass('CSSValueList', ["length?"], {
+});
+
+$.$defineNativeClass('HTMLCanvasElement', ["width=", "height="], {
+ getContext$1: function(contextId) {
+  return this.getContext(contextId);
+ }
+});
+
+$.$defineNativeClass('CanvasRenderingContext', ["canvas?"], {
+});
+
+$.$defineNativeClass('CanvasRenderingContext2D', ["strokeStyle!", "font!", "fillStyle!"], {
+ translate$2: function(tx, ty) {
+  return this.translate(tx,ty);
+ },
+ stroke$0: function() {
+  return this.stroke();
+ },
+ save$0: function() {
+  return this.save();
+ },
+ rotate$1: function(angle) {
+  return this.rotate(angle);
+ },
+ restore$0: function() {
+  return this.restore();
+ },
+ rect$4: function(x, y, width, height) {
+  return this.rect(x,y,width,height);
+ },
+ get$rect: function() { return new $.Closure21(this, 'rect$4'); },
+ fillText$4: function(text, x, y, maxWidth) {
+  return this.fillText(text,x,y,maxWidth);
+ },
+ fillText$3: function(text,x,y) {
+  return this.fillText(text,x,y);
+},
+ drawImage$9: function(canvas_OR_image_OR_video, sx_OR_x, sy_OR_y, sw_OR_width, height_OR_sh, dx, dy, dw, dh) {
+  return this.drawImage(canvas_OR_image_OR_video,sx_OR_x,sy_OR_y,sw_OR_width,height_OR_sh,dx,dy,dw,dh);
+ },
+ drawImage$3: function(canvas_OR_image_OR_video,sx_OR_x,sy_OR_y) {
+  return this.drawImage(canvas_OR_image_OR_video,sx_OR_x,sy_OR_y);
+},
+ closePath$0: function() {
+  return this.closePath();
+ },
+ clearRect$4: function(x, y, width, height) {
+  return this.clearRect(x,y,width,height);
+ },
+ beginPath$0: function() {
+  return this.beginPath();
+ },
+ arc$6: function(x, y, radius, startAngle, endAngle, anticlockwise) {
+  return this.arc(x,y,radius,startAngle,endAngle,anticlockwise);
+ }
+});
+
+$.$defineNativeClass('CharacterData', ["length?"], {
+});
+
+$.$defineNativeClass('ClientRect', ["width?", "top?", "left?", "height?"], {
+});
+
+$.$defineNativeClass('ClientRectList', ["length?"], {
+});
+
+_ConsoleImpl = (typeof console == 'undefined' ? {} : console);
+_ConsoleImpl.error$1 = function(arg) {
+  return this.error(arg);
+ };
+_ConsoleImpl.get$error = function() { return new $.Closure20(this, 'error$1'); };
+$.$defineNativeClass('DOMApplicationCache', [], {
+ update$0: function() {
+  return this.update();
+ },
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._DOMApplicationCacheEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('DOMException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('DOMMimeTypeArray', ["length?"], {
+});
+
+$.$defineNativeClass('DOMPlugin', ["length?"], {
+});
+
+$.$defineNativeClass('DOMPluginArray', ["length?"], {
+});
+
+$.$defineNativeClass('DOMSelection', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('DOMSettableTokenList', ["value="], {
+});
+
+$.$defineNativeClass('DOMStringList', ["length?"], {
+ contains$1: function(string) {
+  return this.contains(string);
+ },
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'String'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('DOMTokenList', ["length?"], {
+ toString$0: function() {
+  return this.toString();
+ },
+ contains$1: function(token) {
+  return this.contains(token);
+ },
+ add$1: function(token) {
+  return this.add(token);
+ }
+});
+
+$.$defineNativeClass('DataTransferItemList', ["length?"], {
+ clear$0: function() {
+  return this.clear();
+ },
+ add$2: function(data_OR_file, type) {
+  return this.add(data_OR_file,type);
+ },
+ add$1: function(data_OR_file) {
+  return this.add(data_OR_file);
 }
-EvilAliens.prototype.drawBeforeCtxRestore = function() {
-  this.drawScore();
-  this.drawLives();
+});
+
+$.$defineNativeClass('DedicatedWorkerContext', [], {
+ postMessage$2: function(message, messagePorts) {
+  return this.postMessage(message,messagePorts);
+ },
+ get$on: function() {
+  return $._DedicatedWorkerContextEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('DeprecatedPeerConnection', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._DeprecatedPeerConnectionEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLDocument', [], {
+ query$1: function(selectors) {
+  if ($.CTC3.hasMatch$1(selectors) === true) return this.$dom_getElementById$1($.substring$1(selectors, 1));
+  return this.$dom_querySelector$1(selectors);
+ },
+ $dom_querySelector$1: function(selectors) {
+  return this.querySelector(selectors);
+ },
+ $dom_getElementById$1: function(elementId) {
+  return this.getElementById(elementId);
+ },
+ get$on: function() {
+  return $._DocumentEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('DocumentFragment', [], {
+ $dom_querySelector$1: function(selectors) {
+  return this.querySelector(selectors);
+ },
+ get$on: function() {
+  return $._ElementEventsImpl$1(this);
+ },
+ click$0: function() {
+ },
+ get$click: function() { return new $.Closure22(this, 'click$0'); },
+ get$parent: function() {
+  return;
+ },
+ get$translate: function() {
+  return false;
+ },
+ translate$2: function(arg0, arg1) { return this.get$translate().$call$2(arg0, arg1); },
+ get$rect: function() {
+  var t1 = new $.Closure17();
+  var t2 = $.CompleterImpl$0();
+  $.setRuntimeTypeInfo(t2, ({T: 'ElementRect'}));
+  return $._createMeasurementFuture(t1, t2);
+ },
+ query$1: function(selectors) {
+  return this.$dom_querySelector$1(selectors);
+ }
+});
+
+$.$defineNativeClass('DocumentType', ["entities?"], {
+});
+
+$.$defineNativeClass('Element', [], {
+ $dom_querySelector$1: function(selectors) {
+  return this.querySelector(selectors);
+ },
+ $dom_getClientRects$0: function() {
+  return this.getClientRects();
+ },
+ $dom_getBoundingClientRect$0: function() {
+  return this.getBoundingClientRect();
+ },
+ get$$$dom_scrollWidth: function() {
+  return this.scrollWidth;;
+ },
+ get$$$dom_scrollTop: function() {
+  return this.scrollTop;;
+ },
+ get$$$dom_scrollLeft: function() {
+  return this.scrollLeft;;
+ },
+ get$$$dom_scrollHeight: function() {
+  return this.scrollHeight;;
+ },
+ get$$$dom_offsetWidth: function() {
+  return this.offsetWidth;;
+ },
+ get$$$dom_offsetTop: function() {
+  return this.offsetTop;;
+ },
+ get$$$dom_offsetLeft: function() {
+  return this.offsetLeft;;
+ },
+ get$$$dom_offsetHeight: function() {
+  return this.offsetHeight;;
+ },
+ get$$$dom_clientWidth: function() {
+  return this.clientWidth;;
+ },
+ get$$$dom_clientTop: function() {
+  return this.clientTop;;
+ },
+ get$$$dom_clientLeft: function() {
+  return this.clientLeft;;
+ },
+ get$$$dom_clientHeight: function() {
+  return this.clientHeight;;
+ },
+ click$0: function() {
+  return this.click();
+ },
+ get$click: function() { return new $.Closure22(this, 'click$0'); },
+ translate$2: function(arg0, arg1) { return this.translate.$call$2(arg0, arg1); },
+ get$on: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$on')) {
+    return $._ElementEventsImpl$1(this);
+  } else {
+    return Object.prototype.get$on.call(this);
+  }
+ },
+ get$rect: function() {
+  var t1 = new $.Closure15(this);
+  var t2 = $.CompleterImpl$0();
+  $.setRuntimeTypeInfo(t2, ({T: 'ElementRect'}));
+  return $._createMeasurementFuture(t1, t2);
+ },
+ query$1: function(selectors) {
+  return this.$dom_querySelector$1(selectors);
+ }
+});
+
+$.$defineNativeClass('HTMLEmbedElement', ["width=", "src=", "height="], {
+});
+
+$.$defineNativeClass('EntryArray', ["length?"], {
+});
+
+$.$defineNativeClass('EntryArraySync', ["length?"], {
+});
+
+$.$defineNativeClass('EntrySync', [], {
+ remove$0: function() {
+  return this.remove();
+ }
+});
+
+$.$defineNativeClass('ErrorEvent', ["message?"], {
+});
+
+$.$defineNativeClass('Event', [], {
+ preventDefault$0: function() {
+  return this.preventDefault();
+ }
+});
+
+$.$defineNativeClass('EventException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('EventSource', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._EventSourceEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('EventTarget', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  if (Object.getPrototypeOf(this).hasOwnProperty('$dom_addEventListener$3')) {
+    return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+  } else {
+    return Object.prototype.$dom_addEventListener$3.call(this, type, listener, useCapture);
+  }
+ },
+ get$on: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$on')) {
+    return $._EventsImpl$1(this);
+  } else {
+    return Object.prototype.get$on.call(this);
+  }
+ }
+});
+
+$.$defineNativeClass('HTMLFieldSetElement', [], {
+ get$elements: function() {
+  return this.lib$_FieldSetElementImpl$elements;
+ },
+ set$elements: function(x) {
+  this.lib$_FieldSetElementImpl$elements = x;
+ }
+});
+
+$.$defineNativeClass('FileException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('FileList', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'File'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('FileReader', ["error?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._FileReaderEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('FileWriter', ["length?", "error?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._FileWriterEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('FileWriterSync', ["length?"], {
+});
+
+$.$defineNativeClass('Float32Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'num'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Float64Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'num'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('HTMLFormElement', ["length?"], {
+});
+
+$.$defineNativeClass('HTMLFrameElement', ["width?", "src=", "height?"], {
+});
+
+$.$defineNativeClass('HTMLFrameSetElement', [], {
+ get$on: function() {
+  return $._FrameSetElementEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLHRElement', ["width="], {
+});
+
+$.$defineNativeClass('HTMLAllCollection', ["length?"], {
+});
+
+$.$defineNativeClass('HTMLCollection', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'Node'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('HTMLOptionsCollection', [], {
+ set$length: function(value) {
+  this.length = value;;
+ },
+ get$length: function() {
+  return this.length;;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('History', ["length?"], {
+});
+
+$.$defineNativeClass('IDBCursor', ["key?"], {
+});
+
+$.$defineNativeClass('IDBCursorWithValue', ["value?"], {
+});
+
+$.$defineNativeClass('IDBDatabase', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._IDBDatabaseEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('IDBDatabaseException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('IDBObjectStore', [], {
+ clear$0: function() {
+  return this.clear();
+ },
+ add$2: function(value, key) {
+  return this.add(value,key);
+ },
+ add$1: function(value) {
+  return this.add(value);
 }
-EvilAliens.prototype.drawLives = function() {
-  this.ctx.set$fillStyle("red");
-  this.ctx.set$font("bold 2em Arial");
-  this.ctx.fillText("Lives: " + this.lives, -this.ctx.get$canvas().get$width() / 2 + 50, this.ctx.get$canvas().get$height() / 2 - 80);
+});
+
+$.$defineNativeClass('IDBRequest', ["error?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  if (Object.getPrototypeOf(this).hasOwnProperty('$dom_addEventListener$3')) {
+    return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+  } else {
+    return Object.prototype.$dom_addEventListener$3.call(this, type, listener, useCapture);
+  }
+ },
+ get$on: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$on')) {
+    return $._IDBRequestEventsImpl$1(this);
+  } else {
+    return Object.prototype.get$on.call(this);
+  }
+ }
+});
+
+$.$defineNativeClass('IDBTransaction', ["error?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._IDBTransactionEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('IDBVersionChangeRequest', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._IDBVersionChangeRequestEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLIFrameElement', ["width=", "src=", "height="], {
+});
+
+$.$defineNativeClass('ImageData', ["width?", "height?"], {
+});
+
+$.$defineNativeClass('HTMLImageElement', ["y?", "x?", "width=", "src=", "height="], {
+ complete$1: function(arg0) { return this.complete.$call$1(arg0); }
+});
+
+$.$defineNativeClass('HTMLInputElement', ["width=", "value=", "src=", "pattern?", "height="], {
+ get$on: function() {
+  return $._InputElementEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('Int16Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Int32Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Int8Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('JavaScriptAudioNode', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._JavaScriptAudioNodeEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLLIElement', ["value="], {
+});
+
+$.$defineNativeClass('LocalMediaStream', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ }
+});
+
+$.$defineNativeClass('Location', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('HTMLMarqueeElement', ["width=", "height="], {
+ start$0: function() {
+  return this.start();
+ }
+});
+
+$.$defineNativeClass('MediaController', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ }
+});
+
+$.$defineNativeClass('HTMLMediaElement', ["src=", "error?"], {
+ load$0: function() {
+  return this.load();
+ },
+ get$load: function() { return new $.Closure22(this, 'load$0'); },
+ get$on: function() {
+  return $._MediaElementEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('MediaKeyEvent', ["message?"], {
+});
+
+$.$defineNativeClass('MediaList', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'String'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('MediaStream', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  if (Object.getPrototypeOf(this).hasOwnProperty('$dom_addEventListener$3')) {
+    return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+  } else {
+    return Object.prototype.$dom_addEventListener$3.call(this, type, listener, useCapture);
+  }
+ },
+ get$on: function() {
+  return $._MediaStreamEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('MediaStreamList', ["length?"], {
+});
+
+$.$defineNativeClass('MediaStreamTrackList', ["length?"], {
+});
+
+$.$defineNativeClass('MessagePort', [], {
+ start$0: function() {
+  return this.start();
+ },
+ postMessage$2: function(message, messagePorts) {
+  return this.postMessage(message,messagePorts);
+ },
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._MessagePortEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLMeterElement', ["value="], {
+});
+
+$.$defineNativeClass('MouseEvent', ["y?", "x?", "clientY?", "clientX?"], {
+});
+
+$.$defineNativeClass('NamedNodeMap', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'Node'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Node', [], {
+ $dom_replaceChild$2: function(newChild, oldChild) {
+  return this.replaceChild(newChild,oldChild);
+ },
+ $dom_removeChild$1: function(oldChild) {
+  return this.removeChild(oldChild);
+ },
+ contains$1: function(other) {
+  return this.contains(other);
+ },
+ $dom_appendChild$1: function(newChild) {
+  return this.appendChild(newChild);
+ },
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ set$text: function(value) {
+  this.textContent = value;;
+ },
+ get$parent: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$parent')) {
+    return this.parentNode;;
+  } else {
+    return Object.prototype.get$parent.call(this);
+  }
+ },
+ remove$0: function() {
+  !$.eqNullB(this.get$parent()) && this.get$parent().$dom_removeChild$1(this);
+  return this;
+ }
+});
+
+$.$defineNativeClass('NodeList', ["length?"], {
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ last$0: function() {
+  return this.operator$index$1($.sub($.get$length(this), 1));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ operator$indexSet$2: function(index, value) {
+  this._parent.$dom_replaceChild$2(value, this.operator$index$1(index));
+ },
+ clear$0: function() {
+  this._parent.set$text('');
+ },
+ removeLast$0: function() {
+  var result = this.last$0();
+  !$.eqNullB(result) && this._parent.$dom_removeChild$1(result);
+  return result;
+ },
+ addLast$1: function(value) {
+  this._parent.$dom_appendChild$1(value);
+ },
+ add$1: function(value) {
+  this._parent.$dom_appendChild$1(value);
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'Node'}));
+  return t1;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Notification', ["tag?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._NotificationEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLOListElement', [], {
+ start$0: function() { return this.start.$call$0(); }
+});
+
+$.$defineNativeClass('HTMLObjectElement', ["width=", "height="], {
+});
+
+$.$defineNativeClass('HTMLOptionElement', ["value="], {
+});
+
+$.$defineNativeClass('HTMLOutputElement', ["value="], {
+});
+
+$.$defineNativeClass('HTMLParamElement', ["value="], {
+});
+
+$.$defineNativeClass('PeerConnection00', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._PeerConnection00EventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('WebKitPoint', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('PositionError', ["message?"], {
+});
+
+$.$defineNativeClass('HTMLPreElement', ["width="], {
+});
+
+$.$defineNativeClass('HTMLProgressElement', ["value="], {
+});
+
+$.$defineNativeClass('RadioNodeList', ["value="], {
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Range', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('RangeException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('Rect', ["top?", "left?"], {
+});
+
+$.$defineNativeClass('SQLError', ["message?"], {
+});
+
+$.$defineNativeClass('SQLException', ["message?"], {
+});
+
+$.$defineNativeClass('SQLResultSetRowList', ["length?"], {
+});
+
+$.$defineNativeClass('SVGAngle', ["value="], {
+});
+
+$.$defineNativeClass('SVGCursorElement', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGElementInstance', [], {
+ get$on: function() {
+  return $._SVGElementInstanceEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('SVGElementInstanceList', ["length?"], {
+});
+
+$.$defineNativeClass('SVGException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('SVGFEBlendElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEColorMatrixElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEComponentTransferElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFECompositeElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEConvolveMatrixElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEDiffuseLightingElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEDisplacementMapElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEDropShadowElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEFloodElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEGaussianBlurElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEImageElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEMergeElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEMorphologyElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEOffsetElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFEPointLightElement', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGFESpecularLightingElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFESpotLightElement', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGFETileElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFETurbulenceElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGFilterElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGForeignObjectElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGGlyphRefElement', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGImageElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGLength', ["value="], {
+});
+
+$.$defineNativeClass('SVGLengthList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGMaskElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGMatrix', [], {
+ translate$2: function(x, y) {
+  return this.translate(x,y);
+ },
+ rotate$1: function(angle) {
+  return this.rotate(angle);
+ }
+});
+
+$.$defineNativeClass('SVGNumber', ["value="], {
+});
+
+$.$defineNativeClass('SVGNumberList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGPathSegArcAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegArcRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoCubicAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoCubicRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoCubicSmoothAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoCubicSmoothRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoQuadraticAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoQuadraticRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoQuadraticSmoothAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegCurvetoQuadraticSmoothRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoHorizontalAbs', ["x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoHorizontalRel', ["x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoVerticalAbs', ["y?"], {
+});
+
+$.$defineNativeClass('SVGPathSegLinetoVerticalRel', ["y?"], {
+});
+
+$.$defineNativeClass('SVGPathSegList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGPathSegMovetoAbs', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPathSegMovetoRel', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPatternElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGPoint', ["y?", "x?"], {
+});
+
+$.$defineNativeClass('SVGPointList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGRect', ["y?", "x?", "width=", "height="], {
+});
+
+$.$defineNativeClass('SVGRectElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGSVGElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('SVGStringList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGTextPositioningElement', ["y?", "x?"], {
+ rotate$1: function(arg0) { return this.rotate.$call$1(arg0); }
+});
+
+$.$defineNativeClass('SVGTransformList', [], {
+ clear$0: function() {
+  return this.clear();
+ }
+});
+
+$.$defineNativeClass('SVGUseElement', ["y?", "x?", "width?", "height?"], {
+});
+
+$.$defineNativeClass('Screen', ["width?", "height?"], {
+});
+
+$.$defineNativeClass('HTMLScriptElement', ["src="], {
+});
+
+$.$defineNativeClass('HTMLSelectElement', ["value=", "length="], {
+});
+
+$.$defineNativeClass('ShadowRoot', [], {
+ get$innerHTML: function() {
+  return this.lib$_ShadowRootImpl$innerHTML;
+ },
+ set$innerHTML: function(x) {
+  this.lib$_ShadowRootImpl$innerHTML = x;
+ }
+});
+
+$.$defineNativeClass('SharedWorkerContext', [], {
+ get$on: function() {
+  return $._SharedWorkerContextEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('HTMLSourceElement', ["src="], {
+});
+
+$.$defineNativeClass('SpeechGrammar', ["src="], {
+});
+
+$.$defineNativeClass('SpeechGrammarList', ["length?"], {
+});
+
+$.$defineNativeClass('SpeechInputResultList', ["length?"], {
+});
+
+$.$defineNativeClass('SpeechRecognition', [], {
+ start$0: function() {
+  return this.start();
+ },
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._SpeechRecognitionEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('SpeechRecognitionError', ["message?"], {
+});
+
+$.$defineNativeClass('SpeechRecognitionResult', ["length?"], {
+});
+
+$.$defineNativeClass('SpeechRecognitionResultList', ["length?"], {
+});
+
+$.$defineNativeClass('Storage', [], {
+ $dom_setItem$2: function(key, data) {
+  return this.setItem(key,data);
+ },
+ $dom_key$1: function(index) {
+  return this.key(index);
+ },
+ $dom_getItem$1: function(key) {
+  return this.getItem(key);
+ },
+ $dom_clear$0: function() {
+  return this.clear();
+ },
+ get$$$dom_length: function() {
+  return this.length;;
+ },
+ isEmpty$0: function() {
+  return $.eqNull(this.$dom_key$1(0));
+ },
+ get$length: function() {
+  return this.get$$$dom_length();
+ },
+ forEach$1: function(f) {
+  for (var i = 0; true; ++i) {
+    var key = this.$dom_key$1(i);
+    if ($.eqNullB(key)) return;
+    f.$call$2(key, this.operator$index$1(key));
+  }
+ },
+ clear$0: function() {
+  return this.$dom_clear$0();
+ },
+ operator$indexSet$2: function(key, value) {
+  return this.$dom_setItem$2(key, value);
+ },
+ operator$index$1: function(key) {
+  return this.$dom_getItem$1(key);
+ },
+ containsKey$1: function(key) {
+  return !$.eqNullB(this.$dom_getItem$1(key));
+ },
+ is$Map: function() { return true; }
+});
+
+$.$defineNativeClass('StorageEvent', ["key?"], {
+});
+
+$.$defineNativeClass('StyleSheetList', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'StyleSheet'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('HTMLTableCellElement', ["width=", "height="], {
+});
+
+$.$defineNativeClass('HTMLTableColElement', ["width="], {
+});
+
+$.$defineNativeClass('HTMLTableElement', ["width="], {
+});
+
+$.$defineNativeClass('HTMLTextAreaElement', ["value="], {
+});
+
+$.$defineNativeClass('TextMetrics', ["width?"], {
+});
+
+$.$defineNativeClass('TextTrack', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._TextTrackEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('TextTrackCue', ["text!"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._TextTrackCueEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('TextTrackCueList', ["length?"], {
+});
+
+$.$defineNativeClass('TextTrackList', ["length?"], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._TextTrackListEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('TimeRanges', ["length?"], {
+});
+
+$.$defineNativeClass('Touch', ["clientY?", "clientX?"], {
+});
+
+$.$defineNativeClass('TouchList', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'Touch'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot assign element of immutable List.'));
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('HTMLTrackElement', ["src="], {
+});
+
+$.$defineNativeClass('Uint16Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Uint32Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Uint8Array', ["length?"], {
+ removeRange$2: function(start, rangeLength) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeRange on immutable List.'));
+ },
+ removeLast$0: function() {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot removeLast on immutable List.'));
+ },
+ indexOf$2: function(element, start) {
+  return $.indexOf0(this, element, start, $.get$length(this));
+ },
+ isEmpty$0: function() {
+  return $.eq($.get$length(this), 0);
+ },
+ forEach$1: function(f) {
+  return $.forEach1(this, f);
+ },
+ addLast$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ add$1: function(value) {
+  throw $.captureStackTrace($.UnsupportedOperationException$1('Cannot add to immutable List.'));
+ },
+ iterator$0: function() {
+  var t1 = $._FixedSizeListIterator$1(this);
+  $.setRuntimeTypeInfo(t1, ({T: 'int'}));
+  return t1;
+ },
+ operator$indexSet$2: function(index, value) {
+  this[index] = value;
+ },
+ operator$index$1: function(index) {
+  return this[index];;
+ },
+ is$JavaScriptIndexingBehavior: function() { return true; },
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('Uint8ClampedArray', [], {
+ is$List0: function() { return true; },
+ is$Collection: function() { return true; }
+});
+
+$.$defineNativeClass('HTMLVideoElement', ["width=", "height="], {
+});
+
+$.$defineNativeClass('WebSocket', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._WebSocketEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('WheelEvent', ["y?", "x?", "clientY?", "clientX?"], {
+});
+
+$.$defineNativeClass('DOMWindow', ["length?"], {
+ postMessage$3: function(message, targetOrigin, messagePorts) {
+  return this.postMessage(message,targetOrigin,messagePorts);
+ },
+ postMessage$2: function(message,targetOrigin) {
+  return this.postMessage(message,targetOrigin);
+},
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._WindowEventsImpl$1(this);
+ },
+ _ensureRequestAnimationFrame$0: function() {
+     if (this.requestAnimationFrame && this.cancelAnimationFrame) return;
+   var vendors = ['ms', 'moz', 'webkit', 'o'];
+   for (var i = 0; i < vendors.length && !this.requestAnimationFrame; ++i) {
+     this.requestAnimationFrame = this[vendors[i] + 'RequestAnimationFrame'];
+     this.cancelAnimationFrame =
+         this[vendors[i]+'CancelAnimationFrame'] ||
+         this[vendors[i]+'CancelRequestAnimationFrame'];
+   }
+   if (this.requestAnimationFrame && this.cancelAnimationFrame) return;
+   this.requestAnimationFrame = function(callback) {
+       return window.setTimeout(callback, 16 /* 16ms ~= 60fps */);
+   };
+   this.cancelAnimationFrame = function(id) { clearTimeout(id); }
+;
+ },
+ _requestAnimationFrame$1: function(callback) {
+  return this.requestAnimationFrame($.convertDartClosureToJS(callback, 1));
+ },
+ requestAnimationFrame$1: function(callback) {
+  this._ensureRequestAnimationFrame$0();
+  return this._requestAnimationFrame$1(callback);
+ },
+ get$top: function() {
+  return $._createSafe(this.get$_top());
+ },
+ get$_top: function() {
+  return this.top;;
+ }
+});
+
+$.$defineNativeClass('Worker', [], {
+ postMessage$2: function(message, messagePorts) {
+  return this.postMessage(message,messagePorts);
+ },
+ get$on: function() {
+  return $._WorkerEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('WorkerContext', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  if (Object.getPrototypeOf(this).hasOwnProperty('get$on')) {
+    return $._WorkerContextEventsImpl$1(this);
+  } else {
+    return Object.prototype.get$on.call(this);
+  }
+ }
+});
+
+$.$defineNativeClass('WorkerLocation', [], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('XMLHttpRequest', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._XMLHttpRequestEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('XMLHttpRequestException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('XMLHttpRequestUpload', [], {
+ $dom_addEventListener$3: function(type, listener, useCapture) {
+  return this.addEventListener(type,$.convertDartClosureToJS(listener, 1),useCapture);
+ },
+ get$on: function() {
+  return $._XMLHttpRequestUploadEventsImpl$1(this);
+ }
+});
+
+$.$defineNativeClass('XPathException', ["message?"], {
+ toString$0: function() {
+  return this.toString();
+ }
+});
+
+$.$defineNativeClass('IDBOpenDBRequest', [], {
+ get$on: function() {
+  return $._IDBOpenDBRequestEventsImpl$1(this);
+ }
+});
+
+// 222 dynamic classes.
+// 356 classes
+// 30 !leaf
+(function(){
+  var v0/*class(_SVGTextPositioningElementImpl)*/ = 'SVGTextPositioningElement|SVGTextElement|SVGTSpanElement|SVGTRefElement|SVGAltGlyphElement|SVGTextElement|SVGTSpanElement|SVGTRefElement|SVGAltGlyphElement';
+  var v1/*class(_MediaElementImpl)*/ = 'HTMLMediaElement|HTMLVideoElement|HTMLAudioElement|HTMLVideoElement|HTMLAudioElement';
+  var v2/*class(_ElementImpl)*/ = [v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v1/*class(_MediaElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v0/*class(_SVGTextPositioningElementImpl)*/,v1/*class(_MediaElementImpl)*/,'Element|HTMLUnknownElement|HTMLUListElement|HTMLTrackElement|HTMLTitleElement|HTMLTextAreaElement|HTMLTableSectionElement|HTMLTableRowElement|HTMLTableElement|HTMLTableColElement|HTMLTableCellElement|HTMLTableCaptionElement|HTMLStyleElement|HTMLSpanElement|HTMLSourceElement|HTMLShadowElement|HTMLSelectElement|HTMLScriptElement|SVGElement|SVGViewElement|SVGVKernElement|SVGUseElement|SVGTitleElement|SVGTextContentElement|SVGTextPathElement|SVGTextPathElement|SVGSymbolElement|SVGSwitchElement|SVGStyleElement|SVGStopElement|SVGScriptElement|SVGSVGElement|SVGRectElement|SVGPolylineElement|SVGPolygonElement|SVGPatternElement|SVGPathElement|SVGMissingGlyphElement|SVGMetadataElement|SVGMaskElement|SVGMarkerElement|SVGMPathElement|SVGLineElement|SVGImageElement|SVGHKernElement|SVGGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGGlyphRefElement|SVGGlyphElement|SVGGElement|SVGForeignObjectElement|SVGFontFaceUriElement|SVGFontFaceSrcElement|SVGFontFaceNameElement|SVGFontFaceFormatElement|SVGFontFaceElement|SVGFontElement|SVGFilterElement|SVGFETurbulenceElement|SVGFETileElement|SVGFESpotLightElement|SVGFESpecularLightingElement|SVGFEPointLightElement|SVGFEOffsetElement|SVGFEMorphologyElement|SVGFEMergeNodeElement|SVGFEMergeElement|SVGFEImageElement|SVGFEGaussianBlurElement|SVGFEFloodElement|SVGFEDropShadowElement|SVGFEDistantLightElement|SVGFEDisplacementMapElement|SVGFEDiffuseLightingElement|SVGFEConvolveMatrixElement|SVGFECompositeElement|SVGFEComponentTransferElement|SVGFEColorMatrixElement|SVGFEBlendElement|SVGEllipseElement|SVGDescElement|SVGDefsElement|SVGCursorElement|SVGComponentTransferFunctionElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGClipPathElement|SVGCircleElement|SVGAnimationElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGAltGlyphItemElement|SVGAltGlyphDefElement|SVGAElement|SVGViewElement|SVGVKernElement|SVGUseElement|SVGTitleElement|SVGTextContentElement|SVGTextPathElement|SVGTextPathElement|SVGSymbolElement|SVGSwitchElement|SVGStyleElement|SVGStopElement|SVGScriptElement|SVGSVGElement|SVGRectElement|SVGPolylineElement|SVGPolygonElement|SVGPatternElement|SVGPathElement|SVGMissingGlyphElement|SVGMetadataElement|SVGMaskElement|SVGMarkerElement|SVGMPathElement|SVGLineElement|SVGImageElement|SVGHKernElement|SVGGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGGlyphRefElement|SVGGlyphElement|SVGGElement|SVGForeignObjectElement|SVGFontFaceUriElement|SVGFontFaceSrcElement|SVGFontFaceNameElement|SVGFontFaceFormatElement|SVGFontFaceElement|SVGFontElement|SVGFilterElement|SVGFETurbulenceElement|SVGFETileElement|SVGFESpotLightElement|SVGFESpecularLightingElement|SVGFEPointLightElement|SVGFEOffsetElement|SVGFEMorphologyElement|SVGFEMergeNodeElement|SVGFEMergeElement|SVGFEImageElement|SVGFEGaussianBlurElement|SVGFEFloodElement|SVGFEDropShadowElement|SVGFEDistantLightElement|SVGFEDisplacementMapElement|SVGFEDiffuseLightingElement|SVGFEConvolveMatrixElement|SVGFECompositeElement|SVGFEComponentTransferElement|SVGFEColorMatrixElement|SVGFEBlendElement|SVGEllipseElement|SVGDescElement|SVGDefsElement|SVGCursorElement|SVGComponentTransferFunctionElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGClipPathElement|SVGCircleElement|SVGAnimationElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGAltGlyphItemElement|SVGAltGlyphDefElement|SVGAElement|HTMLQuoteElement|HTMLProgressElement|HTMLPreElement|HTMLParamElement|HTMLParagraphElement|HTMLOutputElement|HTMLOptionElement|HTMLOptGroupElement|HTMLObjectElement|HTMLOListElement|HTMLModElement|HTMLMeterElement|HTMLMetaElement|HTMLMenuElement|HTMLMarqueeElement|HTMLMapElement|HTMLLinkElement|HTMLLegendElement|HTMLLabelElement|HTMLLIElement|HTMLKeygenElement|HTMLInputElement|HTMLImageElement|HTMLIFrameElement|HTMLHtmlElement|HTMLHeadingElement|HTMLHeadElement|HTMLHRElement|HTMLFrameSetElement|HTMLFrameElement|HTMLFormElement|HTMLFontElement|HTMLFieldSetElement|HTMLEmbedElement|HTMLDivElement|HTMLDirectoryElement|HTMLDetailsElement|HTMLDListElement|HTMLContentElement|HTMLCanvasElement|HTMLButtonElement|HTMLBodyElement|HTMLBaseFontElement|HTMLBaseElement|HTMLBRElement|HTMLAreaElement|HTMLAppletElement|HTMLAnchorElement|HTMLElement|HTMLUnknownElement|HTMLUListElement|HTMLTrackElement|HTMLTitleElement|HTMLTextAreaElement|HTMLTableSectionElement|HTMLTableRowElement|HTMLTableElement|HTMLTableColElement|HTMLTableCellElement|HTMLTableCaptionElement|HTMLStyleElement|HTMLSpanElement|HTMLSourceElement|HTMLShadowElement|HTMLSelectElement|HTMLScriptElement|SVGElement|SVGViewElement|SVGVKernElement|SVGUseElement|SVGTitleElement|SVGTextContentElement|SVGTextPathElement|SVGTextPathElement|SVGSymbolElement|SVGSwitchElement|SVGStyleElement|SVGStopElement|SVGScriptElement|SVGSVGElement|SVGRectElement|SVGPolylineElement|SVGPolygonElement|SVGPatternElement|SVGPathElement|SVGMissingGlyphElement|SVGMetadataElement|SVGMaskElement|SVGMarkerElement|SVGMPathElement|SVGLineElement|SVGImageElement|SVGHKernElement|SVGGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGGlyphRefElement|SVGGlyphElement|SVGGElement|SVGForeignObjectElement|SVGFontFaceUriElement|SVGFontFaceSrcElement|SVGFontFaceNameElement|SVGFontFaceFormatElement|SVGFontFaceElement|SVGFontElement|SVGFilterElement|SVGFETurbulenceElement|SVGFETileElement|SVGFESpotLightElement|SVGFESpecularLightingElement|SVGFEPointLightElement|SVGFEOffsetElement|SVGFEMorphologyElement|SVGFEMergeNodeElement|SVGFEMergeElement|SVGFEImageElement|SVGFEGaussianBlurElement|SVGFEFloodElement|SVGFEDropShadowElement|SVGFEDistantLightElement|SVGFEDisplacementMapElement|SVGFEDiffuseLightingElement|SVGFEConvolveMatrixElement|SVGFECompositeElement|SVGFEComponentTransferElement|SVGFEColorMatrixElement|SVGFEBlendElement|SVGEllipseElement|SVGDescElement|SVGDefsElement|SVGCursorElement|SVGComponentTransferFunctionElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGClipPathElement|SVGCircleElement|SVGAnimationElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGAltGlyphItemElement|SVGAltGlyphDefElement|SVGAElement|SVGViewElement|SVGVKernElement|SVGUseElement|SVGTitleElement|SVGTextContentElement|SVGTextPathElement|SVGTextPathElement|SVGSymbolElement|SVGSwitchElement|SVGStyleElement|SVGStopElement|SVGScriptElement|SVGSVGElement|SVGRectElement|SVGPolylineElement|SVGPolygonElement|SVGPatternElement|SVGPathElement|SVGMissingGlyphElement|SVGMetadataElement|SVGMaskElement|SVGMarkerElement|SVGMPathElement|SVGLineElement|SVGImageElement|SVGHKernElement|SVGGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGRadialGradientElement|SVGLinearGradientElement|SVGGlyphRefElement|SVGGlyphElement|SVGGElement|SVGForeignObjectElement|SVGFontFaceUriElement|SVGFontFaceSrcElement|SVGFontFaceNameElement|SVGFontFaceFormatElement|SVGFontFaceElement|SVGFontElement|SVGFilterElement|SVGFETurbulenceElement|SVGFETileElement|SVGFESpotLightElement|SVGFESpecularLightingElement|SVGFEPointLightElement|SVGFEOffsetElement|SVGFEMorphologyElement|SVGFEMergeNodeElement|SVGFEMergeElement|SVGFEImageElement|SVGFEGaussianBlurElement|SVGFEFloodElement|SVGFEDropShadowElement|SVGFEDistantLightElement|SVGFEDisplacementMapElement|SVGFEDiffuseLightingElement|SVGFEConvolveMatrixElement|SVGFECompositeElement|SVGFEComponentTransferElement|SVGFEColorMatrixElement|SVGFEBlendElement|SVGEllipseElement|SVGDescElement|SVGDefsElement|SVGCursorElement|SVGComponentTransferFunctionElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGFEFuncRElement|SVGFEFuncGElement|SVGFEFuncBElement|SVGFEFuncAElement|SVGClipPathElement|SVGCircleElement|SVGAnimationElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGSetElement|SVGAnimateTransformElement|SVGAnimateMotionElement|SVGAnimateElement|SVGAnimateColorElement|SVGAltGlyphItemElement|SVGAltGlyphDefElement|SVGAElement|HTMLQuoteElement|HTMLProgressElement|HTMLPreElement|HTMLParamElement|HTMLParagraphElement|HTMLOutputElement|HTMLOptionElement|HTMLOptGroupElement|HTMLObjectElement|HTMLOListElement|HTMLModElement|HTMLMeterElement|HTMLMetaElement|HTMLMenuElement|HTMLMarqueeElement|HTMLMapElement|HTMLLinkElement|HTMLLegendElement|HTMLLabelElement|HTMLLIElement|HTMLKeygenElement|HTMLInputElement|HTMLImageElement|HTMLIFrameElement|HTMLHtmlElement|HTMLHeadingElement|HTMLHeadElement|HTMLHRElement|HTMLFrameSetElement|HTMLFrameElement|HTMLFormElement|HTMLFontElement|HTMLFieldSetElement|HTMLEmbedElement|HTMLDivElement|HTMLDirectoryElement|HTMLDetailsElement|HTMLDListElement|HTMLContentElement|HTMLCanvasElement|HTMLButtonElement|HTMLBodyElement|HTMLBaseFontElement|HTMLBaseElement|HTMLBRElement|HTMLAreaElement|HTMLAppletElement|HTMLAnchorElement|HTMLElement'].join('|');
+  var v3/*class(_DocumentFragmentImpl)*/ = 'DocumentFragment|ShadowRoot|ShadowRoot';
+  var v4/*class(_DocumentImpl)*/ = 'HTMLDocument|SVGDocument|SVGDocument';
+  var v5/*class(_CharacterDataImpl)*/ = 'CharacterData|Text|CDATASection|CDATASection|Comment|Text|CDATASection|CDATASection|Comment';
+  var v6/*class(_WorkerContextImpl)*/ = 'WorkerContext|SharedWorkerContext|DedicatedWorkerContext|SharedWorkerContext|DedicatedWorkerContext';
+  var v7/*class(_NodeImpl)*/ = [v2/*class(_ElementImpl)*/,v3/*class(_DocumentFragmentImpl)*/,v4/*class(_DocumentImpl)*/,v5/*class(_CharacterDataImpl)*/,v2/*class(_ElementImpl)*/,v3/*class(_DocumentFragmentImpl)*/,v4/*class(_DocumentImpl)*/,v5/*class(_CharacterDataImpl)*/,'Node|ProcessingInstruction|Notation|EntityReference|Entity|DocumentType|Attr|ProcessingInstruction|Notation|EntityReference|Entity|DocumentType|Attr'].join('|');
+  var v8/*class(_MediaStreamImpl)*/ = 'MediaStream|LocalMediaStream|LocalMediaStream';
+  var v9/*class(_IDBRequestImpl)*/ = 'IDBRequest|IDBOpenDBRequest|IDBVersionChangeRequest|IDBOpenDBRequest|IDBVersionChangeRequest';
+  var v10/*class(_AbstractWorkerImpl)*/ = 'AbstractWorker|Worker|SharedWorker|Worker|SharedWorker';
+  var table = [
+    // [dynamic-dispatch-tag, tags of classes implementing dynamic-dispatch-tag]
+    ['SVGTextPositioningElement', v0/*class(_SVGTextPositioningElementImpl)*/],
+    ['Uint8Array', 'Uint8Array|Uint8ClampedArray|Uint8ClampedArray'],
+    ['AbstractWorker', v10/*class(_AbstractWorkerImpl)*/],
+    ['AudioParam', 'AudioParam|AudioGain|AudioGain'],
+    ['WorkerContext', v6/*class(_WorkerContextImpl)*/],
+    ['CSSValueList', 'CSSValueList|WebKitCSSFilterValue|WebKitCSSTransformValue|WebKitCSSFilterValue|WebKitCSSTransformValue'],
+    ['CanvasRenderingContext', 'CanvasRenderingContext|WebGLRenderingContext|CanvasRenderingContext2D|WebGLRenderingContext|CanvasRenderingContext2D'],
+    ['CharacterData', v5/*class(_CharacterDataImpl)*/],
+    ['DOMTokenList', 'DOMTokenList|DOMSettableTokenList|DOMSettableTokenList'],
+    ['HTMLDocument', v4/*class(_DocumentImpl)*/],
+    ['DocumentFragment', v3/*class(_DocumentFragmentImpl)*/],
+    ['HTMLMediaElement', v1/*class(_MediaElementImpl)*/],
+    ['Element', v2/*class(_ElementImpl)*/],
+    ['EntrySync', 'EntrySync|FileEntrySync|DirectoryEntrySync|FileEntrySync|DirectoryEntrySync'],
+    ['Event', 'Event|WebGLContextEvent|UIEvent|WheelEvent|TouchEvent|TextEvent|SVGZoomEvent|MouseEvent|KeyboardEvent|CompositionEvent|WheelEvent|TouchEvent|TextEvent|SVGZoomEvent|MouseEvent|KeyboardEvent|CompositionEvent|WebKitTransitionEvent|TrackEvent|StorageEvent|SpeechRecognitionEvent|SpeechRecognitionError|SpeechInputEvent|ProgressEvent|XMLHttpRequestProgressEvent|XMLHttpRequestProgressEvent|PopStateEvent|PageTransitionEvent|OverflowEvent|OfflineAudioCompletionEvent|MutationEvent|MessageEvent|MediaStreamEvent|MediaKeyEvent|IDBVersionChangeEvent|HashChangeEvent|ErrorEvent|DeviceOrientationEvent|DeviceMotionEvent|CustomEvent|CloseEvent|BeforeLoadEvent|AudioProcessingEvent|WebKitAnimationEvent|WebGLContextEvent|UIEvent|WheelEvent|TouchEvent|TextEvent|SVGZoomEvent|MouseEvent|KeyboardEvent|CompositionEvent|WheelEvent|TouchEvent|TextEvent|SVGZoomEvent|MouseEvent|KeyboardEvent|CompositionEvent|WebKitTransitionEvent|TrackEvent|StorageEvent|SpeechRecognitionEvent|SpeechRecognitionError|SpeechInputEvent|ProgressEvent|XMLHttpRequestProgressEvent|XMLHttpRequestProgressEvent|PopStateEvent|PageTransitionEvent|OverflowEvent|OfflineAudioCompletionEvent|MutationEvent|MessageEvent|MediaStreamEvent|MediaKeyEvent|IDBVersionChangeEvent|HashChangeEvent|ErrorEvent|DeviceOrientationEvent|DeviceMotionEvent|CustomEvent|CloseEvent|BeforeLoadEvent|AudioProcessingEvent|WebKitAnimationEvent'],
+    ['Node', v7/*class(_NodeImpl)*/],
+    ['MediaStream', v8/*class(_MediaStreamImpl)*/],
+    ['IDBRequest', v9/*class(_IDBRequestImpl)*/],
+    ['EventTarget', [v6/*class(_WorkerContextImpl)*/,v7/*class(_NodeImpl)*/,v8/*class(_MediaStreamImpl)*/,v9/*class(_IDBRequestImpl)*/,v10/*class(_AbstractWorkerImpl)*/,v6/*class(_WorkerContextImpl)*/,v7/*class(_NodeImpl)*/,v8/*class(_MediaStreamImpl)*/,v9/*class(_IDBRequestImpl)*/,v10/*class(_AbstractWorkerImpl)*/,'EventTarget|XMLHttpRequestUpload|XMLHttpRequest|DOMWindow|WebSocket|TextTrackList|TextTrackCue|TextTrack|SpeechRecognition|PeerConnection00|Notification|MessagePort|MediaController|IDBTransaction|IDBDatabase|FileWriter|FileReader|EventSource|DeprecatedPeerConnection|DOMApplicationCache|BatteryManager|AudioContext|XMLHttpRequestUpload|XMLHttpRequest|DOMWindow|WebSocket|TextTrackList|TextTrackCue|TextTrack|SpeechRecognition|PeerConnection00|Notification|MessagePort|MediaController|IDBTransaction|IDBDatabase|FileWriter|FileReader|EventSource|DeprecatedPeerConnection|DOMApplicationCache|BatteryManager|AudioContext'].join('|')],
+    ['HTMLCollection', 'HTMLCollection|HTMLOptionsCollection|HTMLOptionsCollection'],
+    ['IDBCursor', 'IDBCursor|IDBCursorWithValue|IDBCursorWithValue'],
+    ['NodeList', 'NodeList|RadioNodeList|RadioNodeList']];
+$.dynamicSetMetadata(table);
+})();
+
+if (typeof window != 'undefined' && typeof document != 'undefined' &&
+    window.addEventListener && document.readyState == 'loading') {
+  window.addEventListener('DOMContentLoaded', function(e) {
+    $.main();
+  });
+} else {
+  $.main();
 }
-EvilAliens.prototype.drawScore = function() {
-  this.ctx.set$fillStyle("red");
-  this.ctx.set$font("bold 2em Arial");
-  this.ctx.fillText("Score: " + this.score, -this.ctx.get$canvas().get$width() / 2 + 50, this.ctx.get$canvas().get$height() / 2 - 50);
+function init() {
+  Isolate.$isolateProperties = {};
+Isolate.$defineClass = function(cls, superclass, fields, prototype) {
+  var generateGetterSetter = function(field, prototype) {
+  var len = field.length;
+  var lastChar = field[len - 1];
+  var needsGetter = lastChar == '?' || lastChar == '=';
+  var needsSetter = lastChar == '!' || lastChar == '=';
+  if (needsGetter || needsSetter) field = field.substring(0, len - 1);
+  if (needsGetter) {
+    var getterString = "return this." + field + ";";
+    prototype["get$" + field] = new Function(getterString);
+  }
+  if (needsSetter) {
+    var setterString = "this." + field + " = v;";
+    prototype["set$" + field] = new Function("v", setterString);
+  }
+  return field;
+};
+  var constructor;
+  if (typeof fields == 'function') {
+    constructor = fields;
+  } else {
+    var str = "function " + cls + "(";
+    var body = "";
+    for (var i = 0; i < fields.length; i++) {
+      if (i != 0) str += ", ";
+      var field = fields[i];
+      field = generateGetterSetter(field, prototype);
+      str += field;
+      body += "this." + field + " = " + field + ";\n";
+    }
+    str += ") {" + body + "}\n";
+    str += "return " + cls + ";";
+    constructor = new Function(str)();
+  }
+  Isolate.$isolateProperties[cls] = constructor;
+  constructor.prototype = prototype;
+  if (superclass !== "") {
+    Isolate.$pendingClasses[cls] = superclass;
+  }
+};
+Isolate.$pendingClasses = {};
+Isolate.$finishClasses = function(collectedClasses) {
+  for (var collected in collectedClasses) {
+    if (Object.prototype.hasOwnProperty.call(collectedClasses, collected)) {
+      var desc = collectedClasses[collected];
+      Isolate.$defineClass(collected, desc.super, desc[''], desc);
+    }
+  }
+  var pendingClasses = Isolate.$pendingClasses;
+  Isolate.$pendingClasses = {};
+  var finishedClasses = {};
+  function finishClass(cls) {
+    if (finishedClasses[cls]) return;
+    finishedClasses[cls] = true;
+    var superclass = pendingClasses[cls];
+    if (!superclass) return;
+    finishClass(superclass);
+    var constructor = Isolate.$isolateProperties[cls];
+    var superConstructor = Isolate.$isolateProperties[superclass];
+    var prototype = constructor.prototype;
+    if (prototype.__proto__) {
+      prototype.__proto__ = superConstructor.prototype;
+      prototype.constructor = constructor;
+    } else {
+      function tmp() {};
+      tmp.prototype = superConstructor.prototype;
+      var newPrototype = new tmp();
+      constructor.prototype = newPrototype;
+      newPrototype.constructor = constructor;
+      var hasOwnProperty = Object.prototype.hasOwnProperty;
+      for (var member in prototype) {
+        if (member == '' || member == 'super') continue;
+        if (hasOwnProperty.call(prototype, member)) {
+          newPrototype[member] = prototype[member];
+        }
+      }
+    }
+  }
+  for (var cls in pendingClasses) finishClass(cls);
+};
+Isolate.$finishIsolateConstructor = function(oldIsolate) {
+  var isolateProperties = oldIsolate.$isolateProperties;
+  var isolatePrototype = oldIsolate.prototype;
+  var str = "{\n";
+  str += "var properties = Isolate.$isolateProperties;\n";
+  for (var staticName in isolateProperties) {
+    if (Object.prototype.hasOwnProperty.call(isolateProperties, staticName)) {
+      str += "this." + staticName + "= properties." + staticName + ";\n";
+    }
+  }
+  str += "}\n";
+  var newIsolate = new Function(str);
+  newIsolate.prototype = isolatePrototype;
+  isolatePrototype.constructor = newIsolate;
+  newIsolate.$isolateProperties = isolateProperties;
+  return newIsolate;
+};
 }
-EvilAliens.prototype.start$0 = EvilAliens.prototype.start;
-EvilAliens.prototype.update$0 = EvilAliens.prototype.update;
-// ********** Code for top level **************
-function main() {
-  var canvas = html_get$document().query('#surface');
-  var ctx = canvas.getContext$1('2d');
-  var assetManager = new AssetManager();
-  assetManager.queueDownload('img/alien-explosion.png');
-  assetManager.queueDownload('img/alien.png');
-  assetManager.queueDownload('img/bullet.png');
-  assetManager.queueDownload('img/earth.png');
-  assetManager.queueDownload('img/sentry.png');
-  assetManager.queueDownload('img/explosion.png');
-  var game = new EvilAliens(assetManager);
-  assetManager.downloadAll((function () {
-    game.init$1(ctx);
-    game.start$0();
-  })
-  );
-}
-//  ********** Globals **************
-function $static_init(){
-  $globals._firstMeasurementRequest = true;
-  $globals._nextMeasurementFrameScheduled = false;
-}
-var const$3 = new _DeletedKeySentinel()/*const _DeletedKeySentinel()*/;
-var $globals = {};
-$static_init();
-main();

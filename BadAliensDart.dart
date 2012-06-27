@@ -14,7 +14,7 @@
 #source('EvilAliens.dart');
 
 void main() {
-  var canvas = html.document.query('#surface');
+  html.CanvasElement canvas = html.document.query('#surface');
   var ctx = canvas.getContext('2d');
   
   AssetManager assetManager = new AssetManager();

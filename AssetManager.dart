@@ -21,7 +21,7 @@ class AssetManager {
     for (final path in downloadQueue) {
       html.ImageElement img = new html.Element.tag("img");
       img.on.load.add((event) {
-        print(img.src + ' is loaded');
+        print("${img.src} is loaded");
         successCount += 1;
         if (isDone()) {
             downloadCallback();

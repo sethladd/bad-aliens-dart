@@ -6,7 +6,7 @@ class Animation {
   num frameDuration;
   num totalTime;
   bool loop;
-  int elapsedTime = 0;
+  num elapsedTime = 0;
   
   Animation(this.spriteSheet, this.frameWidth, this.frameDuration, [this.loop = false]) {
     frameHeight = spriteSheet.height;

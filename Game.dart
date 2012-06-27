@@ -42,18 +42,20 @@ class Game {
     html.window.requestAnimationFrame(loop);
   }
   
-  void loop(int time) {
+  bool loop(int time) {
     clockTick = this.timer.tick();
     update();
     draw();
     click = null;
     html.window.requestAnimationFrame(loop);
+    return false;
   }
   
   void startInput() {
     print('Starting input');
     
-    Point getXandY(e) {
+    Point getXandY(html.MouseEvent e) {
+        e.preventDefault();
         num x =  e.clientX - clientBoundingRect.x - (ctx.canvas.width/2);
         num y = e.clientY - clientBoundingRect.y - (ctx.canvas.height/2);
         return new Point(x, y);

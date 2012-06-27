@@ -37,12 +37,12 @@ class EvilAliens extends Game {
   void drawLives() {
     ctx.fillStyle = "red";
     ctx.font = "bold 2em Arial";
-    ctx.fillText("Lives: " + lives, -ctx.canvas.width/2 + 50, ctx.canvas.height/2 - 80);
+    ctx.fillText("Lives: $lives", -ctx.canvas.width/2 + 50, ctx.canvas.height/2 - 80);
   }
   
   void drawScore() {
     ctx.fillStyle = "red";
     ctx.font = "bold 2em Arial";
-    ctx.fillText("Score: " + score, -ctx.canvas.width/2 + 50, ctx.canvas.height/2 - 50);
+    ctx.fillText("Score: $score", -ctx.canvas.width/2 + 50, ctx.canvas.height/2 - 50);
   }
 }
