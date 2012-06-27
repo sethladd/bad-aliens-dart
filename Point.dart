@@ -1,6 +1,6 @@
 class Point {
-  final int x;
-  final int y;
+  final num x;
+  final num y;
   
   Point(this.x, this.y);
 }

@@ -34,11 +34,11 @@ class GameEntity {
   }
   
   html.CanvasElement rotateAndCache(image, angle) {
-    var offscreenCanvas = new html.Element.tag("canvas");
+    html.CanvasElement offscreenCanvas = new html.Element.tag("canvas");
     var size = Math.max(image.width, image.height);
     offscreenCanvas.width = size;
     offscreenCanvas.height = size;
-    var offscreenCtx = offscreenCanvas.getContext('2d');
+    html.CanvasRenderingContext2D offscreenCtx = offscreenCanvas.getContext('2d');
     offscreenCtx.save();
     offscreenCtx.translate(size/2, size/2);
     offscreenCtx.rotate(angle + Math.PI/2);
