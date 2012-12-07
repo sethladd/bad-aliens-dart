@@ -1,3 +1,5 @@
+part of bad_aliens;
+
 class GameEntity {
   Game game;
   num x;
@@ -5,13 +7,13 @@ class GameEntity {
   bool removeFromWorld = false;
   var sprite;
   num radius;
-  
+
   GameEntity(Game this.game);
-  
+
   GameEntity.withPosition(Game this.game, num this.x, num this.y);
-  
+
   void update() { }
-  
+
   void draw(ctx) {
     if (game.showOutlines) {
       ctx.beginPath();
@@ -21,20 +23,20 @@ class GameEntity {
       ctx.closePath();
     }
   }
-  
+
   void drawSpriteCentered(ctx) {
-    num _x = x - sprite.width/2;
-    num _y = y - sprite.height/2;
+    var _x = x - sprite.width/2;
+    var _y = y - sprite.height/2;
     ctx.drawImage(sprite, _x, _y);
   }
-  
+
   bool outsideScreen() {
     return (x > game.halfSurfaceWidth || x < -(game.halfSurfaceWidth) ||
         y > game.halfSurfaceHeight || y < -(game.halfSurfaceHeight));
   }
-  
-  html.CanvasElement rotateAndCache(image, angle) {
-    var offscreenCanvas = new html.Element.tag("canvas");
+
+  CanvasElement rotateAndCache(image, angle) {
+    var offscreenCanvas = new CanvasElement();
     var size = Math.max(image.width, image.height);
     offscreenCanvas.width = size;
     offscreenCanvas.height = size;

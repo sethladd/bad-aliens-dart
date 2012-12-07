@@ -1,27 +1,24 @@
+part of bad_aliens;
+
 class AssetManager {
-  var successCount = 0;
-  var errorCount = 0;
-  Map cache;
-  List downloadQueue;
-  
-  AssetManager() {
-    downloadQueue = [];
-    cache = {};
-  }
-    
+  int successCount = 0;
+  int errorCount = 0;
+  Map cache = {};
+  List downloadQueue = [];
+
   void queueDownload(String path) {
     downloadQueue.add(path);
   }
-  
+
   void downloadAll(downloadCallback) {
     if (downloadQueue.length == 0) {
       downloadCallback();
     }
-    
+
     for (final path in downloadQueue) {
-      html.ImageElement img = new html.Element.tag("img");
+      var img = new ImageElement();
       img.on.load.add((event) {
-        print(img.src + ' is loaded');
+        print('${img.src} is loaded');
         successCount += 1;
         if (isDone()) {
             downloadCallback();
@@ -41,9 +38,9 @@ class AssetManager {
   getAsset(path) {
     return cache[path];
   }
-  
+
   bool isDone() {
     return (downloadQueue.length == successCount + errorCount);
   }
-    
+
 }

@@ -1,18 +1,20 @@
+part of bad_aliens;
+
 class Animation {
 
-  html.ImageElement spriteSheet;
+  ImageElement spriteSheet;
   num frameWidth;
   num frameHeight;
   num frameDuration;
   num totalTime;
   bool loop;
-  int elapsedTime = 0;
-  
-  Animation(this.spriteSheet, this.frameWidth, this.frameDuration, [this.loop = false]) {
+  num elapsedTime = 0;
+
+  Animation(this.spriteSheet, this.frameWidth, this.frameDuration, {this.loop: false}) {
     frameHeight = spriteSheet.height;
     totalTime = (spriteSheet.width / frameWidth) * frameDuration;
   }
-    
+
   void drawFrame(tick, ctx, x, y, [scaleBy = 1]) {
     elapsedTime += tick;
     if (loop) {
@@ -32,11 +34,11 @@ class Animation {
                   frameWidth*scaleBy,
                   frameHeight*scaleBy);
   }
-  
+
   bool isDone() {
     return (elapsedTime >= totalTime);
   }
-  
+
   num currentFrame() {
     return (elapsedTime / frameDuration).floor();
   }

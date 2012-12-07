@@ -1,16 +1,18 @@
+part of bad_aliens;
+
 class Bullet extends GameEntity {
-  
+
   num angle;
-  Point explodesAt;
+  GamePoint explodesAt;
   static final num speed = 250;
   num radialDistance = 95;
   Animation animation;
-  
-  Bullet(Game game, num x, num y, num this.angle, Point this.explodesAt) : super.withPosition(game, x, y) {
+
+  Bullet(Game game, num x, num y, num this.angle, GamePoint this.explodesAt) : super.withPosition(game, x, y) {
     sprite = game.assetManager.getAsset('img/bullet.png');
-    animation = new Animation(sprite, 7, 0.05, true);
+    animation = new Animation(sprite, 7, 0.05, loop:true);
   }
-  
+
   void update() {
     if (outsideScreen()) {
       removeFromWorld = true;
@@ -24,7 +26,7 @@ class Bullet extends GameEntity {
       radialDistance += speed * game.clockTick;
     }
   }
-  
+
   void draw(ctx) {
     ctx.save();
     ctx.translate(x, y);
@@ -32,7 +34,7 @@ class Bullet extends GameEntity {
     ctx.translate(-x, -y);
     animation.drawFrame(game.clockTick, ctx, x, y);
     ctx.restore();
-    
+
     super.draw(ctx);
   }
 
