@@ -17,14 +17,14 @@ class AssetManager {
 
     for (final path in downloadQueue) {
       var img = new ImageElement();
-      img.on.load.add((event) {
+      img.onLoad.listen((event) {
         print('${img.src} is loaded');
         successCount += 1;
         if (isDone()) {
             downloadCallback();
         }
       });
-      img.on.error.add((event) {
+      img.onError.listen((event) {
         errorCount += 1;
         if (isDone()) {
             downloadCallback();

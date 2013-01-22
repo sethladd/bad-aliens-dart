@@ -56,11 +56,11 @@ class Game {
       return new GamePoint(x, y);
     }
 
-    ctx.canvas.on.click.add((e) {
+    ctx.canvas.onClick.listen((e) {
        click = getXandY(e);
     });
 
-    ctx.canvas.on.mouseMove.add((e) {
+    ctx.canvas.onMouseMove.listen((e) {
        mouse = getXandY(e);
     });
 
