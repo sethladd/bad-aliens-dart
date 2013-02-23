@@ -1,6 +1,5 @@
-name:  Bad Aliens
+name:  bad_aliens
 description:  Very simple HTML5 game.
 
-#dependencies:
-#  js: any
-#  unittest: { sdk: unittest }
+dependencies:
+  browser: any
