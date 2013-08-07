@@ -1,5 +1,6 @@
 part of bad_aliens;
 
+// Added by thnah for testing git
 class Alien extends GameEntity {
 
   num radialDistance;
