@@ -1,5 +1,5 @@
 part of bad_aliens;
-
+// Modified by Normand
 class Game {
 
   List entities = [];
