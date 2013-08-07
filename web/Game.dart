@@ -1,5 +1,5 @@
 part of bad_aliens;
-// Modified by Normand
+// Modified by Normand. more comment push to upstream
 class Game {
 
   List entities = [];
@@ -12,7 +12,7 @@ class Game {
   num surfaceHeight;
   num halfSurfaceWidth;
   num halfSurfaceHeight;
-  GamePoint clientBoundingRect;
+  GamePoint clientBoundingRect; ////
   AssetManager assetManager;
 
   bool showOutlines = false;
