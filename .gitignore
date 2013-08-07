@@ -1,2 +1,5 @@
 .DS_Store
 packages
+*.dart.js
+*.dart.js.deps
+*.dart.js.map
