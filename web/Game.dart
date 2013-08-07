@@ -26,7 +26,7 @@ class Game {
     halfSurfaceWidth = surfaceWidth/2;
     halfSurfaceHeight = surfaceHeight/2;
 
-    ClientRect rect = ctx.canvas.getBoundingClientRect();
+    Rect rect = ctx.canvas.getBoundingClientRect();
     clientBoundingRect = new GamePoint(rect.left, rect.top);
 
     startInput();
@@ -97,9 +97,13 @@ class Game {
       }
     }
 
-    for (var i = entities.length-1; i >= 0; --i) {
-      if (entities[i].removeFromWorld) {
-        entities.removeRange(i, 1);
+    var entitiesLeng = entities.length;
+    var j = entities.length-1;
+
+    for (; j >= 0; --j) {
+      if (entities[j].removeFromWorld) {
+        //entities.removeRange(i, 1); Boum here !!
+        entities.removeAt(j);
       }
     }
   }

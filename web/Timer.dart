@@ -7,7 +7,7 @@ class Timer {
   num wallLastTimestamp = 0;
 
   num tick() {
-    num wallCurrent = new Date.now().millisecondsSinceEpoch;
+    num wallCurrent = new DateTime.now().millisecondsSinceEpoch;
     num wallDelta = (wallCurrent - wallLastTimestamp) / 1000;
     wallLastTimestamp = wallCurrent;
 
